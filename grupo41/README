@@ -12,7 +12,7 @@ Ricardo Cruz 47871
   - Usamos 4 linhas de comentario para indicar o nosso grupo, nomes e numeros, em vez das 3 indicadas no enunciado, esperemos que 
   não seja um problema
 
-  - Alterámos o table-private.h e por consequinte, o table.c, de modo a contar o número de colisões
+  - Alterámos o table-private.h e, por consequente, o table.c de modo a contar o número de colisões
   
   - Criámos um data-private.h e adicionámos a função data_create_empty no data.c, de modo a criar uma estrutura data_t 
   com size=0 e data=NULL
