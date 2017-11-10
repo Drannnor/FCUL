@@ -23,7 +23,7 @@ int rtables_unbind(struct rtables_t *rtables){
  * Devolve 0 (ok) ou -1 (problemas).
  */
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
-    //copiado do table.c, com tables e nao rtables
+    /*//copiado do table.c, com tables e nao rtables
     if(table->num_entries < table->size_table && key != NULL){
         int hash = hashcode(table->size_table, key);
         struct entry_t *entrada = &table->hash_table[hash];
@@ -47,7 +47,19 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
         find_next(table);
         return 0;
     }
-    return -1;
+    return -1;*/
+
+    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
+        perror("Erro ao alocar memoria");
+        return -1;
+    }
+
+    msg_out->opcode = OC_PUT;
+    msg_out->c_type = CT_ENTRY;
+	msg_out->table_num = rtables->t_num;
+
+    msg_res = network_send_receive(rtables->socket,msg_out);
+    
 
 }
 
