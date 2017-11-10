@@ -50,7 +50,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     return -1;*/
 
     if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria");
+        perror("Erro ao alocar memoria para mensagem");
         return -1;
     }
 
@@ -58,8 +58,14 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     msg_out->c_type = CT_ENTRY;
 	msg_out->table_num = rtables->t_num;
 
-    msg_res = network_send_receive(rtables->socket,msg_out);
-    
+    if((server = malloc(sizeof(struct server_t))) == NULL){
+        perror("Erro ao alocar memoria para  server")
+        return -1;
+    }
+    server->socket_fd = rtables->socket_fd;
+
+    msg_res = network_send_receive(server,msg_out);
+    //???
 
 }
 
@@ -67,39 +73,86 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
  * Devolve 0 (OK) ou -1 em caso de erros.
  */
 int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
-    //copiado do table.c, com tables e nao rtables
+    /*//copiado do table.c, com tables e nao rtables
     struct entry_t *entrada = get_entry(table,key);
     if(entrada != NULL){
         data_destroy(entrada->value);
         entrada->value = data_dup(value);
         return 0;
     }
-    return -1;
+    return -1;*/
 
+    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
+        perror("Erro ao alocar memoria para mensagem");
+        return -1;
+    }
+
+    msg_out->opcode = OC_UPDATE;
+    msg_out->c_type = CT_ENTRY;
+	msg_out->table_num = rtables->t_num;
+    
+    //porque nao usamos o table_update? Pelo que parece, nao percebi os enunciados passados.
+    //??? e por ai fora
 }
 
 /* Fun��o para obter da tabela remota o valor associado � chave key.
  * Devolve NULL em caso de erro.
  */
-struct data_t *rtables_get(struct rtables_t *tables, char *key){
-    //copiado do table.c, com tables e nao rtables
+struct data_t *rtables_get(struct rtables_t *rtables, char *key){
+    /*//copiado do table.c, com tables e nao rtables
     struct entry_t *entrada = get_entry(table, key);
     if(entrada == NULL) return NULL;
-    return data_dup(entrada->value);
+    return data_dup(entrada->value);*/
+
+    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
+        perror("Erro ao alocar memoria para mensagem");
+        return -1;
+    }
+
+    msg_out->opcode = OC_GET;
+    msg_out->c_type = CT_KEY;
+	msg_out->table_num = rtables->t_num;
+    msg_out->content = strdup(key);
+    //???
 }
 
 /* Devolve n�mero de pares chave/valor na tabela remota.
  */
 int rtables_size(struct rtables_t *rtables){
     //copiado do table.c, com tables e nao rtables
-    return table->num_entries;
+    //return table->num_entries;
+    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
+        perror("Erro ao alocar memoria para mensagem");
+        return -1;
+    }
+
+    msg_out->opcode = OC_SIZE;
+    msg_out->c_type = 0;
+	msg_out->table_num = rtables->t_num;
+
+    //???
+}
+
+/* Devolve o número de colisões existentes na tabela remota.
+ */
+int rtables_collisions(struct rtables_t *rtables){
+    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
+        perror("Erro ao alocar memoria para mensagem");
+        return -1;
+    }
+
+    msg_out->opcode = OC_COLLS;
+    msg_out->c_type = 0;
+	msg_out->table_num = rtables->t_num;
+
+    //???
 }
 
 /* Devolve um array de char * com a c�pia de todas as keys da
  * tabela remota, e um �ltimo elemento a NULL.
  */
 char **rtables_get_keys(struct rtables_t *rtables){
-    //copiado do table.c, com tables e nao rtables
+    /*//copiado do table.c, com tables e nao rtables
     char **list;
     if((list = (char **) malloc(sizeof(char *)*(table->num_entries+1))) == NULL){
         return NULL;
@@ -115,6 +168,7 @@ char **rtables_get_keys(struct rtables_t *rtables){
     }
     list[j] = NULL;
     return list;
+    */
 }
 
 /* Liberta a mem�ria alocada por rtables_get_keys().
