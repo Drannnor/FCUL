@@ -6,7 +6,8 @@
 
 //declarar a estrutura
 struct rtables_t{
-    int socket_fd;
+    struct server_t *server; 
+    //int server_fd;
     int t_num;
 };
 

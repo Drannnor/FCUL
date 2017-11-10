@@ -12,7 +12,6 @@ static struct table_t **tables;
 static struct tablenum;
 int table_skel_init(char **n_tables){
 
-
     if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenum))) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
 		return -1;
@@ -50,7 +49,6 @@ struct message_t *invoke(struct message_t *msg_in){
 */
 struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela){
 	struct message_t *msg_resposta;
-	
 	
 	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
 	if(msg_pedido == NULL){

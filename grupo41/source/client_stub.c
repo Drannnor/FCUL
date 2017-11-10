@@ -1,5 +1,7 @@
 #include "client_stub-private.h"
 
+//static struct server_t server;
+
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
  * tabelas remotas num servidor.
  * Os alunos dever�o implementar uma forma de descobrir quantas tabelas
@@ -8,7 +10,16 @@
  * retorna NULL em caso de erro .
  */
 struct rtables_t *rtables_bind(const char *address_port){
+    struct rtables_t rtables;
+    if((rtables = (struct rtables_t) malloc(sizeof(struct rtables_t))) == NULL){
+        fprintf(stderr, "Failed malloc!\n");
+        return NULL;
+    }
 
+    rtables.server = network_connect(address_port);
+    rtables.t_num = 0;
+
+    return rtables;
 }
 
 /* Termina a associa��o entre o cliente e um conjunto de tabelas remotas, e
@@ -16,41 +27,19 @@ struct rtables_t *rtables_bind(const char *address_port){
  * Retorna 0 se tudo correr bem e -1 em caso de erro.
  */
 int rtables_unbind(struct rtables_t *rtables){
-
+    int n_co = network_close(rtables->server);
+    free(rtables);
+    return n_co;
 }
 
 /* Fun��o para adicionar um par chave valor numa tabela remota.
  * Devolve 0 (ok) ou -1 (problemas).
  */
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
-    /*//copiado do table.c, com tables e nao rtables
-    if(table->num_entries < table->size_table && key != NULL){
-        int hash = hashcode(table->size_table, key);
-        struct entry_t *entrada = &table->hash_table[hash];
-        int col = 0;
-        while(entrada->key != NULL){
-            col = 1;
-            if(!strcmp(key,entrada->key)){
 
-                return -1;
-            }
-            if(entrada->next == NULL){
-                entrada->next = table -> next;
-
-            }
-            entrada = entrada->next;
-        }
-        entrada -> key = strdup(key);
-        entrada -> value = data_dup(value);
-        if(col) table->collisions++;
-        table -> num_entries++;
-        find_next(table);
-        return 0;
-    }
-    return -1;*/
-
-    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria para mensagem");
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
         return -1;
     }
 
@@ -58,13 +47,15 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     msg_out->c_type = CT_ENTRY;
 	msg_out->table_num = rtables->t_num;
 
-    if((server = malloc(sizeof(struct server_t))) == NULL){
-        perror("Erro ao alocar memoria para  server")
-        return -1;
+    if((msg_out->content.entry = entry_create(key, value)) == NULL){
+        fprintf(stderr, "Failed to create entry!\n");
+        free_message(msg_out);
     }
-    server->socket_fd = rtables->socket_fd;
-
-    msg_res = network_send_receive(server,msg_out);
+    
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server,msg_out);
+    print_message(msg_res);
+    return msg_res->content.result;
     //???
 
 }
