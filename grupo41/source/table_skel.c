@@ -9,24 +9,34 @@ Ricardo Cruz 47871
 #include "table_skel.h"
 
 static struct table_t **tables;
-static struct tablenum;
+static int tablenum;
+
 int table_skel_init(char **n_tables){
 
-	//tuamae
+	if(n_tables == NULL){
+		fprintf(stderr, "NULL n_tables");
+		return -1;
+	}
+
+	tablenum = atoi(n_tables[0]);
 
     if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenum))) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
 		return -1;
     }
-    
 
+	int i;
+	for(i = 1; i < tablenum; i++){
+		tables[i-2] = table_create(atoi(n_tables[i]));
+	}
+    
 }
 
 int table_skel_destroy(){
+	int i;
     for(i = 0; i < tablenum; i++){
 		table_destroy(tables[i]);
 	}
-
 	free(tables);
 
 }
