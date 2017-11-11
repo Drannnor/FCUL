@@ -21,5 +21,4 @@ int table_skel_destroy();
  * em caso de erro.
  */
 struct message_t *invoke(struct message_t *msg_in);
-
 #endif

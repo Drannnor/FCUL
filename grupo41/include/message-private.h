@@ -17,5 +17,6 @@ Ricardo Cruz 47871
 
 struct message_t* message_error();
 void print_message(struct message_t *msg);
+struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela);
 
 #endif

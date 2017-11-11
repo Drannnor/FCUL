@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "table-private.h": "c",
+        "message-private.h": "c",
+        "network_client-private.h": "c"
+    }
+}
