@@ -164,7 +164,9 @@ int main(int argc, char **argv){
 
 			Usar network_send_receive para enviar msg_out para
 			o server e receber msg_resposta.
+		*/
 		
+		/*
 		if(completed){
 			msg_resposta = network_send_receive(server, msg_out);
 			print_message(msg_resposta);

@@ -224,13 +224,13 @@ int main(int argc, char **argv){
 
 
 
-	table_skel_destroy();
-	/*
+	//table_skel_destroy();
+
 	for(i = 0; i < tablenums; i++){
 		table_destroy(tables[i]);
 	}
 
-	free(tables);*/
+	free(tables);
 
-	return table_skel_destroy();
+	return 0;
 }

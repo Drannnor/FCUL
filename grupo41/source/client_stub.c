@@ -5,7 +5,7 @@
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
  * tabelas remotas num servidor.
  * Os alunos dever�o implementar uma forma de descobrir quantas tabelas
- * existem no servidor.
+ * existem no servidor. //TODO + verificar out of bounds + reconnect
  * address_port � uma string no formato <hostname>:<port>.
  * retorna NULL em caso de erro .
  */
