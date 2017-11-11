@@ -37,7 +37,9 @@ int main(int argc, char **argv){
 	}
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
-	server = network_connect(argv[1]);
+	//server = network_connect(argv[1]); 
+	struct rtables_t *rtables; //!!!
+	rtables = rtables_bind(argv[1]);
 
 	if((in =(char *)malloc(MAX_SIZE)) == NULL){
 		fprintf(stderr, "Failed malloc in\n");
@@ -66,7 +68,7 @@ int main(int argc, char **argv){
 		}
 
 		if(strcasecmp(tok, "put") == 0){
-			msg_out->opcode = OC_PUT; 
+			/*msg_out->opcode = OC_PUT; 
 			msg_out->c_type = CT_ENTRY;
 			msg_out->table_num = atoi(strtok(NULL, " "));
 			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
@@ -76,16 +78,28 @@ int main(int argc, char **argv){
 			entry->key = strdup(strtok(NULL," "));
 			tok = strtok(NULL, " \n");
 			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;
+			msg_out->content.entry = entry;*/
+			rtables->t_num = atoi(strtok(NULL, " "));
+			char* key_o = strdup(strtok(NULL," ")); //verificar null??? //!!!
+			tok = strtok(NULL, " \n");
+			struct data_t *value_o = data_create2(strlen(tok),(void*)tok); //!!!
+			rtables_put(rtables, key, value);
+			//retornar valor????
+
 		}
 		else if(strcasecmp(tok, "get")== 0){
-			msg_out->opcode = OC_GET; 
+			/*msg_out->opcode = OC_GET; 
 			msg_out->c_type = CT_KEY;
 			msg_out->table_num = atoi(strtok(NULL, " "));
-			msg_out->content.key = strdup(strtok(NULL," \n"));
+			msg_out->content.key = strdup(strtok(NULL," \n"));*/
+			rtables->t_num = atoi(strtok(NULL, " "));
+			char* key = strdup(strtok(NULL," ")); //!!!
+			rtables_get(rtables, key);
+			//retornar valor????
+
 		}
 		else if(strcasecmp(tok, "update") == 0){
-			msg_out->opcode = OC_UPDATE; 
+			/*msg_out->opcode = OC_UPDATE; 
 			msg_out->c_type = CT_ENTRY;
 			msg_out->table_num = atoi(strtok(NULL, " "));
 			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
@@ -95,22 +109,35 @@ int main(int argc, char **argv){
 			entry->key = strdup(strtok(NULL," "));
 			tok = strtok(NULL, " \n");
 			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;
+			msg_out->content.entry = entry;*/
+			rtables->t_num = atoi(strtok(NULL, " "));
+			char* key_o = strdup(strtok(NULL," ")); //verificar null??? //!!!
+			tok = strtok(NULL, " \n");
+			struct data_t *value_o = data_create2(strlen(tok),(void*)tok); //!!!
+			rtables_update(rtables, key, value);
+			//retornar valor????
 		}
 		else if(strcasecmp(tok, "size") == 0){
-			msg_out->opcode = OC_SIZE;
+			/*msg_out->opcode = OC_SIZE;
 			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));
+			msg_out->table_num = atoi(strtok(NULL, " "));*/
+			rtables->t_num = atoi(strtok(NULL, " "));
+			rtables_size(rtables);
+			//retornar valor????
 		}
 		else if(strcasecmp(tok, "collisions") == 0){
-			msg_out->opcode = OC_COLLS;
+			/*msg_out->opcode = OC_COLLS;
 			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));
+			msg_out->table_num = atoi(strtok(NULL, " "));*/
+			rtables->t_num = atoi(strtok(NULL, " "));
+			rtables_collisions(rtables);
+			//retornar valor????
 		}
 		else if(strcasecmp(tok, "quit") == 0){
 			free(msg_out);
 			free(in);
 			return network_close(server);
+			//rtables_unbind(rtables); ???
 		}
 		else{
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
@@ -134,10 +161,11 @@ int main(int argc, char **argv){
 			msg_resposta = network_send_receive(server, msg_out);
 			print_message(msg_resposta);
 			free_message(msg_out);
-			free_message(msg_resposta);
+			free_message(msg_resposta); //???
 		}
 	}
 	free(in);
-  	return network_close(server);
+  	//return network_close(server);
+	return rtables_unbind(rtables); 
 }
 

@@ -10,8 +10,12 @@
  * retorna NULL em caso de erro .
  */
 struct rtables_t *rtables_bind(const char *address_port){
-    struct rtables_t rtables;
-    if((rtables = (struct rtables_t) malloc(sizeof(struct rtables_t))) == NULL){
+    if(address_port == NULL){
+        return NULL;
+    }
+
+    struct rtables_t *rtables;
+    if((rtables = (struct *rtables_t) malloc(sizeof(struct rtables_t))) == NULL){
         fprintf(stderr, "Failed malloc!\n");
         return NULL;
     }
@@ -27,6 +31,10 @@ struct rtables_t *rtables_bind(const char *address_port){
  * Retorna 0 se tudo correr bem e -1 em caso de erro.
  */
 int rtables_unbind(struct rtables_t *rtables){
+    if(rtables == NULL){
+        return -1;
+    }
+
     int n_co = network_close(rtables->server);
     free(rtables);
     return n_co;
@@ -36,6 +44,9 @@ int rtables_unbind(struct rtables_t *rtables){
  * Devolve 0 (ok) ou -1 (problemas).
  */
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
+    if(rtables == NULL || key == NULL || value == NULL){
+        return -1;
+    }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
@@ -53,67 +64,109 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     }
     
     print_message(msg_out);
+    //nao eh preciso fazer malloc??? nah me cheira.
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
-    return msg_res->content.result;
-    //???
 
+    int res = msg_res->content.result;
+    free(key);
+    data_destroy(value);
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
 }
 
 /* Fun��o para substituir na tabela remota, o valor associado � chave key.
  * Devolve 0 (OK) ou -1 em caso de erros.
  */
 int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
-    /*//copiado do table.c, com tables e nao rtables
-    struct entry_t *entrada = get_entry(table,key);
-    if(entrada != NULL){
-        data_destroy(entrada->value);
-        entrada->value = data_dup(value);
-        return 0;
+    if(rtables == NULL || key == NULL || value == NULL){
+        return -1;
     }
-    return -1;*/
 
-    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria para mensagem");
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
         return -1;
     }
 
     msg_out->opcode = OC_UPDATE;
     msg_out->c_type = CT_ENTRY;
 	msg_out->table_num = rtables->t_num;
-    
-    //porque nao usamos o table_update? Pelo que parece, nao percebi os enunciados passados.
-    //??? e por ai fora
+
+    if((msg_out->content.entry = entry_create(key, value)) == NULL){
+        fprintf(stderr, "Failed to create entry!\n");
+        free_message(msg_out);
+    }
+
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server,msg_out);
+    print_message(msg_res);
+
+    int res = msg_res->content.result;
+    free(key);
+    data_destroy(value);
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
 }
 
 /* Fun��o para obter da tabela remota o valor associado � chave key.
  * Devolve NULL em caso de erro.
  */
 struct data_t *rtables_get(struct rtables_t *rtables, char *key){
-    /*//copiado do table.c, com tables e nao rtables
-    struct entry_t *entrada = get_entry(table, key);
-    if(entrada == NULL) return NULL;
-    return data_dup(entrada->value);*/
+    if(rtables == NULL || key == NULL){
+        return NULL;
+    }
 
-    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria para mensagem");
-        return -1;
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
+        return NULL;
     }
 
     msg_out->opcode = OC_GET;
     msg_out->c_type = CT_KEY;
 	msg_out->table_num = rtables->t_num;
-    msg_out->content = strdup(key);
-    //???
+    if((msg_out->content.key = strdup(key)) == NULL){
+        free_message(msg_out);
+        return NULL;
+    }
+
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server,msg_out);
+    print_message(msg_res);
+
+    struct data_t *data_res;
+    if((data_res = (struct data_t*) malloc(sizeof(struct data_t))) == NULL){
+        fprintf(stderr, "Failed malloc! - data_res");
+        return NULL;
+    }
+
+    if((data_res = data_dup(msg_res->content.data)) == NULL){
+        free(data_res);
+        free_message(msg_out);
+        free_message(msg_res);
+        return NULL;
+    }
+
+    free(key);
+    free_message(msg_res);
+    free_message(msg_out);
+    return data_res;
+    //free(data_res)???
 }
 
 /* Devolve n�mero de pares chave/valor na tabela remota.
  */
 int rtables_size(struct rtables_t *rtables){
-    //copiado do table.c, com tables e nao rtables
-    //return table->num_entries;
-    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria para mensagem");
+    if(rtables == NULL){
+        return -1;
+    }
+
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
         return -1;
     }
 
@@ -121,14 +174,26 @@ int rtables_size(struct rtables_t *rtables){
     msg_out->c_type = 0;
 	msg_out->table_num = rtables->t_num;
 
-    //???
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server, msg_out);
+    print_message(msg_res); 
+    
+    int res = msg_res->content.result;
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
 }
 
 /* Devolve o número de colisões existentes na tabela remota.
  */
 int rtables_collisions(struct rtables_t *rtables){
-    if((msg_out = malloc(sizeof(struct message_t))) == NULL){
-        perror("Erro ao alocar memoria para mensagem");
+    if(rtables == NULL){
+        return -1;
+    }
+
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
         return -1;
     }
 
@@ -136,36 +201,58 @@ int rtables_collisions(struct rtables_t *rtables){
     msg_out->c_type = 0;
 	msg_out->table_num = rtables->t_num;
 
-    //???
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server, msg_out);
+    print_message(msg_res); 
+    
+    int res = msg_res->content.result;
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
 }
 
 /* Devolve um array de char * com a c�pia de todas as keys da
  * tabela remota, e um �ltimo elemento a NULL.
  */
 char **rtables_get_keys(struct rtables_t *rtables){
-    /*//copiado do table.c, com tables e nao rtables
-    char **list;
-    if((list = (char **) malloc(sizeof(char *)*(table->num_entries+1))) == NULL){
+    if(rtables == NULL){
         return NULL;
     }
-    int i;
-    int j = 0;
-    for(i = 0; i < table->size_table; i++){
-        if(table->hash_table[i].key != NULL){
-            list[j++] = strdup(table->hash_table[i].key);
-            
-        }
-       
+
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
+        return NULL;
     }
-    list[j] = NULL;
-    return list;
-    */
+
+    msg_out->opcode = OC_GET;
+    msg_out->c_type = CT_KEY;
+	msg_out->table_num = rtables->t_num;
+    msg_out->content.key = '*';
+
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server,msg_out);
+    print_message(msg_res);
+
+    /*if((char** res = (char**) malloc(sizeof(char*) * blahblahblah)) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
+        return NULL;
+    }
+
+    res = msg_out->content.keys;
+    free_message(msg_res);
+    free_message(msg_out);
+    return res; COMO FIZESTE ESTRIGA???*/ 
 }
 
 /* Liberta a mem�ria alocada por rtables_get_keys().
  */
 void rtables_free_keys(char **keys){
-    char **ptr= keys;
+    if(keys == NULL){
+        return NULL;
+    }
+
+    char **ptr = keys;
     while(*keys){
         free(*keys++);
     }
