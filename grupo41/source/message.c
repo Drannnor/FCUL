@@ -297,7 +297,6 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
         break;
     case CT_VALUE:
-        //??? sem &msg
         value_unmarshalling(msg, &msg_buf);
 
         break;
