@@ -24,9 +24,10 @@ int main(int argc, char **argv){
 	struct server_t *server;
 	char *in;
 	char *tok, *tok_first;
-	struct message_t *msg_out, *msg_resposta;
+	//struct message_t *msg_out, *msg_resposta;
 	struct entry_t *entry;
-	int completed, i;
+	int count_param;
+	//int completed;
 	char **tokens;
 
 	signal(SIGPIPE,SIG_IGN);
@@ -59,41 +60,34 @@ int main(int argc, char **argv){
 		*/
 		fgets(in,MAX_SIZE,stdin);
 		in[strlen(in) - 1] = '\0';
-		tok_first = strtok(in," ");
+		tok_opc = strtok(in," ");
 
-		completed = 1;
+		//completed = 1;
 
-		if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+		/*if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
 			fprintf(stderr, "Failed malloc\n");
 			return -1;
-		}
+		}*/
+
 		if((tokens = (char**) malloc(sizeof(char*)*3)) == NULL){
 			fprintf(stderr, "Failed malloc\n");
 			return -1;
 		}
-		i = 0;
+
+		count_param = 0;
 		while((tok = strtok(NULL, " ") != NULL){
-			tokens[i] = tok;
-			if(i++ == 2){ //???
-				tokens[i] = strtok(NULL, " \n");
+			tokens[count_param] = strdup(tok);
+			if(count_param++ == 2){
+				tokens[count_param] = strdup(strtok(NULL, " \n"));
 				break;
 			}
 		}
+		
+		free(in);
 
-		if(strcasecmp(tok_first, "put") == 0){
-			/*msg_out->opcode = OC_PUT; 
-			msg_out->c_type = CT_ENTRY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
-				fprintf(stderr, "Failed malloc\n");
-				return -1;
-			}
-			entry->key = strdup(strtok(NULL," "));
-			tok = strtok(NULL, " \n");
-			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;*/
-			if((char*) sizeof(tokens)<3){ //ta mal!!!??? menor e maior???
-				printf("Input inválido: put table_num key value");
+		if(strcasecmp(tok_opc, "put") == 0){
+			if((count_param+1) < 3){
+				printf("Input inválido: put <table_num> <key> <value>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -103,13 +97,9 @@ int main(int argc, char **argv){
 				//retornar valor????
 			}
 		}
-		else if(strcasecmp(tok_first, "get")== 0){
-			/*msg_out->opcode = OC_GET; 
-			msg_out->c_type = CT_KEY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			msg_out->content.key = strdup(strtok(NULL," \n"));*/
-			if((char*) sizeof(tokens)<2){ //ta mal!!!??? menor e maior???
-				printf("Input inválido: get table_num key");
+		else if(strcasecmp(tok_opc, "get")== 0){
+			if((count_param+1) < 2){
+				printf("Input inválido: get <table_num> <key>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -119,20 +109,9 @@ int main(int argc, char **argv){
 			}
 
 		}
-		else if(strcasecmp(tok_first, "update") == 0){
-			/*msg_out->opcode = OC_UPDATE; 
-			msg_out->c_type = CT_ENTRY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
-				fprintf(stderr, "Failed malloc\n");
-				return -1;
-			}
-			entry->key = strdup(strtok(NULL," "));
-			tok = strtok(NULL, " \n");
-			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;*/
-			if((char*) sizeof(tokens)<3){ //ta mal!!!??? menor e maior???
-				printf("Input inválido: update table_num key value");
+		else if(strcasecmp(tok_opc, "update") == 0){
+			if((count_param+1) < 3){
+				printf("Input inválido: update <table_num> <key> <value>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -142,12 +121,9 @@ int main(int argc, char **argv){
 				//retornar valor????
 			}
 		}
-		else if(strcasecmp(tok_first, "size") == 0){
-			/*msg_out->opcode = OC_SIZE;
-			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));*/
-			if((char*) sizeof(tokens)<1){ //ta mal!!!??? menor e maior???
-				printf("Input inválido: size table_num ");
+		else if(strcasecmp(tok_opc, "size") == 0){
+			if((count_param+1) < 1){
+				printf("Input inválido: size <table_num>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -155,29 +131,26 @@ int main(int argc, char **argv){
 				//retornar valor????
 			}
 		}
-		else if(strcasecmp(tok_first, "collisions") == 0){
-			/*msg_out->opcode = OC_COLLS;
-			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));*/
-			if((char*) sizeof(tokens)<1){ //ta mal!!!??? menor e maior???
-				printf("Input inválido: collisions table_num ");
+		else if(strcasecmp(tok_opc, "collisions") == 0){
+			if((count_param+1) < 1){
+				printf("Input inválido: collisions <table_num>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				rtables_size(rtables);
+				rtables_collisions(rtables);
 				//retornar valor????
 			}
 		}
-		else if(strcasecmp(tok_first, "quit") == 0){
-			free(msg_out);
-			free(in);
-			return network_close(server);
-			//rtables_unbind(rtables); ???
+		else if(strcasecmp(tok_opc, "quit") == 0){
+			//free(msg_out);
+			//return network_close(server);
+			free(tokens);
+			rtables_unbind(rtables);
 		}
 		else{
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
-			free(msg_out);
-			completed = 0;
+			//free(msg_out);
+			//completed = 0;
 		}
 
 		/* Verificar se o comando foi "quit". Em caso afirmativo
@@ -191,16 +164,16 @@ int main(int argc, char **argv){
 
 			Usar network_send_receive para enviar msg_out para
 			o server e receber msg_resposta.
-		*/
+		
 		if(completed){
 			msg_resposta = network_send_receive(server, msg_out);
 			print_message(msg_resposta);
 			free_message(msg_out);
 			free_message(msg_resposta); //???
-		}
+		}*/
 	}
-	free(in);
   	//return network_close(server);
+	free(tokens);
 	return rtables_unbind(rtables); 
 }
 
