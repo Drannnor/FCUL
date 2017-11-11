@@ -12,6 +12,7 @@ static struct table_t **tables;
 static struct tablenum;
 int table_skel_init(char **n_tables){
 
+	//tuamae
 
     if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenum))) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
