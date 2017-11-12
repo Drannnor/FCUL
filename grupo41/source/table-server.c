@@ -13,6 +13,8 @@ Ricardo Cruz 47871
 #include "table-private.h"
 #include "message-private.h"
 
+#define NFDESC 100
+
 static int quit = 0;
 
 /* Função para preparar uma socket de receção de pedidos de ligação.
@@ -41,6 +43,7 @@ int make_server_socket(short port){
 		close(socket_fd);
 		return -1;
 	}
+
 	return socket_fd;
 }
 
@@ -57,16 +60,12 @@ int make_server_socket(short port){
 	Aplica o pedido na tabela;
 	Envia a resposta.
 */
-int network_receive_send(int sockfd, struct table_t **tables){
+int network_receive_send(int sockfd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result;
   	struct message_t *msg_pedido, *msg_resposta;
 
 	/* Verificar parâmetros de entrada */
-	if(*tables == NULL){
-		fprintf(stderr, "Lista de tabelas inválida\n");
-		return -1;
-	}
 
 	if(sockfd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
@@ -107,17 +106,13 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		return -1;
 	}
 	
-	msg_resposta = invoke(msg_pedido);
-	/* Processar a mensagem 
-	if(msg_pedido->table_num >= tablenums){
-		fprintf(stderr, "Numero de tabela dado inválido.\n");
-		msg_resposta = message_error();
+	if((msg_resposta = invoke(msg_pedido)) == NULL){
+		fprintf(stderr, "Failed invoke\n");
+		free(buff_pedido);
+		free(msg_pedido);
+		return -1;
 	}
-	else{
-		msg_resposta = process_message(msg_pedido, tables[msg_pedido->table_num]);
-	}
-
-	 Serializar a mensagem a enviar */
+	
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
@@ -170,11 +165,19 @@ void sign_handler(int signum){
 
 int main(int argc, char **argv){
 	struct table_t **tables;
-	struct sockaddr_in server; 
+	struct sockaddr_in server, client; 
 	struct sigaction a;
-	int socket_de_escuta, i, nfds;
+	int socket_de_escuta, i, nfds, kfds, res;
+
+	int size_client = sizeof(struct sockaddr);
+
+	int msg_size, buffer_size;
+	int nbytes;
+	char* buffer_in, buffer_out;
+	struct message_t *msg_out, *msg_in;
 
 	char **n_tables;
+
 	struct pollfd connections[NFDESC];
 
 	a.sa_handler = sign_handler;
@@ -190,81 +193,59 @@ int main(int argc, char **argv){
 	}
 
 	/* inicialização */
-	if ((socket_de_escuta= socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-    	perror("Erro ao criar socket");
-    	return -1;
-  	}
-	
-	 // Preenche estrutura server para bind
-  	server.sin_family = AF_INET;  // Adress Family
-  	server.sin_port = htons(atoi(argv[1]));  // argv[1] é o primeiro argumento da linha de comando (porta)
-  	server.sin_addr.s_addr = htonl(INADDR_ANY); // INADDR_ANY significa "Qualquer endereço".
+	socket_de_escuta = make_server_socket(atos(argv[1]));
 
-	if (bind(socket_de_escuta, (struct sockaddr *) &server, sizeof(server)) < 0){
-    	perror("Erro ao fazer bind");
-    	close(socket_de_escuta);
-    	return -1;
-  	}
-
-	if (listen(socket_de_escuta, 0) < 0){
-    	perror("Erro ao executar listen");
-    	close(socket_de_escuta);
-    	return -1;
-  	}
 	
-	if((tables =n_tables = (char**)malloc(sizeof(char*)*argc)) == NULL){
+
+	/* inicializar o n_tables*/
+	if((n_tables = (char**)malloc(sizeof(char*)*argc)) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
 		return -1;
-	}
-
-	
-	/* inicializar o n_tables*/
-
+	}    
 
 	table_skel_init(n_tables);
 
+	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++)
     	connections[i].fd = -1;    // poll ignora estruturas com fd < 0
 
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
 
-	nfds = 1
+	nfds = 1;
 
-	while(not fatal_error){ /* espera por dados nos sockets abertos */
-		res = poll(conjunto_de_descritores)
+	while(!quit){ /* espera por dados nos sockets abertos */
+
+		res = poll(connections,nfds,-1);
 		if (res<0){
-			if (errno != EINTR) fatal_error = TRUE
-			continue;
-		}
-		if(socket_de_escuta tem dados para ler){ /* novo pedido de conexão */
-			socket_de_cliente = accept(socket_de_escuta);
-			adiciona socket_de_cliente a conjunto_de_descritores
-		}
-		/* um dos sockets de ligação tem dados para ler */
-		for each socket_de_cliente, s, em conjunto_de_descritores {
-			if (s tem dados para ler) {
-				nbytes = read_all(s, buffer, …);
-				if(read returns 0 bytes) {
-				/* sinal de que a conexão foi fechada pelo cliente */
-					close(s);
-					remove s de conjunto_de_descritores
-				} else {/* processamento da requisição e da resposta */
-					message = buffer_to_message(buffer);
-					msg_out = invoke(message);
-					buffer = message_to_buffer(msg_out);
-					write_all(s, buffer, …);
-				}
+			if (errno != EINTR){}
+				continue;
 			}
-			if (s com erro ou POLLHUP) {
-				close(s);
-				remove s de conjunto_de_descritores
+		}
+
+		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) { // Pedido na listening socket ?
+        	if ((connections[nfds].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
+          		connections[nfds].events = POLLIN; // Vamos esperar dados nesta socket
+				nfds++;
+			}
+      	}
+
+		
+		/* um dos sockets de ligação tem dados para ler */
+		for (i = 1; i < nfds; i++) {
+			if (connections[i].revents == POLLIN) {
+				res = network_receive_send(connections[i].fd);
+			}
+			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 1) {
+				close(connections[i].fd);
+				connections[i].fd = -1;
 			}
 		}
 	}
 	table_skel_destroy();
+	
 	/* fechar as ligações */
-	for each socket s em conjunto_de_descritores {
+	for (i = 1; i < nfds; i++) {
 		close(s);
 	}
 	/*int listening_socket, connsock, result;

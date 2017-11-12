@@ -26,8 +26,8 @@ int table_skel_init(char **n_tables){
     }
 
 	int i;
-	for(i = 1; i < tablenum; i++){
-		tables[i-2] = table_create(atoi(n_tables[i]));
+	for(i = 0; i < tablenum; i++){
+		tables[i] = table_create(atoi(n_tables[i+1]));
 	}
     
 }
@@ -42,15 +42,18 @@ int table_skel_destroy(){
 }
 
 struct message_t *invoke(struct message_t *msg_in){
-    struct message_t *msg_resposta;
+    struct message_t *msg_resposta = NULL;
 
-    if(msg_in->table_num >= tablenum){
-		fprintf(stderr, "Numero de tabela dado inválido.\n");
-		msg_resposta = message_error();
+	int tb_num = msg_in->table_num;
+	if(msg_in != NULL){	
+		if(tb_num >= tablenum){
+			fprintf(stderr, "Numero de tabela dado inválido.\n");
+			msg_resposta = message_error();
+		}
+		else{
+			msg_resposta = process_message(msg_in, tables[tb_num]);
+		}
 	}
-	else{
-		msg_resposta = process_message(msg_in, tables[msg_in->table_num]);
-    }
     return msg_resposta;
 }
 

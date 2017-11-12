@@ -3,6 +3,8 @@
         "table-private.h": "c",
         "message-private.h": "c",
         "network_client-private.h": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "message.h": "c",
+        "network_client.h": "c"
     }
 }

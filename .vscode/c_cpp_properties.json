@@ -5,7 +5,7 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}"
+                "${workspaceRoot}/grupo41/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
