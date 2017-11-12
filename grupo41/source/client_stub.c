@@ -1,4 +1,6 @@
 #include "client_stub-private.h"
+#include "client_stub.h"
+#include "entry-private.h"
 
 //static struct server_t server;
 
@@ -15,13 +17,13 @@ struct rtables_t *rtables_bind(const char *address_port){
     }
 
     struct rtables_t *rtables;
-    if((rtables = (struct *rtables_t) malloc(sizeof(struct rtables_t))) == NULL){
+    if((rtables = (struct rtables_t*) malloc(sizeof(struct rtables_t))) == NULL){
         fprintf(stderr, "Failed malloc!\n");
         return NULL;
     }
 
-    rtables.server = network_connect(address_port);
-    rtables.t_num = 0;
+    rtables->server = network_connect(address_port);
+    rtables->t_num = 0;
 
     return rtables;
 }
@@ -65,6 +67,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     
     print_message(msg_out);
     //nao eh preciso fazer malloc??? nah me cheira.
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
 
@@ -100,6 +103,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     }
 
     print_message(msg_out);
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
 
@@ -134,6 +138,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     }
 
     print_message(msg_out);
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
 
@@ -175,6 +180,7 @@ int rtables_size(struct rtables_t *rtables){
 	msg_out->table_num = rtables->t_num;
 
     print_message(msg_out);
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server, msg_out);
     print_message(msg_res); 
     
@@ -202,6 +208,7 @@ int rtables_collisions(struct rtables_t *rtables){
 	msg_out->table_num = rtables->t_num;
 
     print_message(msg_out);
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server, msg_out);
     print_message(msg_res); 
     
@@ -225,31 +232,35 @@ char **rtables_get_keys(struct rtables_t *rtables){
         return NULL;
     }
 
+    char* asterisco = "*";
+
     msg_out->opcode = OC_GET;
     msg_out->c_type = CT_KEY;
 	msg_out->table_num = rtables->t_num;
-    msg_out->content.key = '*';
+    msg_out->content.key = asterisco;
 
     print_message(msg_out);
+    struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
 
-    /*if((char** res = (char**) malloc(sizeof(char*) * blahblahblah)) == NULL){
+    char** res;
+    if((res = (char**) malloc(sizeof(char*) * 1)) == NULL){ //mudar 1???
         fprintf(stderr, "Failed to malloc!\n");
         return NULL;
     }
 
     res = msg_out->content.keys;
-    free_message(msg_res);
-    free_message(msg_out);
-    return res; COMO FIZESTE ESTRIGA???*/ 
+    free(msg_res);
+    free(msg_out);
+    return res; //COMO FIZESTE ESTRIGA???
 }
 
 /* Liberta a mem�ria alocada por rtables_get_keys().
  */
 void rtables_free_keys(char **keys){
     if(keys == NULL){
-        return NULL;
+        return;
     }
 
     char **ptr = keys;

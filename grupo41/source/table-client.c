@@ -15,17 +15,19 @@ Ricardo Cruz 47871
 
 #include "network_client-private.h"
 #include "message-private.h"
+#include "client_stub-private.h"
+#include "client_stub.h"
 
 #define MAX_SIZE 81
 
 void print_message(struct message_t *msg);
 
 int main(int argc, char **argv){
-	struct server_t *server;
+	//struct server_t *server;
 	char *in;
-	char *tok, *tok_first;
+	char *tok, *tok_opc;
 	//struct message_t *msg_out, *msg_resposta;
-	struct entry_t *entry;
+	//struct entry_t *entry;
 	int count_param;
 	//int completed;
 	char **tokens;
@@ -75,7 +77,7 @@ int main(int argc, char **argv){
 		}
 
 		count_param = 0;
-		while((tok = strtok(NULL, " ") != NULL){
+		while((tok = strtok(NULL, " ")) != NULL){
 			tokens[count_param] = strdup(tok);
 			if(count_param++ == 2){
 				tokens[count_param] = strdup(strtok(NULL, " \n"));
@@ -93,7 +95,7 @@ int main(int argc, char **argv){
 				rtables->t_num = atoi(tokens[0]);
 				char* key_o = strdup(tokens[1]); //verificar null??? //!!!
 				struct data_t *value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]); //!!!
-				rtables_put(rtables, key, value);
+				rtables_put(rtables, key_o, value_o);
 				//retornar valor????
 			}
 		}
@@ -117,7 +119,7 @@ int main(int argc, char **argv){
 				rtables->t_num = atoi(tokens[0]);
 				char* key_o = strdup(tokens[1]); //verificar null??? //!!!key_o
 				struct data_t *value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]); //!!!value_o
-				rtables_put(rtables, key, value);
+				rtables_update(rtables, key_o, value_o);
 				//retornar valor????
 			}
 		}

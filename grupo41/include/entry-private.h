@@ -11,5 +11,5 @@ Ricardo Cruz 47871
 
 /* Funcao que liberta a entry dada */
 void entry_destroy(struct entry_t *entry);
-struct entry_t entry_create(char *key, struct data_t *value);
+struct entry_t *entry_create(char *key, struct data_t *value);
 #endif

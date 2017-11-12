@@ -6,7 +6,7 @@
                 "name": "(gdb) Launch",
                 "type": "cppdbg",
                 "request": "launch",
-                "program": "${workspaceRoot}/binary/test_message",
+                "program": "${workspaceRoot}/binary/",
                 "args": [],
                 "stopAtEntry": false,
                 "cwd": "${workspaceRoot}",

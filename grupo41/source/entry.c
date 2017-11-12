@@ -37,7 +37,7 @@ void entry_destroy(struct entry_t *entry){
     free(entry->key);
 }
 
-struct entry_t entry_create(char *key, data_t *value){
+struct entry_t *entry_create(char *key, struct data_t *value){
     struct entry_t *ent = NULL;
 
     if(key != NULL && value != NULL){

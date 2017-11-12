@@ -6,7 +6,7 @@
         {
             "taskName": "make",
             "type": "shell",
-            "command": "make test_data test_entry  test_table test_message",
+            "command": "cd grupo41 && make",
             "group": {
                 "kind": "build",
                 "isDefault": true
