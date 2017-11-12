@@ -41,6 +41,10 @@ struct data_t *rtables_get(struct rtables_t *tables, char *key);
  */
 int rtables_size(struct rtables_t *rtables);
 
+/* Devolve o número de colisões existentes na tabela remota.
+ */
+int rtables_collisions(struct rtables_t *rtables);
+
 /* Devolve um array de char * com a c�pia de todas as keys da
  * tabela remota, e um �ltimo elemento a NULL.
  */
