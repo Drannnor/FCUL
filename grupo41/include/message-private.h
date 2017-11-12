@@ -17,6 +17,11 @@ Ricardo Cruz 47871
 
 struct message_t* message_error();
 void print_message(struct message_t *msg);
+
+/* Função que recebe uma tabela e uma mensagem de pedido e:
+	- aplica a operação na mensagem de pedido na tabela;
+	- devolve uma mensagem de resposta com oresultado.
+*/
 struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela);
 
 #endif

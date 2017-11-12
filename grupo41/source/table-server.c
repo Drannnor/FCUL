@@ -16,7 +16,6 @@ Ricardo Cruz 47871
 #include "message-private.h"
 
 static int quit = 0;
-static int tablenums;
 
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -110,7 +109,8 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		return -1;
 	}
 	
-	/* Processar a mensagem */
+	msg_resposta = invoke(msg_pedido);
+	/* Processar a mensagem 
 	if(msg_pedido->table_num >= tablenums){
 		fprintf(stderr, "Numero de tabela dado inválido.\n");
 		msg_resposta = message_error();
@@ -119,7 +119,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		msg_resposta = process_message(msg_pedido, tables[msg_pedido->table_num]);
 	}
 
-	/* Serializar a mensagem a enviar */
+	 Serializar a mensagem a enviar */
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
@@ -171,9 +171,12 @@ void sign_handler(int signum){
 }
 
 int main(int argc, char **argv){
-	int listening_socket, connsock, result;
 	struct table_t **tables;
+	struct sockaddr_in server; 
 	struct sigaction a;
+	int socket_de_escuta;
+	char **n_tables;
+	struct pollfd connections[NFDESC];
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
@@ -187,13 +190,114 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	tablenums = (argc-2);
+	/* inicialização */
+	if ((socket_de_escuta= socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+    	perror("Erro ao criar socket");
+    	return -1;
+  	}
+	
+	 // Preenche estrutura server para bind
+  	server.sin_family = AF_INET;  // Adress Family
+  	server.sin_port = htons(atoi(argv[1]));  // argv[1] é o primeiro argumento da linha de comando (porta)
+  	server.sin_addr.s_addr = htonl(INADDR_ANY); // INADDR_ANY significa "Qualquer endereço".
+
+	if (bind(socket_de_escuta, (struct sockaddr *) &server, sizeof(server)) < 0){
+    	perror("Erro ao fazer bind");
+    	close(socket_de_escuta);
+    	return -1;
+  	}
+
+	if (listen(socket_de_escuta, 0) < 0){
+    	perror("Erro ao executar listen");
+    	close(socket_de_escuta);
+    	return -1;
+  	}
+	
+	if((tables =n_tables = (char**)malloc(sizeof(char*)*argc)) == NULL){
+		fprintf(stderr, "Failed malloc tables\n");
+		return -1;
+	}
+
+	
+	/* inicializar o n_tables*/
+
+	table_skel_init(n_tables);
+
+	int i;
+	for (i = 0; i < NFDESC; i++)
+    	connections[i].fd = -1;    // poll ignora estruturas com fd < 0
+
+  	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
+  	connections[0].events = POLLIN;
+
+	while(not fatal_error){ /* espera por dados nos sockets abertos */
+		res = poll(conjunto_de_descritores)
+		if (res<0){
+			if (errno != EINTR) fatal_error = TRUE
+			continue;
+		}
+		if(socket_de_escuta tem dados para ler){ /* novo pedido de conexão */
+			socket_de_cliente = accept(socket_de_escuta);
+			adiciona socket_de_cliente a conjunto_de_descritores
+		}
+		/* um dos sockets de ligação tem dados para ler */
+		for each socket_de_cliente, s, em conjunto_de_descritores {
+			if (s tem dados para ler) {
+				nbytes = read_all(s, buffer, …);
+				if(read returns 0 bytes) {
+				/* sinal de que a conexão foi fechada pelo cliente */
+					close(s);
+					remove s de conjunto_de_descritores
+				} else {/* processamento da requisição e da resposta */
+					message = buffer_to_message(buffer);
+					msg_out = invoke(message);
+					buffer = message_to_buffer(msg_out);
+					write_all(s, buffer, …);
+				}
+			}
+			if (s com erro ou POLLHUP) {
+				close(s);
+				remove s de conjunto_de_descritores
+			}
+		}
+	}
+	table_skel_destroy();
+	/* fechar as ligações */
+	for each socket s em conjunto_de_descritores {
+		close(s);
+	}
+	/*int listening_socket, connsock, result;
+	struct table_t **tables;
+	struct sigaction a;
+	a.sa_handler = sign_handler;
+	a.sa_flags = 0;
+	sigemptyset( &a.sa_mask );
+	sigaction( SIGINT, &a, NULL );
+	signal(SIGPIPE,SIG_IGN);
+
+	if (argc < 3){
+		printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
+		printf("Exemplo de uso: ./table-server 54321 10 15 20 25\n");
+		return -1;
+	}
+
+
+	char **n_tables;
+
+	
+	if((tables =n_tables = (char**)malloc(argc*sizeof(char*))) == NULL){
+		fprintf(stderr, "Failed malloc tables\n");
+		return -1;
+	}
 
 	if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) return -1;
 	
 	/*********************************************************/
 	/* Criar as tabelas de acordo com linha de comandos dada */
 	/*********************************************************/
+
+	
+	/*
 	if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenums))) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
 		return -1;
@@ -203,7 +307,7 @@ int main(int argc, char **argv){
 	for(i = 2; i < argc; i++){
 		tables[i-2] = table_create(atoi(argv[i]));
 	}
-
+	
 	while (!quit) {
 		if ((connsock = accept(listening_socket, NULL, NULL)) == -1){
 			break;
@@ -216,7 +320,7 @@ int main(int argc, char **argv){
 			/* Fazer ciclo de pedido e resposta */
 			
 			/* Ciclo feito com sucesso ? Houve erro?
-			   Cliente desligou? */
+			   Cliente desligou? 
 
 		}
 		printf(" * Client is disconnected!\n");
@@ -230,7 +334,7 @@ int main(int argc, char **argv){
 		table_destroy(tables[i]);
 	}
 
-	free(tables);*/
+	free(tables);
 
-	return table_skel_destroy();
+	return table_skel_destroy();*/
 }
