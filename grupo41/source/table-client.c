@@ -25,7 +25,7 @@ void print_message(struct message_t *msg);
 int main(int argc, char **argv){
 	//struct server_t *server;
 	char *in;
-	char *tok, *tok_opc;
+	char *tok, *tok_opc, *opah; //!!!!
 	//struct message_t *msg_out, *msg_resposta;
 	//struct entry_t *entry;
 	int count_param;
@@ -62,8 +62,8 @@ int main(int argc, char **argv){
 		*/
 		fgets(in,MAX_SIZE,stdin);
 		in[strlen(in) - 1] = '\0';
-		tok_opc = strtok(in," ");
-
+		tok_opc = strdup(strtok(in," "));
+		
 		//completed = 1;
 
 		/*if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
@@ -79,17 +79,21 @@ int main(int argc, char **argv){
 		count_param = 0;
 		while((tok = strtok(NULL, " ")) != NULL){
 			tokens[count_param] = strdup(tok);
-			if(count_param++ == 2){
-				tokens[count_param] = strdup(strtok(NULL, " \n"));
-				break;
-			}
+			count_param++;
 		}
 		
-		free(in);
+		if(count_param > 1){
+			opah = tokens[count_param-1];
+			tokens[count_param-1] = strdup(strtok(tokens[count_param-1], " \n"));
+			free(opah);	
+		}
+		
+		
 
 		if(strcasecmp(tok_opc, "put") == 0){
-			if((count_param+1) < 3){
+			if(count_param < 3){
 				printf("Input inválido: put <table_num> <key> <value>\n");
+				continue;
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -99,21 +103,28 @@ int main(int argc, char **argv){
 				//retornar valor????
 			}
 		}
-		else if(strcasecmp(tok_opc, "get")== 0){
-			if((count_param+1) < 2){
+		else if(strcasecmp(tok_opc, "get") == 0){
+			if(count_param < 2){
 				printf("Input inválido: get <table_num> <key>\n");
+				continue;
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				char* key = strdup(tokens[1]); //!!!key
-				rtables_get(rtables, key);
+				if((strcmp(tokens[1], "*") == 0)){
+					rtables_get_keys(rtables);
+				}
+				else{
+					char* key = strdup(tokens[1]); //!!!key
+					rtables_get(rtables, key);
+				}
 				//retornar valor????
 			}
 
 		}
 		else if(strcasecmp(tok_opc, "update") == 0){
-			if((count_param+1) < 3){
+			if(count_param < 3){
 				printf("Input inválido: update <table_num> <key> <value>\n");
+				continue;
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -124,8 +135,9 @@ int main(int argc, char **argv){
 			}
 		}
 		else if(strcasecmp(tok_opc, "size") == 0){
-			if((count_param+1) < 1){
+			if(count_param < 1){
 				printf("Input inválido: size <table_num>\n");
+				continue;
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -134,8 +146,9 @@ int main(int argc, char **argv){
 			}
 		}
 		else if(strcasecmp(tok_opc, "collisions") == 0){
-			if((count_param+1) < 1){
+			if(count_param < 1){
 				printf("Input inválido: collisions <table_num>\n");
+				continue;
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
@@ -146,8 +159,9 @@ int main(int argc, char **argv){
 		else if(strcasecmp(tok_opc, "quit") == 0){
 			//free(msg_out);
 			//return network_close(server);
-			free(tokens);
-			rtables_unbind(rtables);
+			//free(tokens);
+			//rtables_unbind(rtables);
+			break;
 		}
 		else{
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
@@ -177,6 +191,7 @@ int main(int argc, char **argv){
 		}*/
 	}
   	//return network_close(server);
+	free(in);
 	free(tokens);
 	return rtables_unbind(rtables); 
 }

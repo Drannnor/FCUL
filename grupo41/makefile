@@ -4,7 +4,7 @@ TEST_DIR = testes
 INC_DIR = include
 OBJ_DIR = object
 SRC_DIR = source
-CFLAGS = -Wall -I $(INC_DIR)
+CFLAGS = -Wall -I $(INC_DIR) -g
 
 all: clean server client
 

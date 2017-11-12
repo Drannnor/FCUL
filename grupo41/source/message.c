@@ -451,7 +451,7 @@ void print_message(struct message_t *msg) {
         }break;
         case CT_RESULT:{
 			if(msg->opcode == OC_RT_ERROR){
-				printf("Ocorreu um erro! Tente novamente!");
+				printf("Ocorreu um erro! Tente novamente!\n");
 				break;
 			}
 			printf("result: %d\n", msg->content.result);
