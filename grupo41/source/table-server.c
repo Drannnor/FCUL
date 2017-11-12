@@ -10,8 +10,6 @@ Ricardo Cruz 47871
    Exemplo de uso: ./table_server 54321 10 15 20 25
 */
 #include <error.h>
-
-#include "inet.h"
 #include "table-private.h"
 #include "message-private.h"
 
@@ -174,7 +172,8 @@ int main(int argc, char **argv){
 	struct table_t **tables;
 	struct sockaddr_in server; 
 	struct sigaction a;
-	int socket_de_escuta;
+	int socket_de_escuta, i, nfds;
+
 	char **n_tables;
 	struct pollfd connections[NFDESC];
 
@@ -221,14 +220,16 @@ int main(int argc, char **argv){
 	
 	/* inicializar o n_tables*/
 
+
 	table_skel_init(n_tables);
 
-	int i;
 	for (i = 0; i < NFDESC; i++)
     	connections[i].fd = -1;    // poll ignora estruturas com fd < 0
 
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
+
+	nfds = 1
 
 	while(not fatal_error){ /* espera por dados nos sockets abertos */
 		res = poll(conjunto_de_descritores)

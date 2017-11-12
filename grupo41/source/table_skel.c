@@ -55,8 +55,5 @@ struct message_t *invoke(struct message_t *msg_in){
 }
 
 
-/* Função que recebe uma tabela e uma mensagem de pedido e:
-	- aplica a operação na mensagem de pedido na tabela;
-	- devolve uma mensagem de resposta com oresultado.
-*/
+
 
