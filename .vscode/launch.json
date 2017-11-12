@@ -1,0 +1,25 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+            
+            {
+                "name": "(gdb) server",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceRoot}/grupo41/binary/server",
+                "args": ["54322","10","15"],
+                "stopAtEntry": false,
+                "cwd": "${workspaceRoot}",
+                "environment": [],
+                "externalConsole": true,
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            }
+        ]
+    }

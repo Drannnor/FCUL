@@ -12,6 +12,7 @@ Ricardo Cruz 47871
 #include "inet.h"
 #include "message.h"
 #include "network_client-private.h"
+#include "table-private.h"
 
 #define OC_RT_ERROR 99
 

@@ -17,7 +17,7 @@ int table_skel_init(char **n_tables){
 		fprintf(stderr, "NULL n_tables");
 		return -1;
 	}
-
+	
 	tablenum = atoi(n_tables[0]);
 
     if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenum))) == NULL){
@@ -27,9 +27,13 @@ int table_skel_init(char **n_tables){
 
 	int i;
 	for(i = 0; i < tablenum; i++){
-		tables[i] = table_create(atoi(n_tables[i+1]));
+		if((tables[i] = table_create(atoi(n_tables[i+1]))) == NULL){
+			fprintf(stderr, "Failed to create tables\n");
+			free(tables);
+			return -1;
+		}
 	}
-    
+    return 0;
 }
 
 int table_skel_destroy(){
@@ -38,7 +42,7 @@ int table_skel_destroy(){
 		table_destroy(tables[i]);
 	}
 	free(tables);
-
+	return 0;
 }
 
 struct message_t *invoke(struct message_t *msg_in){

@@ -12,6 +12,7 @@ Ricardo Cruz 47871
 #include <error.h>
 #include "table-private.h"
 #include "message-private.h"
+#include "table_skel.h"
 
 #define NFDESC 100
 
@@ -164,17 +165,11 @@ void sign_handler(int signum){
 }
 
 int main(int argc, char **argv){
-	struct table_t **tables;
-	struct sockaddr_in server, client; 
+	struct sockaddr_in client; 
 	struct sigaction a;
-	int socket_de_escuta, i, nfds, kfds, res;
+	int socket_de_escuta, i, nfds, res;
 
-	int size_client = sizeof(struct sockaddr);
-
-	int msg_size, buffer_size;
-	int nbytes;
-	char* buffer_in, buffer_out;
-	struct message_t *msg_out, *msg_in;
+	socklen_t size_client = sizeof(struct sockaddr);
 
 	char **n_tables;
 
@@ -193,17 +188,35 @@ int main(int argc, char **argv){
 	}
 
 	/* inicialização */
-	socket_de_escuta = make_server_socket(atos(argv[1]));
-
-	
+	if(( socket_de_escuta = make_server_socket(atoi(argv[1]))) < 0){
+		fprintf(stderr, "Error creating server socket");
+		return -1;
+	}
 
 	/* inicializar o n_tables*/
-	if((n_tables = (char**)malloc(sizeof(char*)*argc)) == NULL){
+	if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
 		return -1;
-	}    
+	}
 
-	table_skel_init(n_tables);
+	if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+		fprintf(stderr, "Failed malloc tables\n");
+		free(n_tables);
+		return -1;
+	}
+
+	sprintf(n_tables[0], "%d", argc-2);
+
+	for(i = 1; i <= argc - 2; i++){
+		n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1);//verificar os mallocs
+    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]));
+	 } 
+	 printf("%d\n", i);
+
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		return -1;
+	}
 
 	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++)
@@ -218,7 +231,7 @@ int main(int argc, char **argv){
 
 		res = poll(connections,nfds,-1);
 		if (res<0){
-			if (errno != EINTR){}
+			if (errno != EINTR){
 				continue;
 			}
 		}
@@ -230,7 +243,6 @@ int main(int argc, char **argv){
 			}
       	}
 
-		
 		/* um dos sockets de ligação tem dados para ler */
 		for (i = 1; i < nfds; i++) {
 			if (connections[i].revents == POLLIN) {
@@ -242,81 +254,12 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-	table_skel_destroy();
-	
+
+	//FREE do n_tables
 	/* fechar as ligações */
-	for (i = 1; i < nfds; i++) {
-		close(s);
-	}
-	/*int listening_socket, connsock, result;
-	struct table_t **tables;
-	struct sigaction a;
-	a.sa_handler = sign_handler;
-	a.sa_flags = 0;
-	sigemptyset( &a.sa_mask );
-	sigaction( SIGINT, &a, NULL );
-	signal(SIGPIPE,SIG_IGN);
-
-	if (argc < 3){
-		printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
-		printf("Exemplo de uso: ./table-server 54321 10 15 20 25\n");
-		return -1;
-	}
-
-
-	char **n_tables;
-
-	
-	if((tables =n_tables = (char**)malloc(argc*sizeof(char*))) == NULL){
-		fprintf(stderr, "Failed malloc tables\n");
-		return -1;
-	}
-
-	if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) return -1;
-	
-	/*********************************************************/
-	/* Criar as tabelas de acordo com linha de comandos dada */
-	/*********************************************************/
-
-	
-	/*
-	if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenums))) == NULL){
-		fprintf(stderr, "Failed malloc tables\n");
-		return -1;
-	}
-
-	int i;
-	for(i = 2; i < argc; i++){
-		tables[i-2] = table_create(atoi(argv[i]));
+	for (i = 0; i < nfds; i++) {
+		close(connections[i].fd);
 	}
 	
-	while (!quit) {
-		if ((connsock = accept(listening_socket, NULL, NULL)) == -1){
-			break;
-		}
-			
-		printf(" * Client is connected!\n");
-
-		while (!quit && (result = network_receive_send(connsock, tables)) >= 0){
-			
-			/* Fazer ciclo de pedido e resposta */
-			
-			/* Ciclo feito com sucesso ? Houve erro?
-			   Cliente desligou? 
-
-		}
-		printf(" * Client is disconnected!\n");
-	}
-
-
-
-	table_skel_destroy();
-	/*
-	for(i = 0; i < tablenums; i++){
-		table_destroy(tables[i]);
-	}
-
-	free(tables);
-
-	return table_skel_destroy();*/
+	return table_skel_destroy();
 }

@@ -10,7 +10,7 @@ Ricardo Cruz 47871
 #include <arpa/inet.h>
 
 #include "message-private.h"
-#include "table.h"
+#include "table-private.h"
 #include "entry-private.h"
 
 #define _OPCODE 2

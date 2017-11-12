@@ -5,6 +5,7 @@
         "network_client-private.h": "c",
         "inet.h": "c",
         "message.h": "c",
-        "network_client.h": "c"
+        "network_client.h": "c",
+        "entry-private.h": "c"
     }
 }
