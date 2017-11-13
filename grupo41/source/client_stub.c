@@ -2,8 +2,6 @@
 #include "client_stub.h"
 #include "entry-private.h"
 
-//static struct server_t server;
-
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
  * tabelas remotas num servidor.
  * Os alunos dever�o implementar uma forma de descobrir quantas tabelas
@@ -66,7 +64,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     }
     
     print_message(msg_out);
-    //nao eh preciso fazer malloc??? nah me cheira.
+
     struct message_t *msg_res;
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
@@ -143,11 +141,6 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     print_message(msg_res);
 
     struct data_t *data_res;
-    if((data_res = (struct data_t*) malloc(sizeof(struct data_t))) == NULL){
-        fprintf(stderr, "Failed malloc! - data_res");
-        return NULL;
-    }
-
     if((data_res = data_dup(msg_res->content.data)) == NULL){
         free(data_res);
         free_message(msg_out);
@@ -159,7 +152,6 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     free_message(msg_res);
     free_message(msg_out);
     return data_res;
-    //free(data_res)???
 }
 
 /* Devolve n�mero de pares chave/valor na tabela remota.
@@ -244,16 +236,27 @@ char **rtables_get_keys(struct rtables_t *rtables){
     msg_res = network_send_receive(rtables->server,msg_out);
     print_message(msg_res);
 
+    int i = 0;
+    while(msg_res->content.keys[i] != NULL){
+        i++;
+    }
+
     char** res;
-    if((res = (char**) malloc(sizeof(char*) * 1)) == NULL){ //mudar 1???
+    if((res = (char**) malloc(sizeof(char*) * (i+1))) == NULL){ //precisamos de 4 sockets!!!
         fprintf(stderr, "Failed to malloc!\n");
         return NULL;
     }
 
-    res = msg_out->content.keys;
-    free(msg_res);
+    i = 0;
+    while(msg_res->content.keys[i] != NULL){
+        res[i] = strdup(msg_res->content.keys[i]);
+        i++;
+    }
+    res[i] = NULL;
+
+    free_message(msg_res);
     free(msg_out);
-    return res; //COMO FIZESTE ESTRIGA???
+    return res;
 }
 
 /* Liberta a mem�ria alocada por rtables_get_keys().

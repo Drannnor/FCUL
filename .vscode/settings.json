@@ -2,6 +2,7 @@
     "files.associations": {
         "network_client-private.h": "c",
         "client_stub-private.h": "c",
-        "client_stub.h": "c"
+        "client_stub.h": "c",
+        "data.h": "c"
     }
 }
