@@ -14,7 +14,7 @@ Ricardo Cruz 47871
 #include "message-private.h"
 #include "table_skel.h"
 
-#define NFDESC 100
+#define NFDESC 6
 
 static int quit = 0;
 
@@ -211,9 +211,8 @@ int main(int argc, char **argv){
 
 	for(i = 1; i <= argc - 2; i++){
 		n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1);//verificar os mallocs
-    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]));
+    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
 	 } 
-	 printf("%d\n", i);
 
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
@@ -221,12 +220,17 @@ int main(int argc, char **argv){
 	}
 
 	//initializacao da lista de conections
-	for (i = 0; i < NFDESC; i++)
+	for (i = 0; i < NFDESC; i++){
     	connections[i].fd = -1; // poll ignora estruturas com fd < 0
-		connections[i].revents = 0;    
+		connections[i].revents = -1;
+		connections[i].events = -1;
+	}
 
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
+    
+    connections[1].fd = stdrin;  // Vamos detetar eventos no standart in
+  	connections[1].events = POLLIN;
 
 	nfds = 1;
 
@@ -236,12 +240,16 @@ int main(int argc, char **argv){
 		if (res<0){
 			if (errno != EINTR){
 				continue;
-			}
+			}else{
+                quit = 1;
+            }
 		}
-
-		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) { // Pedido na listening socket ?
-        	if ((connections[nfds].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
-          		connections[nfds].events = POLLIN; // Vamos esperar dados nesta socket
+        i = 2;
+		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
+            while(connections[i++].fd != -1){
+            }
+        	if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
+          		connections[i].events = POLLIN; // Vamos esperar dados nesta socket
 				nfds++;
 			}
       	}
@@ -251,9 +259,12 @@ int main(int argc, char **argv){
 			if (connections[i].revents == POLLIN) {
 				res = network_receive_send(connections[i].fd);
 			}
-			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 1) {
+			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 0) {
 				close(connections[i].fd);
 				connections[i].fd = -1;
+				connections[i].revents = -1;
+				connections[i].events = -1;
+                nfds--;
 			}
 		}
 	}
