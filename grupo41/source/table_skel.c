@@ -33,6 +33,7 @@ int table_skel_init(char **n_tables){
 			return -1;
 		}
 	}
+	
 	for(i = 0; i < tablenum + 1; i++){
 		free(n_tables[i]);
 	}
