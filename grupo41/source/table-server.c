@@ -107,12 +107,14 @@ int network_receive_send(int sockfd){
 		return -1;
 	}
 	
+	print_message(msg_pedido);
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
 		free(buff_pedido);
 		free(msg_pedido);
 		return -1;
 	}
+	print_message(msg_resposta);
 	
 
 	/* Verificar se a serialização teve sucesso */
@@ -220,7 +222,8 @@ int main(int argc, char **argv){
 
 	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++)
-    	connections[i].fd = -1;    // poll ignora estruturas com fd < 0
+    	connections[i].fd = -1; // poll ignora estruturas com fd < 0
+		connections[i].revents = 0;    
 
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;

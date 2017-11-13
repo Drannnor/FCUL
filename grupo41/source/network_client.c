@@ -93,6 +93,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 
 	/* Serializar a mensagem recebida */
 
+	print_message(msg);
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg, &message_out)) < 0){
 		fprintf(stderr, "Failed marshalling\n");

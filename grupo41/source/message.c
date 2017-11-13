@@ -100,13 +100,6 @@ int message_to_buffer(struct message_t *msg, char **msg_buf){
         return -1;
     }
 
-    // Consoante o msg->c_type, determinar o tamanho do vetor de bytes
-    //   que tem de ser alocado antes de serializar msg - done
-
-    // Alocar quantidade de memória determinada antes
-    //    *msg_buf = .... - done
-
-    // Inicializar ponteiro auxiliar com o endereço da memória alocada
     ptr = *msg_buf;
 
     short_value = htons(msg->opcode);
