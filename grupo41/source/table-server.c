@@ -172,11 +172,8 @@ void sign_handler(int signum){
 }
 
 int main(int argc, char **argv){
-	struct sockaddr_in client; 
 	struct sigaction a;
 	int socket_de_escuta, i, nfds, res;
-
-	socklen_t size_client = sizeof(struct sockaddr);
 
 	char **n_tables;
 
@@ -227,8 +224,8 @@ int main(int argc, char **argv){
 	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++){
     	connections[i].fd = -1; // poll ignora estruturas com fd < 0
-		connections[i].revents = -1;
-		connections[i].events = -1;
+		connections[i].revents = 0;
+		connections[i].events = 0;
 	}
 
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
@@ -243,7 +240,7 @@ int main(int argc, char **argv){
 
 		res = poll(connections,nfds,-1);
 		if (res<0){
-			if (errno != EINTR){
+			if (errno == EINTR){
 				continue;
 			}else{
                 quit = 1;
@@ -253,28 +250,29 @@ int main(int argc, char **argv){
         i = 2;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
-            	while(connections[i++].fd != -1){
+            	while(connections[i].fd != -1){
+					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
+        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
           			connections[i].events = POLLIN; // Vamos esperar dados nesta socket
 					nfds++;
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */
-		for (i = 1; i < nfds; i++) {
-			if (connections[i].revents == POLLIN) {
+		for (i = 1; i < NFDESC; i++) {
+			if (connections[i].revents & POLLIN) {
 				if(i == 1){
 					//tratar do input do standart in
 				} else {
 					res = network_receive_send(connections[i].fd);
 				}
 			}
-			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 0) {
+			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 				if(res == -1){
 					close(connections[i].fd);
 					connections[i].fd = -1;
-					connections[i].revents = -1;
-					connections[i].events = -1;
+					connections[i].revents = 0;
+					connections[i].events = 0;
 					nfds--;
 				} else {
 					quit = 1;

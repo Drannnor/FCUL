@@ -105,7 +105,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	   logo de seguida
 	*/
 	msg_size = htonl(message_size);
-
+	printf("Vai escrever");
 	/* Verificar se o envio teve sucesso */
 	if(write_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
 		fprintf(stderr, "Write failed - size write_all\n");
