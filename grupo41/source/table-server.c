@@ -30,7 +30,7 @@ int make_server_socket(short port){
 	}
 	
 	int sim = 1;
-	if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
 		fprintf(stderr,"SO_REUSEADDR setsockopt error");
 	}
 
@@ -234,7 +234,7 @@ int main(int argc, char **argv){
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
-    connections[1].fd = stdin;  // Vamos detetar eventos no standart in
+    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standart in
   	connections[1].events = POLLIN;
 
 	nfds = 1;
