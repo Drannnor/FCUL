@@ -70,7 +70,7 @@ int network_receive_send(int sockfd){
 
 	if(sockfd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
-		return -1;
+		return -2;
 	}
 
 	/* Com a função read_all, receber num inteiro o tamanho da 
@@ -86,7 +86,7 @@ int network_receive_send(int sockfd){
 	   mensagem de pedido. */
 	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
 		fprintf(stderr, "Failed malloc buff_pedido \n");
-		return -1;
+		return -2;
 	}
 
 	/* Com a função read_all, receber a mensagem de resposta. */
@@ -104,7 +104,7 @@ int network_receive_send(int sockfd){
 		fprintf(stderr, "Failed unmarshalling\n");
 		free(buff_pedido);
 		free(msg_pedido);
-		return -1;
+		return -2;
 	}
 	
 	print_message(msg_pedido);
@@ -112,7 +112,7 @@ int network_receive_send(int sockfd){
 		fprintf(stderr, "Failed invoke\n");
 		free(buff_pedido);
 		free(msg_pedido);
-		return -1;
+		return -2;
 	}
 	print_message(msg_resposta);
 	
@@ -123,7 +123,7 @@ int network_receive_send(int sockfd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Enviar ao cliente o tamanho da mensagem que será enviada
@@ -137,7 +137,7 @@ int network_receive_send(int sockfd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Enviar a mensagem que foi previamente serializada */
@@ -148,7 +148,7 @@ int network_receive_send(int sockfd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Libertar memória */
@@ -229,7 +229,7 @@ int main(int argc, char **argv){
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
-    connections[1].fd = stdrin;  // Vamos detetar eventos no standart in
+    connections[1].fd = stdin;  // Vamos detetar eventos no standart in
   	connections[1].events = POLLIN;
 
 	nfds = 1;
@@ -244,7 +244,9 @@ int main(int argc, char **argv){
                 quit = 1;
             }
 		}
+
         i = 2;
+
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
             while(connections[i++].fd != -1){
             }
@@ -260,11 +262,17 @@ int main(int argc, char **argv){
 				res = network_receive_send(connections[i].fd);
 			}
 			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 0) {
+				if(res == -1){
 				close(connections[i].fd);
 				connections[i].fd = -1;
 				connections[i].revents = -1;
 				connections[i].events = -1;
                 nfds--;
+				} else {
+					quit = 1;
+					fprintf(stderr,"Closing server...");
+				}
+				
 			}
 		}
 	}
