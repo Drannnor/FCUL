@@ -28,6 +28,11 @@ int make_server_socket(short port){
 		fprintf(stderr, "Erro ao criar socket.\n");
 		return -1;
 	}
+	
+	int sim = 1;
+	if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
+		fprintf(stderr,"SO_REUSEADDR setsockopt error");
+	}
 
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);  
@@ -248,31 +253,33 @@ int main(int argc, char **argv){
         i = 2;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
-            while(connections[i++].fd != -1){
-            }
-        	if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
-          		connections[i].events = POLLIN; // Vamos esperar dados nesta socket
-				nfds++;
-			}
+            	while(connections[i++].fd != -1){
+            	}
+        		if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr *) &client, &size_client)) > 0){ // Ligação feita ?
+          			connections[i].events = POLLIN; // Vamos esperar dados nesta socket
+					nfds++;
+				}
       	}
-
 		/* um dos sockets de ligação tem dados para ler */
 		for (i = 1; i < nfds; i++) {
 			if (connections[i].revents == POLLIN) {
-				res = network_receive_send(connections[i].fd);
+				if(i == 1){
+					//tratar do input do standart in
+				} else {
+					res = network_receive_send(connections[i].fd);
+				}
 			}
 			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res <= 0) {
 				if(res == -1){
-				close(connections[i].fd);
-				connections[i].fd = -1;
-				connections[i].revents = -1;
-				connections[i].events = -1;
-                nfds--;
+					close(connections[i].fd);
+					connections[i].fd = -1;
+					connections[i].revents = -1;
+					connections[i].events = -1;
+					nfds--;
 				} else {
 					quit = 1;
 					fprintf(stderr,"Closing server...");
 				}
-				
 			}
 		}
 	}
