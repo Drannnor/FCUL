@@ -58,12 +58,12 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
 	if(msg_pedido == NULL){
 		fprintf(stderr, "msg_pedido dada igual a NULL.\n");
-		return message_error(-1);
+		return message_error();
 	}
 
 	if(tabela == NULL){
 		fprintf(stderr, "Tabela dada igual a NULL\n");
-		return message_error(-1);
+		return message_error();
 	}
 
 	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
@@ -90,7 +90,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			result_r = table_update(tabela, key_p, value_p);
 			if(result_r < 0){
 				free(msg_resposta);
-				return message_error(-1);
+				return message_error();
 			}
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
@@ -114,7 +114,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			result_r = table_put(tabela, key_p, value_p);
 			if(result_r < 0){
 				free(msg_resposta);
-				return message_error(-1);
+				return message_error();
 			}
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
@@ -125,7 +125,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		default:
 			free(msg_resposta);
-			return message_error(-1);
+			return message_error();
 	}
 
 	/* Preparar mensagem de resposta */
@@ -195,7 +195,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 	/* Processar a mensagem */
 	if(msg_pedido->table_num >= tablenums){
 		fprintf(stderr, "Numero de tabela dado inválido.\n");
-		msg_resposta = message_error(-1);
+		msg_resposta = message_error();
 	}
 	else{
 		msg_resposta = process_message(msg_pedido, tables[msg_pedido->table_num]);

@@ -140,7 +140,6 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     if((msg_res = network_send_receive(rtables->server,msg_out)==NULL || msg_res->opcode == OC_RT_ERROR)){
         return NULL;
     }
-    
     print_message(msg_res);
 
     struct data_t *data_res;

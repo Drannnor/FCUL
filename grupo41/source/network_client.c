@@ -83,12 +83,12 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	/* Verificar parâmetros de entrada */
 	if (server == NULL){
 		fprintf(stderr, "Server dado eh invalido\n");
-		return message_error(-1);
+		return message_error();
 	}
 
 	if(msg == NULL){
 		fprintf(stderr, "Mensagem dada eh invalida\n");
-		return message_error(-1);
+		return message_error();
 	}
 
 	/* Serializar a mensagem recebida */
@@ -97,7 +97,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if((message_size = message_to_buffer(msg, &message_out)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
 		free(message_out);
-		return message_error(-1);
+		return message_error();
 	}
 
 	/* Enviar ao servidor o tamanho da mensagem que será enviada
@@ -105,31 +105,58 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	*/
 	msg_size = htonl(message_size);
 
+	int result;
+	int first_try = 1;
 	/* Verificar se o envio teve sucesso */
-	if(write_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
-		fprintf(stderr, "Write failed - size write_all\n");
-		free(message_out);
-		return message_error(-1);
+	while(first_try >= 0){
+		if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Write failed - size write_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
+	
 
 	/* Enviar a mensagem que foi previamente serializada */
-
+	first_try = 1;
 	/* Verificar se o envio teve sucesso */
-	if(write_all(server->socket_fd, message_out, message_size) < 0){
-		fprintf(stderr, "Write failed - message write_all\n");
-		free(message_out);
-		return message_error(-1);
+	while(first_try >= 0){
+		if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Write failed - message write_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
 
 	/* De seguida vamos receber a resposta do servidor:
 
 		Com a função read_all, receber num inteiro o tamanho da 
 		mensagem de resposta. */
-
-	if(read_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
-		fprintf(stderr, "Read failed - size read_all\n");
-		free(message_out);
-		return message_error(-2);
+	first_try = 1;
+	while(first_try >= 0){
+		if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+			if(result == 0  == 0|| first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Read failed - size read_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
 
 	/* Alocar memória para receber o número de bytes da
@@ -140,15 +167,24 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if((message_in = (char *)malloc(ntohl(msg_size))) == NULL){
 		printf("Failed malloc - message_in\n");
 		free(message_out);
-		return message_error(-1);
+		return message_error();
 	}
 	
 	/* Verificar se a receção teve sucesso */
-	if(read_all(server->socket_fd, message_in, ntohl(msg_size)) < 0){
-		fprintf(stderr, "Read failed - message read_all\n");
-		free(message_out);
-		free(message_in);
-		return message_error(-2);
+	first_try = 1;
+	while(first_try >= 0){
+		if((result = read_all(server->socket_fd, message_in, ntohl(msg_size)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Read failed - message read_all\n");
+				free(message_out);
+				free(message_in);
+				return message_error();
+			}	
+		}
 	}
 
 	/* Desserializar a mensagem de resposta */
@@ -159,7 +195,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		fprintf(stderr, "Failed unmarshalling\n");
 		free(message_out);
 		free(message_in);
-		return message_error(-1);
+		return message_error();
 	}
 
 	/* Libertar memória */

@@ -15,7 +15,7 @@ Ricardo Cruz 47871
 
 #define OC_RT_ERROR 99
 
-struct message_t* message_error(int erro);
+struct message_t* message_error();
 void print_message(struct message_t *msg);
 
 #endif
