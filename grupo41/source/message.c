@@ -166,7 +166,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
     // msg_size tem tamanho mínimo ?
 
     if (msg_buf == NULL || msg_size < _MIN_SIZE){
-        
+        printf("fuckoff1");
         return NULL;
     }
 
@@ -188,6 +188,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
     if(msg->opcode < 10 || msg->opcode > 100){
         free(msg);
+        printf("%d\n", msg->opcode);
         return NULL;
     }
 
@@ -290,7 +291,6 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
         break;
     case CT_VALUE:
-        //??? sem &msg
         value_unmarshalling(msg, &msg_buf);
 
         break;
@@ -529,7 +529,7 @@ void print_message(struct message_t *msg) {
         }break;
         case CT_RESULT:{
 			if(msg->opcode == OC_RT_ERROR){
-				printf("Ocorreu um erro! Tente novamente!");
+				printf("Ocorreu um erro! Tente novamente!\n");
 				break;
 			}
 			printf("result: %d\n", msg->content.result);

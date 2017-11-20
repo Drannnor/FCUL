@@ -106,31 +106,59 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	*/
 	msg_size = htonl(message_size);
 	printf("Vai escrever");
+
+	int result;
+	int first_try = 1;
 	/* Verificar se o envio teve sucesso */
-	if(write_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
-		fprintf(stderr, "Write failed - size write_all\n");
-		free(message_out);
-		return message_error();
+	while(first_try >= 0){
+		if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Write failed - size write_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
+	
 
 	/* Enviar a mensagem que foi previamente serializada */
-
+	first_try = 1;
 	/* Verificar se o envio teve sucesso */
-	if(write_all(server->socket_fd, message_out, message_size) < 0){
-		fprintf(stderr, "Write failed - message write_all\n");
-		free(message_out);
-		return message_error();
+	while(first_try >= 0){
+		if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Write failed - message write_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
 
 	/* De seguida vamos receber a resposta do servidor:
 
 		Com a função read_all, receber num inteiro o tamanho da 
 		mensagem de resposta. */
-
-	if(read_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
-		fprintf(stderr, "Read failed - size read_all\n");
-		free(message_out);
-		return message_error();
+	first_try = 1;
+	while(first_try >= 0){
+		if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Read failed - size read_all\n");
+				free(message_out);
+				return message_error();
+			}	
+		}
 	}
 
 	/* Alocar memória para receber o número de bytes da
@@ -145,11 +173,20 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	}
 	
 	/* Verificar se a receção teve sucesso */
-	if(read_all(server->socket_fd, message_in, ntohl(msg_size)) < 0){
-		fprintf(stderr, "Read failed - message read_all\n");
-		free(message_out);
-		free(message_in);
-		return message_error();
+	first_try = 1;
+	while(first_try >= 0){
+		if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
+			if(result == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Read failed - message read_all\n");
+				free(message_out);
+				free(message_in);
+				return message_error();
+			}	
+		}
 	}
 
 	/* Desserializar a mensagem de resposta */

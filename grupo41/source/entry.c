@@ -36,3 +36,19 @@ void entry_destroy(struct entry_t *entry){
     data_destroy(entry->value);
     free(entry->key);
 }
+
+struct entry_t *entry_create(char *key, struct data_t *value){
+    struct entry_t *ent = NULL;
+
+    if(key != NULL && value != NULL){
+        if((ent = (struct entry_t*)malloc(sizeof(struct entry_t))) == NULL){
+            fprintf(stderr, "Failed malloc!\n");
+            return NULL;
+        }
+        ent->key = strdup(key);
+        ent->value = data_dup(value);
+        ent->next = NULL;
+    }
+    
+    return ent;
+}

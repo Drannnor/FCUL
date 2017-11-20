@@ -6,6 +6,9 @@
         "inet.h": "c",
         "message.h": "c",
         "network_client.h": "c",
-        "entry-private.h": "c"
+        "entry-private.h": "c",
+        "client_stub-private.h": "c",
+        "client_stub.h": "c",
+        "data.h": "c"
     }
 }

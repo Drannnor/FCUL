@@ -27,3 +27,7 @@ Ricardo Cruz 47871
   - Não definimos diferentes tipos de erros para diferentes mensagens de erro
 
   - Para fechar o servidor, este não pode estar a atender algum cliente e temos de usar o ctrl+c
+
+  - Acrecentamos um método print_table no table.c para imprimir a tabela como pedido pelo professor
+
+  -  

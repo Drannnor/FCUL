@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "table-private.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}
