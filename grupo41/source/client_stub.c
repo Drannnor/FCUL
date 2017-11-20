@@ -5,7 +5,7 @@
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
  * tabelas remotas num servidor.
  * Os alunos dever�o implementar uma forma de descobrir quantas tabelas
- * existem no servidor. //TODO + verificar out of bounds + reconnect
+ * existem no servidor. //???TODO + verificar out of bounds + reconnect
  * address_port � uma string no formato <hostname>:<port>.
  * retorna NULL em caso de erro .
  */
@@ -137,7 +137,10 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 
     print_message(msg_out);
     struct message_t *msg_res;
-    msg_res = network_send_receive(rtables->server,msg_out);
+    if((msg_res = network_send_receive(rtables->server,msg_out)==NULL || msg_res->opcode == OC_RT_ERROR)){
+        return NULL;
+    }
+    
     print_message(msg_res);
 
     struct data_t *data_res;
