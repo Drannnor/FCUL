@@ -69,9 +69,18 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				key_o = strdup(tokens[1]); //verificar null???
-				value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]);
-				rtables_put(rtables, key_o, value_o);
+				if((key_o = strdup(tokens[1])) == NULL){
+					fprintf(stderr, "put - strdup failed\n");
+					return -1;
+				}
+				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2])) == NULL){
+					fprintf(stderr, "put - data_create2 failed\n");
+					return -1;
+				}
+				if((rtables_put(rtables, key_o, value_o) == -1){
+					fprintf(stderr, "put - rtables_put failed\n");
+					return -1;
+				}
 			}
 		}
 		else if(strcasecmp(tok_opc, "get") == 0){
@@ -85,7 +94,10 @@ int main(int argc, char **argv){
 					rtables_free_keys(rtables_get_keys(rtables));
 				}
 				else{
-					key = strdup(tokens[1]);
+					if((key_o = strdup(tokens[1])) == NULL){
+						fprintf(stderr, "get - strdup failed\n");
+						return -1;
+					}
 					data_destroy(rtables_get(rtables, key));
 				}
 			}
@@ -97,9 +109,18 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				key_o = strdup(tokens[1]); //verificar null???
-				value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]);
-				rtables_update(rtables, key_o, value_o);
+				if((key_o = strdup(tokens[1])) == NULL){
+					fprintf(stderr, "strdup failed\n");
+					return -1;
+				}
+				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]))==NULL){
+					fprintf(stderr, "update - data_create2 failed\n");
+					return -1;
+				}
+				if((rtables_update(rtables, key_o, value_o)) == NULL){
+					fprintf(stderr, "update - rtables_update failed\n");
+					return -1;
+				}
 			}
 		}
 		else if(strcasecmp(tok_opc, "size") == 0){
@@ -108,7 +129,10 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				rtables_size(rtables);
+				if((rtables_size(rtables)) == NULL){
+					fprintf(stderr, "size - rtables_size failed\n");
+					return -1;
+				}
 			}
 		}
 		else if(strcasecmp(tok_opc, "collisions") == 0){
@@ -117,7 +141,10 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				rtables_collisions(rtables);
+				if((rtables_collisions(rtables)) == NULL){
+					fprintf(stderr, "collisions - rtables_collisions failed\n");
+					return -1;
+				}
 			}
 		}
 		else if(strcasecmp(tok_opc, "quit") == 0){

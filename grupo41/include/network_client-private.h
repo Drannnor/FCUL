@@ -10,7 +10,7 @@ Ricardo Cruz 47871
 #include "inet.h"
 #include "network_client.h"
 
-#define RETRY_TIME = 5000;
+#define RETRY_TIME = 5;
 
 struct server_t{
 	/* Atributos importantes para interagir com o servidor, */

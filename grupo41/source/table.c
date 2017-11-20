@@ -179,6 +179,7 @@ void print_table(struct table_t *table){
     int i;
     char* tkey, 
     struct entry_t *tkeyn;
+    
     for(i=0; i < table_size(table); i++){
         printf("%d: ",i);
         if((tkey = table->hash_table[i].key) != NULL){

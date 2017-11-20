@@ -5,7 +5,7 @@
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
  * tabelas remotas num servidor.
  * Os alunos dever�o implementar uma forma de descobrir quantas tabelas
- * existem no servidor. //???TODO + verificar out of bounds + reconnect
+ * existem no servidor. 
  * address_port � uma string no formato <hostname>:<port>.
  * retorna NULL em caso de erro .
  */
@@ -244,7 +244,7 @@ char **rtables_get_keys(struct rtables_t *rtables){
     }
 
     char** res;
-    if((res = (char**) malloc(sizeof(char*) * (i+1))) == NULL){ //precisamos de 4 sockets!!!
+    if((res = (char**) malloc(sizeof(char*) * (i+1))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
         return NULL;
     }

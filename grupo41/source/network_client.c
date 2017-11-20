@@ -147,7 +147,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	first_try = 1;
 	while(first_try >= 0){
 		if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-			if(result == 0  == 0|| first_try > 0){
+			if(result == 0 || first_try > 0){
 				sleep(RETRY_TIME);
 				first_try--;
 			}
