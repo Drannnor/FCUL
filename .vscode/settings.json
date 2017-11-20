@@ -10,5 +10,6 @@
         "client_stub-private.h": "c",
         "client_stub.h": "c",
         "data.h": "c"
-    }
+    },
+    "C_Cpp.intelliSenseEngineFallback": "Disabled"
 }

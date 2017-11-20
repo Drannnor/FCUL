@@ -12,7 +12,7 @@ Ricardo Cruz 47871
 #include <error.h>
 #include "table-private.h"
 #include "message-private.h"
-#include "table_skel.h"
+#include "table_skel-private.h"
 
 #define NFDESC 6
 #define MAX_SIZE 1000
@@ -233,8 +233,6 @@ int main(int argc, char **argv){
 	nfds = 2;
 
 	char in[MAX_SIZE];
-	int count_param;
-	char *tokens[2];
 	char *tok;
 	
 
@@ -277,7 +275,7 @@ int main(int argc, char **argv){
 						quit = 1;
 					} else if (strcasecmp( tok, "print") == 0){
 						if((tok = strtok(in," ") == NULL)){
-							table_skel_print();
+							table_skel_print(atoi(tok));
 						}
 
 					}
