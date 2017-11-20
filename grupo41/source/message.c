@@ -173,7 +173,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
     // msg_size tem tamanho mínimo ?
 
     if (msg_buf == NULL || msg_size < _MIN_SIZE){
-        
+        printf("fuckoff1");
         return NULL;
     }
 
@@ -195,6 +195,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
     if(msg->opcode < 10 || msg->opcode > 100){
         free(msg);
+        printf("%d\n", msg->opcode);
         return NULL;
     }
 

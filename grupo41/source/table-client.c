@@ -24,7 +24,7 @@ void print_message(struct message_t *msg);
 
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
-	char *tok, *tok_opc, *key_o, *key;
+	char *tok, *tok_opc, *key_o;
 	int count_param,i;
 	struct data_t *value_o;
 	char *tokens[3];
@@ -77,7 +77,7 @@ int main(int argc, char **argv){
 					fprintf(stderr, "put - data_create2 failed\n");
 					return -1;
 				}
-				if((rtables_put(rtables, key_o, value_o) == -1){
+				if((rtables_put(rtables, key_o, value_o)) == -1){
 					fprintf(stderr, "put - rtables_put failed\n");
 					return -1;
 				}
@@ -98,7 +98,7 @@ int main(int argc, char **argv){
 						fprintf(stderr, "get - strdup failed\n");
 						return -1;
 					}
-					data_destroy(rtables_get(rtables, key));
+					data_destroy(rtables_get(rtables, key_o));
 				}
 			}
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 					fprintf(stderr, "update - data_create2 failed\n");
 					return -1;
 				}
-				if((rtables_update(rtables, key_o, value_o)) == NULL){
+				if((rtables_update(rtables, key_o, value_o)) == -1){
 					fprintf(stderr, "update - rtables_update failed\n");
 					return -1;
 				}
@@ -129,7 +129,7 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((rtables_size(rtables)) == NULL){
+				if((rtables_size(rtables)) == -1){
 					fprintf(stderr, "size - rtables_size failed\n");
 					return -1;
 				}
@@ -141,7 +141,7 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((rtables_collisions(rtables)) == NULL){
+				if((rtables_collisions(rtables)) == -1){
 					fprintf(stderr, "collisions - rtables_collisions failed\n");
 					return -1;
 				}

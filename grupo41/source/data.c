@@ -19,9 +19,9 @@ struct data_t *data_create(int size){
             a->datasize = size;
             if((a->data = malloc(size)) == NULL){
                 return NULL;
+            }
         }
     }
-
     return a;
 }
 

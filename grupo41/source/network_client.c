@@ -173,7 +173,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	/* Verificar se a receção teve sucesso */
 	first_try = 1;
 	while(first_try >= 0){
-		if((result = read_all(server->socket_fd, message_in, ntohl(msg_size)) <= 0){
+		if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
 			if(result == 0 || first_try > 0){
 				sleep(RETRY_TIME);
 				first_try--;
