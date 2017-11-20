@@ -93,7 +93,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 
 	/* Serializar a mensagem recebida */
 
-	print_message(msg);
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg, &message_out)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
@@ -105,7 +104,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	   logo de seguida
 	*/
 	msg_size = htonl(message_size);
-	printf("Vai escrever");
 
 	int result;
 	int first_try = 1;
@@ -120,8 +118,12 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				fprintf(stderr, "Write failed - size write_all\n");
 				free(message_out);
 				return message_error();
-			}	
+			}
+			
+		} else { 
+			break;
 		}
+		
 	}
 	
 
@@ -139,6 +141,8 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				free(message_out);
 				return message_error();
 			}	
+		}else { 
+			break;
 		}
 	}
 
@@ -158,7 +162,10 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				free(message_out);
 				return message_error();
 			}	
+		} else { 
+			break;
 		}
+		
 	}
 
 	/* Alocar memória para receber o número de bytes da
@@ -186,6 +193,8 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				free(message_in);
 				return message_error();
 			}	
+		} else { 
+			break;
 		}
 	}
 

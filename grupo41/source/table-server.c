@@ -54,93 +54,6 @@ int make_server_socket(short port){
 }
 
 
-/* Função que recebe uma tabela e uma mensagem de pedido e:
-	- aplica a operação na mensagem de pedido na tabela;
-	- devolve uma mensagem de resposta com oresultado.
-*/
-struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela){
-	struct message_t *msg_resposta;
-	
-	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
-	if(msg_pedido == NULL){
-		fprintf(stderr, "msg_pedido dada igual a NULL.\n");
-		return message_error();
-	}
-
-	if(tabela == NULL){
-		fprintf(stderr, "Tabela dada igual a NULL\n");
-		return message_error();
-	}
-
-	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
-		fprintf(stderr, "Failed malloc\n");
-		return NULL;
-	}
-	
-	/* Verificar opcode e c_type na mensagem de pedido */
-	short opc_p = msg_pedido->opcode;
-
-	/* Aplicar operação na tabela */
-	char *key_p;
-	struct data_t *value_p;
-	int result_r;
-
-	switch(opc_p){
-		case OC_SIZE: 
-			msg_resposta->c_type = CT_RESULT;
-			msg_resposta->content.result = table_size(tabela);
-			break;
-		case OC_UPDATE:
-			key_p = msg_pedido->content.entry->key;
-			value_p = msg_pedido->content.entry->value;
-			result_r = table_update(tabela, key_p, value_p);
-			if(result_r < 0){
-				free(msg_resposta);
-				return message_error();
-			}
-			msg_resposta->c_type = CT_RESULT;
-			msg_resposta->content.result = result_r;
-			break;
-		case OC_GET: 
-			if(strcmp(msg_pedido->content.key,"*") == 0){
-				msg_resposta->content.keys = table_get_keys(tabela);
-				msg_resposta->c_type = CT_KEYS;
-			}
-			else{
-				key_p = msg_pedido->content.key;
-				if((msg_resposta->content.data = table_get(tabela, key_p)) == NULL){
-					msg_resposta->content.data = data_create_empty();
-				}
-				msg_resposta->c_type = CT_VALUE;
-			}
-			break;
-		case OC_PUT:
-			key_p = msg_pedido->content.entry->key;
-			value_p = msg_pedido->content.entry->value;
-			result_r = table_put(tabela, key_p, value_p);
-			if(result_r < 0){
-				free(msg_resposta);
-				return message_error();
-			}
-			msg_resposta->c_type = CT_RESULT;
-			msg_resposta->content.result = result_r;
-			break;
-		case OC_COLLS: 
-			msg_resposta->c_type = CT_RESULT;
-			msg_resposta->content.result = tabela->collisions;
-			break;
-		default:
-			free(msg_resposta);
-			return message_error();
-	}
-
-	/* Preparar mensagem de resposta */
-	msg_resposta->opcode = opc_p + 1;
-	msg_resposta->table_num = msg_pedido->table_num;
-
-	return msg_resposta;
-}
-
 /* Função "inversa" da função network_send_receive usada no table-client.
    Neste caso a função implementa um ciclo receive/send:
 
@@ -294,7 +207,7 @@ int main(int argc, char **argv){
 	sprintf(n_tables[0], "%d", argc-2);
 
 	for(i = 1; i <= argc - 2; i++){
-		n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1);//verificar os mallocs
+		n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1);//verificar os mallocs TODO
     	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
 	 } 
 
@@ -316,7 +229,7 @@ int main(int argc, char **argv){
     connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standart in
   	connections[1].events = POLLIN;
 
-	nfds = 1;
+	nfds = 2;
 
 	while(!quit){ /* espera por dados nos sockets abertos */
 
@@ -345,25 +258,27 @@ int main(int argc, char **argv){
 			if (connections[i].revents & POLLIN) {
 				if(i == 1){
 					//tratar do input do standart in
+					// TODO
 				} else {
 					res = network_receive_send(connections[i].fd);
 				}
-			}
-			if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
-				if(res == -1){
-					close(connections[i].fd);
-					connections[i].fd = -1;
-					connections[i].revents = 0;
-					connections[i].events = 0;
-					nfds--;
-				} else {
-					quit = 1;
-					fprintf(stderr,"Closing server...");
+				if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
+					if(res == -1){
+						close(connections[i].fd);
+						connections[i].fd = -1;
+						connections[i].revents = 0;
+						connections[i].events = 0;// FIXME
+						nfds--;
+					} else {
+						quit = 1;
+						break;
+					}
 				}
 			}
+			
 		}
 	}
-
+	fprintf(stderr,"Closing server...");
 	//FREE do n_tables
 	/* fechar as ligações */
 	for (i = 0; i < nfds; i++) {

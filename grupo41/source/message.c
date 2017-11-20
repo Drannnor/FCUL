@@ -421,9 +421,46 @@ struct message_t* message_error(){
 	return msg;
 }
 
+void print_message(struct message_t *msg) {
+    int i;
+    
+    printf("\n----- MESSAGE -----\n");
+    printf("Tabela número: %d\n", msg->table_num);
+    printf("opcode: %d, c_type: %d\n", msg->opcode, msg->c_type);
+    switch(msg->c_type) {
+        case CT_ENTRY:{
+            printf("key: %s\n", msg->content.entry->key);
+            printf("datasize: %d\n", msg->content.entry->value->datasize);
+        }break;
+        case CT_KEY:{
+            printf("key: %s\n", msg->content.key);
+        }break;
+        case CT_KEYS:{
+            for(i = 0; msg->content.keys[i] != NULL; i++) {
+                printf("key[%d]: %s\n", i, msg->content.keys[i]);
+            }
+        }break;
+        case CT_VALUE:{
+            printf("datasize: %d\n", msg->content.data->datasize);
+        }break;
+        case CT_RESULT:{
+			if(msg->opcode == OC_RT_ERROR){
+				printf("Ocorreu um erro! Tente novamente!\n");
+				break;
+			}
+			printf("result: %d\n", msg->content.result);
+        }break;
+    }
+    printf("-------------------\n");
+}
+
+
+/* Função que recebe uma tabela e uma mensagem de pedido e:
+	- aplica a operação na mensagem de pedido na tabela;
+	- devolve uma mensagem de resposta com oresultado.
+*/
 struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela){
 	struct message_t *msg_resposta;
-	
 	
 	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
 	if(msg_pedido == NULL){
@@ -503,37 +540,4 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 	msg_resposta->table_num = msg_pedido->table_num;
 
 	return msg_resposta;
-}
-
-void print_message(struct message_t *msg) {
-    int i;
-    
-    printf("\n----- MESSAGE -----\n");
-    printf("Tabela número: %d\n", msg->table_num);
-    printf("opcode: %d, c_type: %d\n", msg->opcode, msg->c_type);
-    switch(msg->c_type) {
-        case CT_ENTRY:{
-            printf("key: %s\n", msg->content.entry->key);
-            printf("datasize: %d\n", msg->content.entry->value->datasize);
-        }break;
-        case CT_KEY:{
-            printf("key: %s\n", msg->content.key);
-        }break;
-        case CT_KEYS:{
-            for(i = 0; msg->content.keys[i] != NULL; i++) {
-                printf("key[%d]: %s\n", i, msg->content.keys[i]);
-            }
-        }break;
-        case CT_VALUE:{
-            printf("datasize: %d\n", msg->content.data->datasize);
-        }break;
-        case CT_RESULT:{
-			if(msg->opcode == OC_RT_ERROR){
-				printf("Ocorreu um erro! Tente novamente!\n");
-				break;
-			}
-			printf("result: %d\n", msg->content.result);
-        }break;
-    }
-    printf("-------------------\n");
 }

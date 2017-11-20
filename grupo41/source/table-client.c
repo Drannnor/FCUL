@@ -155,19 +155,6 @@ int main(int argc, char **argv){
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
 		}
 
-		/* Verificar se o comando foi "quit". Em caso afirmativo
-		   não há mais nada a fazer a não ser terminar decentemente.
-		 */
-		/* Caso contrário:
-
-			Verificar qual o comando;
-
-			Preparar msg_out;
-
-			Usar network_send_receive para enviar msg_out para
-			o server e receber msg_resposta.
-		*/
-		
 		free(tok_opc);
 		i = 0;
 		while(i < count_param){
