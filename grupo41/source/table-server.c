@@ -15,6 +15,7 @@ Ricardo Cruz 47871
 #include "table_skel.h"
 
 #define NFDESC 6
+#define MAX_SIZE 1000
 
 static int quit = 0;
 
@@ -231,6 +232,12 @@ int main(int argc, char **argv){
 
 	nfds = 2;
 
+	char in[MAX_SIZE];
+	int count_param;
+	char *tokens[2];
+	char *tok;
+	
+
 	while(!quit){ /* espera por dados nos sockets abertos */
 
 		res = poll(connections,nfds,-1);
@@ -257,8 +264,24 @@ int main(int argc, char **argv){
 		for (i = 1; i < NFDESC; i++) {
 			if (connections[i].revents & POLLIN) {
 				if(i == 1){
-					//tratar do input do standart in
-					// TODO
+					fgets(in,MAX_SIZE,stdin);
+					in[strlen(in) - 1] = '\0';
+
+					if((tok = strdup(strtok(in," ")) == NULL)){
+						fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+						quit = 1;
+						continue;
+					}
+
+					if(strcasecmp( tok, "quit") == 0){
+						quit = 1;
+					} else if (strcasecmp( tok, "print") == 0){
+						if((tok = strtok(in," ") == NULL)){
+							table_skel_print();
+						}
+
+					}
+				
 				} else {
 					res = network_receive_send(connections[i].fd);
 				}
