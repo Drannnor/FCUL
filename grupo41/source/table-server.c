@@ -232,20 +232,29 @@ int main(int argc, char **argv){
 
 	/* inicializar o n_tables*/
 	if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
-		fprintf(stderr, "Failed malloc tables\n");
+		fprintf(stderr, "Failed malloc tables1\n");
 		return -1;
 	}
 
 	if((n_tables[0] = (char *)malloc(_INT)) == NULL){
-		fprintf(stderr, "Failed malloc tables\n");
+		fprintf(stderr, "Failed malloc tables2\n");
 		free(n_tables);
 		return -1;
 	}
 
 	sprintf(n_tables[0], "%d", argc-2);
-
+	int count;
 	for(i = 1; i <= argc - 2; i++){
-		n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1);//verificar os mallocs TODO
+		count = i-1;
+		if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+			while(count >= 1){
+				free(n_tables[count]);
+				count--;
+			}
+			fprintf(stderr, "Failed malloc tables3\n");
+			return -1;
+		}
+		//verificar os mallocs TODO???
     	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
 	 } 
 
