@@ -56,7 +56,7 @@ struct message_t *invoke(struct message_t *msg_in){
 	int tb_num = msg_in->table_num;
 	if(msg_in != NULL){	
 		if(tb_num >= tablenum){
-			fprintf(stderr, "Array out of Bounds.\n");
+			fprintf(stderr, "Tabelo nao existe.\n");
 			msg_resposta = message_error();
 		}
 		else{
@@ -69,7 +69,7 @@ void table_skel_print(int n){
 	if(n < tablenum){
 		print_table(tables[n]);
 	} else {
-		fprintf(stderr, "Array out of Bounds.\n");
+		fprintf(stderr, "tabelo nao existe.\n");
 	}
 }
 

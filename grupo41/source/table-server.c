@@ -184,7 +184,9 @@ int tratar_input(){
 	}
 	if(strcasecmp( tok, "quit") == 0){
 		quit = 1;
+		
 	} else if (strcasecmp( tok, "print") == 0){
+		free(tok);
 		if((tok = strtok(NULL," ")) == NULL){
 			fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
 			return -1;
@@ -194,9 +196,14 @@ int tratar_input(){
 			quit = 1;
 			return -1;
 		}
+		table_skel_print(atoi(tok));
+	} else {
+		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
 	}
+	free(tok);
 	return 0;
 }
+
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, nfds, res;
@@ -218,7 +225,7 @@ int main(int argc, char **argv){
 	}
 
 	/* inicialização */
-	if(( socket_de_escuta = make_server_socket(atoi(argv[1]))) < 0){
+	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
 		fprintf(stderr, "Error creating server socket");
 		return -1;
 	}
@@ -285,31 +292,33 @@ int main(int argc, char **argv){
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */
-		for (i = 1; i < NFDESC; i++) {
+		for (i = 1; i < nfds; i++) {
 			if (connections[i].revents & POLLIN) {
 				if(i == 1){
 					tratar_input();
 				} else {
 					res = network_receive_send(connections[i].fd);
-				}
-				if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
-					if(res == -1){
-						close(connections[i].fd);
-						connections[i].fd = -1;
-						connections[i].revents = 0;
-						connections[i].events = 0;
-						nfds--;
-					} else {
-						quit = 1;
-						break;
+					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
+						if(res == -1){		
+							close(connections[i].fd);
+							connections[i].fd = connections[nfds-1].fd;
+							connections[i].revents = connections[nfds-1].revents;
+							connections[i].events = connections[nfds-1].events;
+							connections[nfds-1].fd = -1;
+							connections[nfds-1].revents = 0;
+							connections[nfds-1].events = 0;
+							nfds--;
+						} else {
+							quit = 1;
+							break;
+						}
 					}
 				}
 			}
 		}
 	}
 	fprintf(stderr,"Closing server...");
-	//FREE do n_tables
-	/* fechar as ligações */
+
 	for (i = 0; i < nfds; i++) {
 		close(connections[i].fd);
 	}
