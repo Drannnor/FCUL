@@ -487,11 +487,19 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 	int result_r;
 
 	switch(opc_p){
-		case OC_SIZE: 
+		case OC_SIZE:
+            if(msg_pedido->c_type != CT_RESULT){
+                fprintf(strerr, "size - c_type errado!\n");
+                return message_error();
+            }
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = table_size(tabela);
 			break;
 		case OC_UPDATE:
+            if(msg_pedido->c_type != CT_ENTRY){
+                fprintf(strerr, "update - c_type errado!\n");
+                return message_error();
+            }
 			key_p = msg_pedido->content.entry->key;
 			value_p = msg_pedido->content.entry->value;
 			result_r = table_update(tabela, key_p, value_p);
@@ -502,7 +510,11 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
 			break;
-		case OC_GET: 
+		case OC_GET:
+            if(msg_pedido->c_type != CT_KEY){
+                fprintf(strerr, "get - c_type errado!\n");
+                return message_error();
+            }
 			if(strcmp(msg_pedido->content.key,"*") == 0){
 				msg_resposta->content.keys = table_get_keys(tabela);
 				msg_resposta->c_type = CT_KEYS;
@@ -516,6 +528,10 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			}
 			break;
 		case OC_PUT:
+            if(msg_pedido->c_type != CT_ENTRY){
+                fprintf(strerr, "put - c_type errado!\n");
+                return message_error();
+            }
 			key_p = msg_pedido->content.entry->key;
 			value_p = msg_pedido->content.entry->value;
 			result_r = table_put(tabela, key_p, value_p);
@@ -526,7 +542,11 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
 			break;
-		case OC_COLLS: 
+		case OC_COLLS:
+            if(msg_pedido->c_type != CT_RESULT){
+                fprintf(strerr, "collisions - c_type errado!\n");
+                return message_error();
+            }
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = tabela->collisions;
 			break;
