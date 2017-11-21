@@ -175,8 +175,9 @@ int rtables_size(struct rtables_t *rtables){
     }
 
     msg_out->opcode = OC_SIZE;
-    msg_out->c_type = 0;
+    msg_out->c_type = CT_RESULT;
 	msg_out->table_num = rtables->t_num;
+    msg_out->content.result = 0;
 
     print_message(msg_out);
     struct message_t *msg_res;
@@ -204,8 +205,9 @@ int rtables_collisions(struct rtables_t *rtables){
     }
 
     msg_out->opcode = OC_COLLS;
-    msg_out->c_type = 0;
+    msg_out->c_type = CT_RESULT;
 	msg_out->table_num = rtables->t_num;
+    msg_out->content.result = 0;
 
     print_message(msg_out);
     struct message_t *msg_res;

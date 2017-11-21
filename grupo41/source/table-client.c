@@ -124,24 +124,26 @@ int main(int argc, char **argv){
 			}
 		}
 		else if(strcasecmp(tok_opc, "size") == 0){
+			int i;
 			if(count_param < 1){
 				printf("Input inválido: size <table_num>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((rtables_size(rtables)) == -1){
+				if((i = rtables_size(rtables)) == -1){
 					fprintf(stderr, "size - rtables_size failed\n");
 					return -1;
 				}
 			}
 		}
 		else if(strcasecmp(tok_opc, "collisions") == 0){
+			int i;
 			if(count_param < 1){
 				printf("Input inválido: collisions <table_num>\n");
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((rtables_collisions(rtables)) == -1){
+				if((i = rtables_collisions(rtables)) == -1){
 					fprintf(stderr, "collisions - rtables_collisions failed\n");
 					return -1;
 				}
