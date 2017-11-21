@@ -167,6 +167,36 @@ void sign_handler(int signum){
 	return;
 }
 
+int tratar_input(){
+	char in[MAX_SIZE];
+	char *tok;
+
+	fgets(in,MAX_SIZE,stdin);
+	in[strlen(in) - 1] = '\0';
+	if((tok = strtok(in," ")) == NULL){
+		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		return -1;
+	}
+	if((tok = strdup(tok)) == NULL){
+		fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+		quit = 1;
+		return -1;
+	}
+	if(strcasecmp( tok, "quit") == 0){
+		quit = 1;
+	} else if (strcasecmp( tok, "print") == 0){
+		if((tok = strtok(NULL," ")) == NULL){
+			fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+			return -1;
+		}
+		if((tok = strdup(tok)) == NULL){
+			fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+			quit = 1;
+			return -1;
+		}
+	}
+	return 0;
+}
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, nfds, res;
@@ -231,11 +261,7 @@ int main(int argc, char **argv){
   	connections[1].events = POLLIN;
 
 	nfds = 2;
-
-	char in[MAX_SIZE];
-	char *tok;
 	
-
 	while(!quit){ /* espera por dados nos sockets abertos */
 
 		res = poll(connections,nfds,-1);
@@ -262,24 +288,7 @@ int main(int argc, char **argv){
 		for (i = 1; i < NFDESC; i++) {
 			if (connections[i].revents & POLLIN) {
 				if(i == 1){
-					fgets(in,MAX_SIZE,stdin);
-					in[strlen(in) - 1] = '\0';
-
-					if((tok = strdup(strtok(in," ")) == NULL)){
-						fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
-						quit = 1;
-						continue;
-					}
-
-					if(strcasecmp( tok, "quit") == 0){
-						quit = 1;
-					} else if (strcasecmp( tok, "print") == 0){
-						if((tok = strtok(in," ") == NULL)){
-							table_skel_print(atoi(tok));
-						}
-
-					}
-				
+					tratar_input();
 				} else {
 					res = network_receive_send(connections[i].fd);
 				}
@@ -288,7 +297,7 @@ int main(int argc, char **argv){
 						close(connections[i].fd);
 						connections[i].fd = -1;
 						connections[i].revents = 0;
-						connections[i].events = 0;// FIXME
+						connections[i].events = 0;
 						nfds--;
 					} else {
 						quit = 1;
@@ -296,7 +305,6 @@ int main(int argc, char **argv){
 					}
 				}
 			}
-			
 		}
 	}
 	fprintf(stderr,"Closing server...");

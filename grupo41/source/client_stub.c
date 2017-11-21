@@ -32,6 +32,7 @@ struct rtables_t *rtables_bind(const char *address_port){
  */
 int rtables_unbind(struct rtables_t *rtables){
     if(rtables == NULL){
+        fprintf(stderr, "NULL rtables");
         return -1;
     }
 
@@ -45,6 +46,7 @@ int rtables_unbind(struct rtables_t *rtables){
  */
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
+        fprintf(stderr, "NULL params");
         return -1;
     }
 
@@ -82,6 +84,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
  */
 int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
+        fprintf(stderr, "NULL params");
         return -1;
     }
 
@@ -118,6 +121,7 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
  */
 struct data_t *rtables_get(struct rtables_t *rtables, char *key){
     if(rtables == NULL || key == NULL){
+        fprintf(stderr, "NULL params");
         return NULL;
     }
 
@@ -160,6 +164,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
  */
 int rtables_size(struct rtables_t *rtables){
     if(rtables == NULL){
+        fprintf(stderr, "NULL params");
         return -1;
     }
 
@@ -188,6 +193,7 @@ int rtables_size(struct rtables_t *rtables){
  */
 int rtables_collisions(struct rtables_t *rtables){
     if(rtables == NULL){
+        fprintf(stderr, "NULL params");
         return -1;
     }
 
@@ -217,6 +223,7 @@ int rtables_collisions(struct rtables_t *rtables){
  */
 char **rtables_get_keys(struct rtables_t *rtables){
     if(rtables == NULL){
+        fprintf(stderr, "NULL params");
         return NULL;
     }
 
@@ -265,6 +272,7 @@ char **rtables_get_keys(struct rtables_t *rtables){
  */
 void rtables_free_keys(char **keys){
     if(keys == NULL){
+        fprintf(stderr, "NULL params");
         return;
     }
 
