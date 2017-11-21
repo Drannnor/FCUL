@@ -6,7 +6,7 @@ OBJ_DIR = object
 SRC_DIR = source
 CFLAGS = -Wall -I $(INC_DIR)
 
-all: clean server client
+all: server client
 
 server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o
 	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o -o $(BIN_DIR)/$@
@@ -32,5 +32,5 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f -rf $(OBJ_DIR)/*
-	rm -f -rf $(BIN_DIR)/*
+	rm -rf $(OBJ_DIR)/*
+	rm -rf $(BIN_DIR)/*

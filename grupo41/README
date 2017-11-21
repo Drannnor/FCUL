@@ -40,3 +40,5 @@ linhas de comentario para indicar o nosso grupo, nomes e numeros,
                                mostrando tambem as colisões que ocorreram
                                
   2. quit que fecha o servidor de forma segura.
+
+  - Nao eh verificado se os parametros do input do cliente sao do tipo esperado
