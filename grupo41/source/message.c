@@ -489,7 +489,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 	switch(opc_p){
 		case OC_SIZE:
             if(msg_pedido->c_type != CT_RESULT){
-                fprintf(strerr, "size - c_type errado!\n");
+                fprintf(stderr, "size - c_type errado!\n");
                 return message_error();
             }
 			msg_resposta->c_type = CT_RESULT;
@@ -497,7 +497,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		case OC_UPDATE:
             if(msg_pedido->c_type != CT_ENTRY){
-                fprintf(strerr, "update - c_type errado!\n");
+                fprintf(stderr, "update - c_type errado!\n");
                 return message_error();
             }
 			key_p = msg_pedido->content.entry->key;
@@ -512,7 +512,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		case OC_GET:
             if(msg_pedido->c_type != CT_KEY){
-                fprintf(strerr, "get - c_type errado!\n");
+                fprintf(stderr, "get - c_type errado!\n");
                 return message_error();
             }
 			if(strcmp(msg_pedido->content.key,"*") == 0){
@@ -529,7 +529,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		case OC_PUT:
             if(msg_pedido->c_type != CT_ENTRY){
-                fprintf(strerr, "put - c_type errado!\n");
+                fprintf(stderr, "put - c_type errado!\n");
                 return message_error();
             }
 			key_p = msg_pedido->content.entry->key;
@@ -544,7 +544,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		case OC_COLLS:
             if(msg_pedido->c_type != CT_RESULT){
-                fprintf(strerr, "collisions - c_type errado!\n");
+                fprintf(stderr, "collisions - c_type errado!\n");
                 return message_error();
             }
 			msg_resposta->c_type = CT_RESULT;
