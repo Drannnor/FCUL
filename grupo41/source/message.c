@@ -10,7 +10,7 @@ Ricardo Cruz 47871
 #include <arpa/inet.h>
 
 #include "message-private.h"
-#include "table.h"
+#include "table-private.h"
 #include "entry-private.h"
 
 #define _OPCODE 2
@@ -100,13 +100,6 @@ int message_to_buffer(struct message_t *msg, char **msg_buf){
         return -1;
     }
 
-    // Consoante o msg->c_type, determinar o tamanho do vetor de bytes
-    //   que tem de ser alocado antes de serializar msg - done
-
-    // Alocar quantidade de memória determinada antes
-    //    *msg_buf = .... - done
-
-    // Inicializar ponteiro auxiliar com o endereço da memória alocada
     ptr = *msg_buf;
 
     short_value = htons(msg->opcode);
@@ -173,7 +166,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
     // msg_size tem tamanho mínimo ?
 
     if (msg_buf == NULL || msg_size < _MIN_SIZE){
-        
+        printf("fuckoff1");
         return NULL;
     }
 
@@ -195,6 +188,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
     if(msg->opcode < 10 || msg->opcode > 100){
         free(msg);
+        printf("%d\n", msg->opcode);
         return NULL;
     }
 
@@ -297,7 +291,6 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
 
         break;
     case CT_VALUE:
-        //??? sem &msg
         value_unmarshalling(msg, &msg_buf);
 
         break;
@@ -452,11 +445,119 @@ void print_message(struct message_t *msg) {
         }break;
         case CT_RESULT:{
 			if(msg->opcode == OC_RT_ERROR){
-				printf("Ocorreu um erro! Tente novamente!");
+				printf("Ocorreu um erro! Tente novamente!\n");
 				break;
 			}
 			printf("result: %d\n", msg->content.result);
         }break;
     }
     printf("-------------------\n");
+}
+
+
+/* Função que recebe uma tabela e uma mensagem de pedido e:
+	- aplica a operação na mensagem de pedido na tabela;
+	- devolve uma mensagem de resposta com oresultado.
+*/
+struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela){
+	struct message_t *msg_resposta;
+	
+	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
+	if(msg_pedido == NULL){
+		fprintf(stderr, "msg_pedido dada igual a NULL.\n");
+		return message_error();
+	}
+
+	if(tabela == NULL){
+		fprintf(stderr, "Tabela dada igual a NULL\n");
+		return message_error();
+	}
+
+	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
+		fprintf(stderr, "Failed malloc\n");
+		return NULL;
+	}
+	
+	/* Verificar opcode e c_type na mensagem de pedido */
+	short opc_p = msg_pedido->opcode;
+
+	/* Aplicar operação na tabela */
+	char *key_p;
+	struct data_t *value_p;
+	int result_r;
+
+	switch(opc_p){
+		case OC_SIZE:
+            if(msg_pedido->c_type != CT_RESULT){
+                fprintf(stderr, "size - c_type errado!\n");
+                return message_error();
+            }
+			msg_resposta->c_type = CT_RESULT;
+			msg_resposta->content.result = table_size(tabela);
+			break;
+		case OC_UPDATE:
+            if(msg_pedido->c_type != CT_ENTRY){
+                fprintf(stderr, "update - c_type errado!\n");
+                return message_error();
+            }
+			key_p = msg_pedido->content.entry->key;
+			value_p = msg_pedido->content.entry->value;
+			result_r = table_update(tabela, key_p, value_p);
+			if(result_r < 0){
+				free(msg_resposta);
+				return message_error();
+			}
+			msg_resposta->c_type = CT_RESULT;
+			msg_resposta->content.result = result_r;
+			break;
+		case OC_GET:
+            if(msg_pedido->c_type != CT_KEY){
+                fprintf(stderr, "get - c_type errado!\n");
+                return message_error();
+            }
+			if(strcmp(msg_pedido->content.key,"*") == 0){
+				msg_resposta->content.keys = table_get_keys(tabela);
+				msg_resposta->c_type = CT_KEYS;
+			}
+			else{
+				key_p = msg_pedido->content.key;
+				if((msg_resposta->content.data = table_get(tabela, key_p)) == NULL){
+					msg_resposta->content.data = data_create_empty();
+				}
+				msg_resposta->c_type = CT_VALUE;
+			}
+			break;
+		case OC_PUT:
+            if(msg_pedido->c_type != CT_ENTRY){
+                fprintf(stderr, "put - c_type errado!\n");
+                return message_error();
+            }
+			key_p = msg_pedido->content.entry->key;
+			value_p = msg_pedido->content.entry->value;
+			result_r = table_put(tabela, key_p, value_p);
+			if(result_r < 0){
+				free(msg_resposta);
+				return message_error();
+			}
+			msg_resposta->c_type = CT_RESULT;
+			msg_resposta->content.result = result_r;
+			break;
+		case OC_COLLS:
+            if(msg_pedido->c_type != CT_RESULT){
+                fprintf(stderr, "collisions - c_type errado!\n");
+                return message_error();
+            }
+			msg_resposta->c_type = CT_RESULT;
+			msg_resposta->content.result = tabela->collisions;
+			break;
+		default:
+			free(msg_resposta);
+			return message_error();
+	}
+
+	/* Preparar mensagem de resposta */
+	msg_resposta->opcode = opc_p + 1;
+	msg_resposta->table_num = msg_pedido->table_num;
+
+	return msg_resposta;
 }

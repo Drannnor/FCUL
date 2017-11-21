@@ -15,18 +15,19 @@ Ricardo Cruz 47871
 
 #include "network_client-private.h"
 #include "message-private.h"
+#include "client_stub-private.h"
+#include "client_stub.h"
 
 #define MAX_SIZE 81
 
 void print_message(struct message_t *msg);
 
 int main(int argc, char **argv){
-	struct server_t *server;
-	char *in;
-	char *tok;
-	struct message_t *msg_out, *msg_resposta;
-	struct entry_t *entry;
-	int completed;
+	char in[MAX_SIZE];
+	char *tok, *tok_opc, *key_o;
+	int count_param,i;
+	struct data_t *value_o;
+	char *tokens[3];
 
 	signal(SIGPIPE,SIG_IGN);
 
@@ -37,12 +38,9 @@ int main(int argc, char **argv){
 	}
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
-	server = network_connect(argv[1]);
+	struct rtables_t *rtables;
+	rtables = rtables_bind(argv[1]);
 
-	if((in =(char *)malloc(MAX_SIZE)) == NULL){
-		fprintf(stderr, "Failed malloc in\n");
-		return -1;
-	}
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	while (1){
@@ -56,88 +54,117 @@ int main(int argc, char **argv){
 		*/
 		fgets(in,MAX_SIZE,stdin);
 		in[strlen(in) - 1] = '\0';
-		tok = strtok(in," ");
+		tok_opc = strdup(strtok(in," "));
 
-		completed = 1;
-
-		if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
-			fprintf(stderr, "Failed malloc\n");
-			return -1;
+		count_param = 0;
+		while((tok = strtok(NULL, " ")) != NULL){
+			tokens[count_param] = strdup(tok);
+			count_param++;
 		}
 
-		if(strcasecmp(tok, "put") == 0){
-			msg_out->opcode = OC_PUT; 
-			msg_out->c_type = CT_ENTRY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
-				fprintf(stderr, "Failed malloc\n");
-				return -1;
+		if(strcasecmp(tok_opc, "put") == 0){
+			if(count_param < 3){
+				printf("Input inválido: put <table_num> <key> <value>\n");
+
 			}
-			entry->key = strdup(strtok(NULL," "));
-			tok = strtok(NULL, " \n");
-			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;
-		}
-		else if(strcasecmp(tok, "get")== 0){
-			msg_out->opcode = OC_GET; 
-			msg_out->c_type = CT_KEY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			msg_out->content.key = strdup(strtok(NULL," \n"));
-		}
-		else if(strcasecmp(tok, "update") == 0){
-			msg_out->opcode = OC_UPDATE; 
-			msg_out->c_type = CT_ENTRY;
-			msg_out->table_num = atoi(strtok(NULL, " "));
-			if((entry = (struct entry_t*) malloc(sizeof(struct entry_t))) == NULL){
-				fprintf(stderr, "Failed malloc\n");
-				return -1;
+			else{
+				rtables->t_num = atoi(tokens[0]);
+				if((key_o = strdup(tokens[1])) == NULL){
+					fprintf(stderr, "put - strdup failed\n");
+					return -1;
+				}
+				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2])) == NULL){
+					fprintf(stderr, "put - data_create2 failed\n");
+					return -1;
+				}
+				if((rtables_put(rtables, key_o, value_o)) == -1){
+					fprintf(stderr, "put - rtables_put failed\n");
+					return -1;
+				}
 			}
-			entry->key = strdup(strtok(NULL," "));
-			tok = strtok(NULL, " \n");
-			entry->value = data_create2(strlen(tok),(void*)tok);
-			msg_out->content.entry = entry;
 		}
-		else if(strcasecmp(tok, "size") == 0){
-			msg_out->opcode = OC_SIZE;
-			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));
+		else if(strcasecmp(tok_opc, "get") == 0){
+			if(count_param < 2){
+				printf("Input inválido: get <table_num> <key>\n");
+
+			}
+			else{
+				rtables->t_num = atoi(tokens[0]);
+				if((strcmp(tokens[1], "*") == 0)){
+					rtables_free_keys(rtables_get_keys(rtables));
+				}
+				else{
+					if((key_o = strdup(tokens[1])) == NULL){
+						fprintf(stderr, "get - strdup failed\n");
+						return -1;
+					}
+					data_destroy(rtables_get(rtables, key_o));
+				}
+			}
+
 		}
-		else if(strcasecmp(tok, "collisions") == 0){
-			msg_out->opcode = OC_COLLS;
-			msg_out->c_type = 0;
-			msg_out->table_num = atoi(strtok(NULL, " "));
+		else if(strcasecmp(tok_opc, "update") == 0){
+			if(count_param < 3){
+				printf("Input inválido: update <table_num> <key> <value>\n");
+			}
+			else{
+				rtables->t_num = atoi(tokens[0]);
+				if((key_o = strdup(tokens[1])) == NULL){
+					fprintf(stderr, "strdup failed\n");
+					return -1;
+				}
+				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]))==NULL){
+					fprintf(stderr, "update - data_create2 failed\n");
+					return -1;
+				}
+				if((rtables_update(rtables, key_o, value_o)) == -1){
+					fprintf(stderr, "update - rtables_update failed\n");
+					return -1;
+				}
+			}
 		}
-		else if(strcasecmp(tok, "quit") == 0){
-			free(msg_out);
-			free(in);
-			return network_close(server);
+		else if(strcasecmp(tok_opc, "size") == 0){
+			int i;
+			if(count_param < 1){
+				printf("Input inválido: size <table_num>\n");
+			}
+			else{
+				rtables->t_num = atoi(tokens[0]);
+				if((i = rtables_size(rtables)) == -1){
+					fprintf(stderr, "size - rtables_size failed\n");
+					return -1;
+				}
+			}
+		}
+		else if(strcasecmp(tok_opc, "collisions") == 0){
+			int i;
+			if(count_param < 1){
+				printf("Input inválido: collisions <table_num>\n");
+			}
+			else{
+				rtables->t_num = atoi(tokens[0]);
+				if((i = rtables_collisions(rtables)) == -1){
+					fprintf(stderr, "collisions - rtables_collisions failed\n");
+					return -1;
+				}
+			}
+		}
+		else if(strcasecmp(tok_opc, "quit") == 0){
+			free(tok_opc);
+			break;
 		}
 		else{
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
-			free(msg_out);
-			completed = 0;
 		}
 
-		/* Verificar se o comando foi "quit". Em caso afirmativo
-		   não há mais nada a fazer a não ser terminar decentemente.
-		 */
-		/* Caso contrário:
-
-			Verificar qual o comando;
-
-			Preparar msg_out;
-
-			Usar network_send_receive para enviar msg_out para
-			o server e receber msg_resposta.
-		*/
-		if(completed){
-			msg_resposta = network_send_receive(server, msg_out);
-			print_message(msg_resposta);
-			free_message(msg_out);
-			free_message(msg_resposta);
+		free(tok_opc);
+		i = 0;
+		while(i < count_param){
+			free(tokens[i]);
+			i++;
 		}
 	}
-	free(in);
-  	return network_close(server);
+	
+	return rtables_unbind(rtables); 
 }
 

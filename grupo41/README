@@ -1,29 +1,42 @@
-Grupo 41
-Alexandre Chícharo 47815
-Bruno Andrade 47829
-Ricardo Cruz 47871
+linhas de comentario para indicar o nosso grupo, nomes e numeros, 
+  em vez das 3 indicadas no enunciado, esperemos que não seja um problema
 
-  - Na máquina que usamos para testar o trabalho, tivemos algums problemas  relacionados com a arquitetura de 64 bits, por isso 
-  o restante dos testes foram compilados com a flag -m32. Mais tarde testamos o trabalho noutra maquina, também de 64 bits e não 
-  tivemos problemas
-
-  - Ao compilar o test_table.c obtivemos alguns warnings de "unused variable 'd'" nomeadamente das linhas 100 e 138
-
-  - Usamos 4 linhas de comentario para indicar o nosso grupo, nomes e numeros, em vez das 3 indicadas no enunciado, esperemos que 
-  não seja um problema
-
-  - Alterámos o table-private.h e, por consequente, o table.c de modo a contar o número de colisões
+2:
+  - Alterámos o table-private.h e por consequinte, o table.c, de modo a contar o
+  número de colisões
   
-  - Criámos um data-private.h e adicionámos a função data_create_empty no data.c, de modo a criar uma estrutura data_t 
-  com size=0 e data=NULL
+  - Criámos um data-private.h e adicionámos a função data_create_empty no
+  data.c, de modo a criar uma estrutura data_t com size=0 e data=NULL
 
-  - Criámos um entry-private.h e adicionámos a função entry_destroy no message.c, entry.c e table.c, de modo a poder libertar entries
+  - Criámos um entry-private.h e adicionámos a função entry_destroy no
+  message.c, entry.c e table.c, de modo a poder libertar entries
 
-  - Criámos um message-private.h e adicionámos duas funções: message_error, para devolver a mensagem de erro, e print_message, método
-  dado pelo professor
+  - Criámos um message-private.h e adicionámos duas funções: message_error, para
+  devolver a mensagem de erro, e print_message, método dado pelo professor
 
   - Movemos a função read_all e write_all para o ficheiro message.c 
 
   - Não definimos diferentes tipos de erros para diferentes mensagens de erro
 
-  - Para fechar o servidor, este não pode estar a atender algum cliente e temos de usar o ctrl+c
+  - Para fechar o servidor, este não pode estar a atender algum cliente e temos
+  de usar o ctrl+c
+
+3:
+  - Acrescentámos um método print_table no table.c para imprimir a tabela como
+  pedido pelo professor
+
+  - Acrescentámos um metodo table_skel_print(int n) no table_skel.c para chamar
+  o metodo print table sobre a tabela n.
+
+  - Acrescentámos um metodo table_skel_connect que envia o numero de tabelas do
+  servidor, a um cliente recem connectado.
+
+  - Tornamos, ambos, o cliente e o servidor, mais robustos, certificando-nos de
+  que eram capazes de tratar inputs incorretos e escrevendo no ecra mensagens de
+  erro, quando tal acontece.
+  
+  - Ao servidor, acrescentámos dois comandos introduzidos pelo sdtin: 
+  1. print <numero da tabela>  que imprime todas as entradas de uma tabela, 
+                               mostrando tambem as colisões que ocorreram
+                               
+  2. quit que fecha o servidor de forma segura.

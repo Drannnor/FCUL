@@ -17,4 +17,6 @@ struct table_t{
 	int collisions;
 };
 
+void print_table(struct table_t *table);
+
 #endif

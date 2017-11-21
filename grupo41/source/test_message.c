@@ -30,7 +30,7 @@ void print_message(struct message_t *msg) {
 		}break;
 		case CT_RESULT:{
 			printf("result: %d\n", msg->content.result);
-		};
+		}break;
 	}
 	printf("-------------------\n");
 }

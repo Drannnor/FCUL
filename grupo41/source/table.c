@@ -174,3 +174,23 @@ struct entry_t *get_entry(struct table_t *table, char *key){
 
     return entrada;
 }
+
+void print_table(struct table_t *table){
+    int i;
+    char* tkey; 
+    struct entry_t* tkeyn;
+    printf("-------TABELA-------\n");
+    for(i=0; i < table->size_table; i++){
+        printf("%d: ",i);
+        if((tkey = table->hash_table[i].key) != NULL){
+            printf("%s ", tkey);
+            tkeyn = table->hash_table[i].next;
+            while(tkeyn != NULL){
+                printf("%s ", tkeyn->key);
+                tkeyn = tkeyn->next;
+            }
+        }
+        printf("\n");
+    }
+    printf("-------------------\n");
+}

@@ -10,13 +10,14 @@ Ricardo Cruz 47871
    Exemplo de uso: ./table_server 54321 10 15 20 25
 */
 #include <error.h>
-
-#include "inet.h"
 #include "table-private.h"
 #include "message-private.h"
+#include "table_skel-private.h"
+
+#define NFDESC 6
+#define MAX_SIZE 1000
 
 static int quit = 0;
-static int tablenums;
 
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -27,6 +28,11 @@ int make_server_socket(short port){
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Erro ao criar socket.\n");
 		return -1;
+	}
+	
+	int sim = 1;
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
+		fprintf(stderr,"SO_REUSEADDR setsockopt error");
 	}
 
 	server.sin_family = AF_INET;
@@ -44,14 +50,10 @@ int make_server_socket(short port){
 		close(socket_fd);
 		return -1;
 	}
+
 	return socket_fd;
 }
 
-
-/* Função que recebe uma tabela e uma mensagem de pedido e:
-	- aplica a operação na mensagem de pedido na tabela;
-	- devolve uma mensagem de resposta com oresultado.
-*/
 
 /* Função "inversa" da função network_send_receive usada no table-client.
    Neste caso a função implementa um ciclo receive/send:
@@ -60,20 +62,16 @@ int make_server_socket(short port){
 	Aplica o pedido na tabela;
 	Envia a resposta.
 */
-int network_receive_send(int sockfd, struct table_t **tables){
+int network_receive_send(int sockfd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result;
   	struct message_t *msg_pedido, *msg_resposta;
 
 	/* Verificar parâmetros de entrada */
-	if(*tables == NULL){
-		fprintf(stderr, "Lista de tabelas inválida\n");
-		return -1;
-	}
 
 	if(sockfd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
-		return -1;
+		return -2;
 	}
 
 	/* Com a função read_all, receber num inteiro o tamanho da 
@@ -89,7 +87,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 	   mensagem de pedido. */
 	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
 		fprintf(stderr, "Failed malloc buff_pedido \n");
-		return -1;
+		return -2;
 	}
 
 	/* Com a função read_all, receber a mensagem de resposta. */
@@ -107,19 +105,18 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		fprintf(stderr, "Failed unmarshalling\n");
 		free(buff_pedido);
 		free(msg_pedido);
-		return -1;
+		return -2;
 	}
 	
-	/* Processar a mensagem */
-	if(msg_pedido->table_num >= tablenums){
-		fprintf(stderr, "Numero de tabela dado inválido.\n");
-		msg_resposta = message_error();
+	print_message(msg_pedido);
+	if((msg_resposta = invoke(msg_pedido)) == NULL){
+		fprintf(stderr, "Failed invoke\n");
+		free(buff_pedido);
+		free(msg_pedido);
+		return -2;
 	}
-	else{
-		msg_resposta = process_message(msg_pedido, tables[msg_pedido->table_num]);
-	}
-
-	/* Serializar a mensagem a enviar */
+	print_message(msg_resposta);
+	
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
@@ -127,7 +124,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Enviar ao cliente o tamanho da mensagem que será enviada
@@ -141,7 +138,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Enviar a mensagem que foi previamente serializada */
@@ -152,7 +149,7 @@ int network_receive_send(int sockfd, struct table_t **tables){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return -1;
+		return -2;
 	}
 
 	/* Libertar memória */
@@ -170,10 +167,50 @@ void sign_handler(int signum){
 	return;
 }
 
+int tratar_input(){
+	char in[MAX_SIZE];
+	char *tok;
+
+	fgets(in,MAX_SIZE,stdin);
+	in[strlen(in) - 1] = '\0';
+	if((tok = strtok(in," ")) == NULL){
+		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		return -1;
+	}
+	if((tok = strdup(tok)) == NULL){
+		fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+		quit = 1;
+		return -1;
+	}
+	if(strcasecmp( tok, "quit") == 0){
+		quit = 1;
+		
+	} else if (strcasecmp( tok, "print") == 0){
+		free(tok);
+		if((tok = strtok(NULL," ")) == NULL){
+			fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+			return -1;
+		}
+		if((tok = strdup(tok)) == NULL){
+			fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+			quit = 1;
+			return -1;
+		}
+		table_skel_print(atoi(tok));
+	} else {
+		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+	}
+	free(tok);
+	return 0;
+}
+
 int main(int argc, char **argv){
-	int listening_socket, connsock, result;
-	struct table_t **tables;
 	struct sigaction a;
+	int socket_de_escuta, i, nfds, res;
+
+	char **n_tables;
+
+	struct pollfd connections[NFDESC];
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
@@ -187,50 +224,114 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	tablenums = (argc-2);
-
-	if ((listening_socket = make_server_socket(atoi(argv[1]))) < 0) return -1;
-	
-	/*********************************************************/
-	/* Criar as tabelas de acordo com linha de comandos dada */
-	/*********************************************************/
-	if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenums))) == NULL){
-		fprintf(stderr, "Failed malloc tables\n");
+	/* inicialização */
+	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
+		fprintf(stderr, "Error creating server socket");
 		return -1;
 	}
 
-	int i;
-	for(i = 2; i < argc; i++){
-		tables[i-2] = table_create(atoi(argv[i]));
+	/* inicializar o n_tables*/
+	if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
+		fprintf(stderr, "Failed malloc tables1\n");
+		return -1;
 	}
 
-	while (!quit) {
-		if ((connsock = accept(listening_socket, NULL, NULL)) == -1){
-			break;
+	if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+		fprintf(stderr, "Failed malloc tables2\n");
+		free(n_tables);
+		return -1;
+	}
+
+	sprintf(n_tables[0], "%d", argc-2);
+	int count;
+	for(i = 1; i <= argc - 2; i++){
+		count = i-1;
+		if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+			while(count >= 1){
+				free(n_tables[count]);
+				count--;
+			}
+			free(n_tables);
+			fprintf(stderr, "Failed malloc tables3\n");
+			return -1;
 		}
-			
-		printf(" * Client is connected!\n");
+		//verificar os mallocs TODO???
+    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
+	 } 
 
-		while (!quit && (result = network_receive_send(connsock, tables)) >= 0){
-			
-			/* Fazer ciclo de pedido e resposta */
-			
-			/* Ciclo feito com sucesso ? Houve erro?
-			   Cliente desligou? */
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		return -1;
+	}
 
+	//initializacao da lista de conections
+	for (i = 0; i < NFDESC; i++){
+    	connections[i].fd = -1; // poll ignora estruturas com fd < 0
+		connections[i].revents = 0;
+		connections[i].events = 0;
+	}
+
+  	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
+  	connections[0].events = POLLIN;
+    
+    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standart in
+  	connections[1].events = POLLIN;
+
+	nfds = 2;
+	
+	while(!quit){ /* espera por dados nos sockets abertos */
+
+		res = poll(connections,nfds,-1);
+		if (res<0){
+			if (errno == EINTR){
+				continue;
+			}else{
+                quit = 1;
+            }
 		}
-		printf(" * Client is disconnected!\n");
+
+        i = 2;
+
+		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
+            	while(connections[i].fd != -1){
+					i++;
+            	}
+        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
+          			connections[i].events = POLLIN; // Vamos esperar dados nesta socket
+					nfds++;
+				}
+      	}
+		/* um dos sockets de ligação tem dados para ler */
+		for (i = 1; i < nfds; i++) {
+			if (connections[i].revents & POLLIN) {
+				if(i == 1){
+					tratar_input();
+				} else {
+					res = network_receive_send(connections[i].fd);
+					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
+						if(res == -1){		
+							close(connections[i].fd);
+							connections[i].fd = connections[nfds-1].fd;
+							connections[i].revents = connections[nfds-1].revents;
+							connections[i].events = connections[nfds-1].events;
+							connections[nfds-1].fd = -1;
+							connections[nfds-1].revents = 0;
+							connections[nfds-1].events = 0;
+							nfds--;
+						} else {
+							quit = 1;
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
+	fprintf(stderr,"Closing server...");
 
-
-
-	table_skel_destroy();
-	/*
-	for(i = 0; i < tablenums; i++){
-		table_destroy(tables[i]);
+	for (i = 0; i < nfds; i++) {
+		close(connections[i].fd);
 	}
-
-	free(tables);*/
-
+	
 	return table_skel_destroy();
 }

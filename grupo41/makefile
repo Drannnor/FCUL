@@ -6,14 +6,14 @@ OBJ_DIR = object
 SRC_DIR = source
 CFLAGS = -Wall -I $(INC_DIR)
 
-all: server client
+all: clean server client
 
-server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o
-	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o -o  $(BIN_DIR)/$@
+server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o
+	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o -o $(BIN_DIR)/$@
 
 
-client: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-client.o $(OBJ_DIR)/network_client.o
-	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/network_client.o -o  $(BIN_DIR)/$@
+client: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-client.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o
+	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o -o  $(BIN_DIR)/$@
 
 
 test_table: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/test_table.o
@@ -26,7 +26,7 @@ test_entry: $(OBJ_DIR)/data.o $(OBJ_DIR)/test_entry.o $(OBJ_DIR)/entry.o
 
 test_data: $(OBJ_DIR)/data.o $(OBJ_DIR)/test_data.o
 	$(CC)  $(CFLAGS)  $(OBJ_DIR)/$@.o $< -o $(BIN_DIR)/$@
-		
+
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@

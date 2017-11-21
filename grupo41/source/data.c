@@ -17,10 +17,11 @@ struct data_t *data_create(int size){
         a = (struct data_t*) malloc(sizeof(struct data_t));
         if (a != NULL){
             a->datasize = size;
-            a->data = malloc(size);
+            if((a->data = malloc(size)) == NULL){
+                return NULL;
+            }
         }
     }
-
     return a;
 }
 
@@ -53,7 +54,7 @@ struct data_t *data_dup(struct data_t *data){
 struct data_t *data_create_empty(){
     struct data_t *a = NULL;
     if((a = (struct data_t*) malloc(sizeof(struct data_t))) == NULL){
-        fprintf(stderr, "data_create_empty rip malloc\n");
+        fprintf(stderr, "data_create_empty - failed malloc\n");
     }
     if (a != NULL){
         a->datasize = 0;
