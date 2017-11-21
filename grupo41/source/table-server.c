@@ -251,6 +251,7 @@ int main(int argc, char **argv){
 				free(n_tables[count]);
 				count--;
 			}
+			free(n_tables);
 			fprintf(stderr, "Failed malloc tables3\n");
 			return -1;
 		}
