@@ -39,8 +39,13 @@ int main(int argc, char **argv){
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
 	struct rtables_t *rtables;
-	rtables = rtables_bind(argv[1]);
-
+	//TODO: receber ip e porta secundario
+	if((rtables = rtables_bind(argv[1]) == NULL){
+		if((rtables = rtables_bind(argv[2]) == NULL){
+			fprintf(stderr, "Unable to connect to server (theres more than one but shhh!");
+			return -1;
+		}
+	}
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	while (1){

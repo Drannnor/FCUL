@@ -20,7 +20,10 @@ struct rtables_t *rtables_bind(const char *address_port){
         return NULL;
     }
 
-    rtables->server = network_connect(address_port);
+    if((rtables->server = network_connect(address_port)) == NULL){
+        free(rtables);
+        return NULL;
+    }
     rtables->t_num = 0;
 
     return rtables;
