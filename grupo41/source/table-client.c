@@ -82,6 +82,8 @@ int main(int argc, char **argv){
 					fprintf(stderr, "put - data_create2 failed\n");
 					return -1;
 				}
+				//FIXME: Como diferenciar o secundario do primario aqui???
+				//FIXME: Criacao de threads???
 				if((rtables_put(rtables, key_o, value_o)) == -1){
 					fprintf(stderr, "put - rtables_put failed\n");
 					return -1;
@@ -170,6 +172,7 @@ int main(int argc, char **argv){
 		}
 	}
 	
+	//FIXME: É este o ack para o client?
 	return rtables_unbind(rtables); 
 }
 
