@@ -174,11 +174,11 @@ int tratar_input(){
 	fgets(in,MAX_SIZE,stdin);
 	in[strlen(in) - 1] = '\0';
 	if((tok = strtok(in," ")) == NULL){
-		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		fprintf(stderr,"Input inválido: quit, print <número da tabela>\n");
 		return -1;
 	}
 	if((tok = strdup(tok)) == NULL){
-		fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+		fprintf(stderr,"Erro ao alocar memória para o primeiro token");
 		quit = 1;
 		return -1;
 	}
@@ -188,17 +188,17 @@ int tratar_input(){
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
 		if((tok = strtok(NULL," ")) == NULL){
-			fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+			fprintf(stderr,"Input inválido: print <número da tabela>\n");
 			return -1;
 		}
 		if((tok = strdup(tok)) == NULL){
-			fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+			fprintf(stderr,"Erro ao alocar memória para o token");
 			quit = 1;
 			return -1;
 		}
 		table_skel_print(atoi(tok));
 	} else {
-		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		fprintf(stderr,"Input inválido: quit, print <número da tabela>\n");
 	}
 	free(tok);
 	return 0;
@@ -264,7 +264,7 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	//initializacao da lista de conections
+	//initializacao da lista de connections
 	for (i = 0; i < NFDESC; i++){
     	connections[i].fd = -1; // poll ignora estruturas com fd < 0
 		connections[i].revents = 0;
@@ -274,7 +274,7 @@ int main(int argc, char **argv){
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
-    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standart in
+    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standard in
   	connections[1].events = POLLIN;
 
 	nfds = 2;
