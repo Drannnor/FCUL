@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 					fprintf(stderr, "update - data_create2 failed\n");
 					return -1;
 				}
-				if((rtables_update(rtables, key_o, value_o)) == -1){
+				if((rtables_update(rtables, key_o, value_o)) == -2){
 					fprintf(stderr, "update - rtables_update failed\n");
 					return -1;
 				}
@@ -130,7 +130,7 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((i = rtables_size(rtables)) == -1){
+				if((i = rtables_size(rtables)) == -2){
 					fprintf(stderr, "size - rtables_size failed\n");
 					return -1;
 				}
@@ -143,7 +143,7 @@ int main(int argc, char **argv){
 			}
 			else{
 				rtables->t_num = atoi(tokens[0]);
-				if((i = rtables_collisions(rtables)) == -1){
+				if((i = rtables_collisions(rtables)) == -2){
 					fprintf(stderr, "collisions - rtables_collisions failed\n");
 					return -1;
 				}
