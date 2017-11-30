@@ -123,7 +123,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		} else { 
 			break;
 		}
-		
 	}
 	
 

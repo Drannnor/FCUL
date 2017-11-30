@@ -10,6 +10,9 @@
  * retorna NULL em caso de erro .
  */
 struct rtables_t *rtables_bind(const char *address_port){
+    int res;
+    int first_try = 1;
+    int tb;
     if(address_port == NULL){
         return NULL;
     }
@@ -21,7 +24,25 @@ struct rtables_t *rtables_bind(const char *address_port){
     }
 
     rtables->server = network_connect(address_port);
-    rtables->t_num = 0;
+    rtables->table_index = 0;
+
+    
+	while(first_try >= 0){
+		if((res = read_all(rtables->server->socket_fd, (char *) &tb, _SHORT)) <= 0){
+			if(res == 0 || first_try > 0){
+				sleep(RETRY_TIME);
+				first_try--;
+			}
+			else{
+				fprintf(stderr, "Read failed - size read_all\n");
+                rtables_unbind(rtables);
+				return NULL;
+			}	
+		} else { 
+			break;
+		}
+	}
+    rtables->numberOfTables = ntohs(tb);
 
     return rtables;
 }
@@ -47,18 +68,18 @@ int rtables_unbind(struct rtables_t *rtables){
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
         fprintf(stderr, "NULL params");
-        return -1;
+        return -2;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -1;
+        return -2;
     }
 
     msg_out->opcode = OC_PUT;
     msg_out->c_type = CT_ENTRY;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
 
     if((msg_out->content.entry = entry_create(key, value)) == NULL){
         fprintf(stderr, "Failed to create entry!\n");
@@ -85,18 +106,18 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
 int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
         fprintf(stderr, "NULL params");
-        return -1;
+        return -2;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -1;
+        return -2;
     }
 
     msg_out->opcode = OC_UPDATE;
     msg_out->c_type = CT_ENTRY;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
 
     if((msg_out->content.entry = entry_create(key, value)) == NULL){
         fprintf(stderr, "Failed to create entry!\n");
@@ -133,7 +154,7 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 
     msg_out->opcode = OC_GET;
     msg_out->c_type = CT_KEY;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
     if((msg_out->content.key = strdup(key)) == NULL){
         free_message(msg_out);
         return NULL;
@@ -165,18 +186,18 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 int rtables_size(struct rtables_t *rtables){
     if(rtables == NULL){
         fprintf(stderr, "NULL params");
-        return -1;
+        return -2;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -1;
+        return -2;
     }
 
     msg_out->opcode = OC_SIZE;
     msg_out->c_type = CT_RESULT;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
     msg_out->content.result = 0;
 
     print_message(msg_out);
@@ -195,18 +216,18 @@ int rtables_size(struct rtables_t *rtables){
 int rtables_collisions(struct rtables_t *rtables){
     if(rtables == NULL){
         fprintf(stderr, "NULL params");
-        return -1;
+        return -2;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -1;
+        return -2;
     }
 
     msg_out->opcode = OC_COLLS;
     msg_out->c_type = CT_RESULT;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
     msg_out->content.result = 0;
 
     print_message(msg_out);
@@ -239,7 +260,7 @@ char **rtables_get_keys(struct rtables_t *rtables){
 
     msg_out->opcode = OC_GET;
     msg_out->c_type = CT_KEY;
-	msg_out->table_num = rtables->t_num;
+	msg_out->table_num = rtables->table_index;
     msg_out->content.key = asterisco;
 
     print_message(msg_out);

@@ -297,7 +297,21 @@ int main(int argc, char **argv){
 					i++;
             	}
         		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
-          			connections[i].events = POLLIN; // Vamos esperar dados nesta socket
+          			connections[i].events = POLLIN;
+					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
+						if (res == 0){
+							close(connections[i].fd);
+							connections[i].fd = connections[nfds-1].fd;
+							connections[i].revents = connections[nfds-1].revents;
+							connections[i].events = connections[nfds-1].events;
+							connections[nfds-1].fd = -1;
+							connections[nfds-1].revents = 0;
+							connections[nfds-1].events = 0;
+						} else {
+							quit = 1;
+						}
+
+					} // Vamos esperar dados nesta socket
 					nfds++;
 				}
       	}

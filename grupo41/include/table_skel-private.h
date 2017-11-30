@@ -4,5 +4,6 @@
 #include "table_skel.h"
 
 void table_skel_print(int n);
+int table_skel_send_tablenum (int socketfd);
 
 #endif

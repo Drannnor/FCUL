@@ -7,8 +7,8 @@
 //declarar a estrutura
 struct rtables_t{
     struct server_t *server; 
-    //int server_fd;
-    int t_num;
+    int numberOfTables;
+    int table_index;
 };
 
 #endif
