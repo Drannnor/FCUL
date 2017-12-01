@@ -259,7 +259,7 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-		//contacta_secundario(n_tables,ip e tal);//e verificar o resultadoTODO:
+		//noutra thread contacta_secundario(n_tables,ip e tal);//e verificar o resultadoTODO:
 	} else{
 		//n_tables = messagem_do_primario(ip e tal);//TODO:
 	}
@@ -309,7 +309,7 @@ int main(int argc, char **argv){
             	}
         		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
           			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
+					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){//TODO: noutra thread
 						if (res == 0){
 							close(connections[i].fd);
 							connections[i].fd = connections[nfds-1].fd;
@@ -322,7 +322,7 @@ int main(int argc, char **argv){
 							quit = 1;
 						}
 
-					} // Vamos esperar dados nesta socket
+					} 
 					nfds++;
 				}
       	}
@@ -332,7 +332,8 @@ int main(int argc, char **argv){
 				if(i == 1){
 					tratar_input();
 				} else {
-					res = network_receive_send(connections[i].fd);
+					res = network_receive_send(connections[i].fd);//TODO: noutra thread
+					//se for o primario, criar uma thread que envia para o secundario TODO:
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		
 							close(connections[i].fd);
