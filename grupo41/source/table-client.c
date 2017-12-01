@@ -23,18 +23,22 @@ Ricardo Cruz 47871
 void print_message(struct message_t *msg);
 
 int isNumber(char *token){
-	int i;
 
 	while(token){
 		if(!isdigit(token)){
-			return -1;
+			return 0;
 		}
 		token++;
 	}
-	
-	return 0;
+
+	return 1;
 }
 
+void ol_switcheroo(char **primary, char **secondary){
+	char* amigo = *primary;
+	*primary = *secondary;
+	*secondary = amigo;
+}
 
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
@@ -61,6 +65,7 @@ int main(int argc, char **argv){
 			fprintf(stderr, "Unable to connect to server (theres more than one but shhh!");
 			return -1;
 		}
+		ol_switcheroo(&primary,&secondary);
 	}
 
 
@@ -89,6 +94,9 @@ int main(int argc, char **argv){
 				printf("Input inválido: put <table_num> <key> <value>\n");
 
 			} else {
+				if(!isNumber(tokens[0])){
+					printf("Input inválido: número de tabela tem de ser um inteiro");
+				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
@@ -105,37 +113,40 @@ int main(int argc, char **argv){
 				//FIXME: Como diferenciar o secundario do primario aqui???
 				//FIXME: Criacao de threads???
 
-				if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME:
+				if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
-						fprintf(stderr, "put - lost connection to server");//FIXME:
+						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
 						return -1;
 					}
-					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME:
-						fprintf(stderr, "put - lost connection to server");//FIXME:
+					ol_switcheroo(&primary,&secondary);
+					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
+						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
 						return -1;
 					}
 				}
-				
 			}
 		}
 		else if(strcasecmp(tok_opc, "get") == 0){
 			if(count_param < 2){
 				printf("Input inválido: get <table_num> <key>\n");
 			} else {
+				if(!isNumber(tokens[0])){
+					printf("Input inválido: número de tabela tem de ser um inteiro");
+				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
 				if((strcmp(tokens[1], "*") == 0)){
-					rtables_free_keys(rtables_get_keys(rtables));
+					rtables_free_keys(rtables_get_keys(rtables));//FIXME: arranjar return 
 				} else {
 					if((key_o = strdup(tokens[1])) == NULL){
 						fprintf(stderr, "get - strdup failed\n");
 						return -1;
 					}
-					data_destroy(rtables_get(rtables, key_o));
+					data_destroy(rtables_get(rtables, key_o));//FIXME: arranjar return
 				}
 			}
 
@@ -143,6 +154,9 @@ int main(int argc, char **argv){
 			if(count_param < 3){
 				printf("Input inválido: update <table_num> <key> <value>\n");
 			} else {
+				if(!isNumber(tokens[0])){
+					printf("Input inválido: número de tabela tem de ser um inteiro");
+				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
@@ -156,9 +170,17 @@ int main(int argc, char **argv){
 					fprintf(stderr, "update - data_create2 failed\n");
 					return -1;
 				}
-				if((rtables_update(rtables, key_o, value_o)) == -2){
-					fprintf(stderr, "update - rtables_update failed\n");
-					return -1;
+				if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+					rtables_unbind(rtables);
+					if((rtables = rtables_bind(secondary)) == NULL){
+						fprintf(stderr, "update - lost connection to server");//FIXME: alterar msg_error
+						return -1;
+					}
+					ol_switcheroo(&primary,&secondary);
+					if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+						fprintf(stderr, "update - rtables_update failed\n");//FIXME: alterar msg_error
+						return -1;
+					}
 				}
 			}
 		} else if(strcasecmp(tok_opc, "size") == 0){
@@ -166,18 +188,25 @@ int main(int argc, char **argv){
 			if(count_param < 1){
 				printf("Input inválido: size <table_num>\n");
 			} else {
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
-					continue;
+				if(!isNumber(tokens[0])){
+					printf("Input inválido: número de tabela tem de ser um inteiro");
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((i = rtables_size(rtables)) == -2){
-					fprintf(stderr, "size - rtables_size failed\n");
-					return -1;
+				if((i = rtables_size(rtables)) == -2){//FIXME: alterar return
+					rtables_unbind(rtables);
+					if((rtables = rtables_bind(secondary)) == NULL){
+						fprintf(stderr, "size - lost connection to server");//FIXME: alterar msg_error
+						return -1;
+					}
+					ol_switcheroo(&primary,&secondary);
+					if((rtables_size(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+						fprintf(stderr, "size - rtables_size failed\n");//FIXME: alterar msg_error
+						return -1;
+					}
 				}
 			}
 		} else if(strcasecmp(tok_opc, "collisions") == 0){
@@ -186,14 +215,25 @@ int main(int argc, char **argv){
 				printf("Input inválido: collisions <table_num>\n");
 			}
 			else{
+				if(!isNumber(tokens[0])){
+					printf("Input inválido: número de tabela tem de ser um inteiro");
+				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((i = rtables_collisions(rtables)) == -2){
-					fprintf(stderr, "collisions - rtables_collisions failed\n");
-					return -1;
+				if((i = rtables_collisions(rtables)) == -2){//FIXME: alterar return 
+					rtables_unbind(rtables);
+					if((rtables = rtables_bind(secondary)) == NULL){
+						fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
+						return -1;
+					}
+					ol_switcheroo(&primary,&secondary);
+					if((rtables_collisions(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+						fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
+						return -1;
+					}
 				}
 			}
 		} else if(strcasecmp(tok_opc, "quit") == 0){
