@@ -207,7 +207,7 @@ int tratar_input(){
 
 int main(int argc, char **argv){
 	struct sigaction a;
-	int socket_de_escuta, i, nfds, res;
+	int socket_de_escuta, i, j, nfds, res;
 
 	char **n_tables;
 
@@ -219,49 +219,53 @@ int main(int argc, char **argv){
 	sigaction( SIGINT, &a, NULL );
 	signal(SIGPIPE,SIG_IGN);
 
-	if (argc >= 4){
+	if (argc >= 4){//servidor primario
 		primary = 1;
-		/* inicializar o n_tables*/
-		if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
-			fprintf(stderr, "Failed malloc tables1\n");
-			return -1;
-		}
-	
-		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
-			fprintf(stderr, "Failed malloc tables2\n");
-			free(n_tables);
-			return -1;
-		}
-	
-		sprintf(n_tables[0], "%d", argc-2);
-		int count;
-		for(i = 1; i <= argc - 2; i++){
-			count = i-1;
-			if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
-				while(count >= 1){
-					free(n_tables[count]);
-					count--;
-				}
-				free(n_tables);
-				fprintf(stderr, "Failed malloc tables3\n");
-				return -1;
-			}
-    		memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
-		 } 
-	 
-		if((table_skel_init(n_tables) < 0)){
-			fprintf(stderr, "Failed to init\n");
-			return -1;
-		}
-
-	} else if (argc == 2){
+	} else if (argc == 2){//servidor secundario
 		primary = 0;
-	} else {
+	} else {//input invalido
 		printf("Uso para servidor primario: ./server <porta TCP> <IP do secundario:porta TCP do secundario> <table1_size> [<table2_size> ...]\n");
 		printf("Exemplo de uso: ./server 54321 127.0.0.1:54322 10 15 20 25\n");
 		printf("-----------------------------------------------------\n");
 		printf("Uso para servidor secundario: ./server <porta TCP>\n");
 		printf("Exemplo de uso: ./server 54322\n");
+		return -1;
+	}
+
+	int table_num = argc - 3;
+	if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+		fprintf(stderr, "Failed malloc tables1\n");
+		return -1;
+	}
+
+	if(primary){
+		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+			fprintf(stderr, "Failed malloc tables2\n");
+			free(n_tables);
+			return -1;
+		}
+
+		sprintf(n_tables[0], "%d", table_num);
+
+		for(i = 1; i <= table_num; i++){
+			if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+				for(j = 0; j < i; j++){
+					free(n_tables[j]);
+				}
+				free(n_tables);
+				fprintf(stderr, "Failed malloc tables3\n");
+				return -1;
+			}
+			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
+		}
+		n_tables[table_num + 1] = NULL;
+		//contacta_secundario(n_tables,ip e tal);//e verificar o resultadoTODO:
+	} else{
+		//n_tables = messagem_do_primario(ip e tal);//TODO:
+	}
+	
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
 		return -1;
 	}
 
