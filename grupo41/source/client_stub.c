@@ -1,5 +1,4 @@
 #include "client_stub-private.h"
-#include "client_stub.h"
 #include "entry-private.h"
 
 /* Fun��o para estabelecer uma associa��o entre o cliente e um conjunto de
