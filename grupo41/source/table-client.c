@@ -22,9 +22,23 @@ Ricardo Cruz 47871
 
 void print_message(struct message_t *msg);
 
+int isNumber(char *token){
+	int i;
+
+	while(token){
+		if(!isdigit(token)){
+			return -1;
+		}
+		token++;
+	}
+	
+	return 0;
+}
+
+
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
-	char *tok, *tok_opc, *key_o;
+	char *tok, *tok_opc, *key_o, *primary, *secondary;
 	int count_param,i;
 	struct data_t *value_o;
 	char *tokens[3];
@@ -32,17 +46,18 @@ int main(int argc, char **argv){
 	signal(SIGPIPE,SIG_IGN);
 
 	/* Testar os argumentos de entrada */
-	if(argc < 2){
+	if(argc < 3){
 		fprintf(stderr, "Insufficient arguments\n");
 		return -1;
 	}
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
 	struct rtables_t *rtables;
-
+	primary = strdup(argv[1]);
+	secondary = strdup(argv[2]);
 	//TODO: receber ip e porta secundario
-	if((rtables = rtables_bind(argv[1]) == NULL){
-		if((rtables = rtables_bind(argv[2]) == NULL){
+	if((rtables = rtables_bind(primary) == NULL){
+		if((rtables = rtables_bind(secondary) == NULL){
 			fprintf(stderr, "Unable to connect to server (theres more than one but shhh!");
 			return -1;
 		}
@@ -90,16 +105,23 @@ int main(int argc, char **argv){
 				//FIXME: Como diferenciar o secundario do primario aqui???
 				//FIXME: Criacao de threads???
 
-				if((rtables_put(rtables, key_o, value_o)) == -2){
-					fprintf(stderr, "put - rtables_put failed\n");
-					return -1;
+				if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME:
+					rtables_unbind(rtables);
+					if((rtables = rtables_bind(secondary)) == NULL){
+						fprintf(stderr, "put - lost connection to server");//FIXME:
+						return -1;
+					}
+					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME:
+						fprintf(stderr, "put - lost connection to server");//FIXME:
+						return -1;
+					}
 				}
+				
 			}
 		}
 		else if(strcasecmp(tok_opc, "get") == 0){
 			if(count_param < 2){
 				printf("Input inválido: get <table_num> <key>\n");
-
 			} else {
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
@@ -188,7 +210,8 @@ int main(int argc, char **argv){
 			i++;
 		}
 	}
-	
+	free(primary);
+	free(secondary);
 	//FIXME: É este o ack para o client?
 	return rtables_unbind(rtables); 
 }
