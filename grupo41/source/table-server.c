@@ -238,7 +238,7 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	if(primary){
+	if(primary){//Servidor Primario
 		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
 			fprintf(stderr, "Failed malloc tables2\n");
 			free(n_tables);
@@ -259,9 +259,14 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-		//noutra thread contacta_secundario(n_tables,ip e tal);//e verificar o resultadoTODO:
-	} else{
-		//n_tables = messagem_do_primario(ip e tal);//TODO:
+		//noutra thread contacta_secundario(n_tables,ip e tal);
+		//e verificar o resultadoTODO:
+	} else{//Servidor Secundario
+		//se existe ficheiro ficheiro com as informacoes do servidor
+			//fazer hello ao servidor principal a indicar que voltaste dos mortosTODO:
+		//caso contario
+			//n_tables = messagem_do_primario(ip e tal);//TODO:
+			//guardar o a informacao das tabelas, e do servidor primario num ficheiro em disco.TODO:
 	}
 	
 	if((table_skel_init(n_tables) < 0)){
