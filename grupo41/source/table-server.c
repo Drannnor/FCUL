@@ -23,9 +23,9 @@ int primary, secondary_up;
 
 
 struct thread_params{
-	struct rtables_t rtables;
+	struct rtables_t *rtables;
 	char **n_tables;
-}
+};
 
 int existe(char* nome_ficheiro){
     /* tenta abrir o ficheiro */
@@ -228,7 +228,7 @@ int main(int argc, char **argv){
 	char **n_tables;
 
 	struct pollfd connections[NFDESC];
-	struct thread_params params;
+	struct thread_params *params;
 	struct sockaddr *p_server;
 
 	a.sa_handler = sign_handler;
@@ -239,7 +239,7 @@ int main(int argc, char **argv){
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	FILE *infos;
-	char *in, token, *nome_ficheiro = "grupo41/serv_info.txt";
+	char *in, token, *nome_ficheiro = "grupo41/serv_info";
 	char *port_ip[2];
 
 	if (argc >= 4){//servidor primario
@@ -283,11 +283,11 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-		if((params = (struct thread_params) malloc(sizeof(struct thread_params)))!= NULL){
+		if((params = (struct thread_params*) malloc(sizeof(struct thread_params)))!= NULL){
 			fprintf(stderr,"Failed malloc thread_params\n");
 			return -1;
 		}
-		params.n_tables = n_tables;
+		params->n_tables = n_tables;
 		//params.rtables = rtables_bind(argv[2]) FIXME: 
 
 		if (pthread_create(&sec_connect, NULL,&contacta_sec,(void*) params) != 0){
@@ -307,7 +307,7 @@ int main(int argc, char **argv){
 			fgets(in,15,infos);
 			token = strdup(strtok(in," "));
 			port_ip[0] = control;
-			token = strdup(strtok(NULL," "))
+			token = strdup(strtok(NULL," "));
 			port_ip[1] = control;
 
 			fclose(infos);
