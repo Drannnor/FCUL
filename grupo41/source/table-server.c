@@ -27,15 +27,6 @@ struct thread_params{
 	char **n_tables;
 };
 
-int existe(char* nome_ficheiro){
-    /* tenta abrir o ficheiro */
-    FILE *ficheiro;
-    if (file = fopen(filename, "w")){
-        fclose(file);
-        return 1;
-    }
-    return 0;
-}
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
 int make_server_socket(short port){
@@ -239,7 +230,7 @@ int main(int argc, char **argv){
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	FILE *infos;
-	char *in, token, *nome_ficheiro = "grupo41/serv_info";
+	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
 	char *port_ip[2];
 
 	if (argc >= 4){//servidor primario
@@ -297,25 +288,21 @@ int main(int argc, char **argv){
 		//noutra thread contacta_secundario(n_tables,ip e tal);
 		//e verificar o resultadoTODO:
 	} else{//Servidor Secundario
-		if(existe(nome_ficheiro)){
+		if((infos = fopen(nome_ficheiro,"r+"))!= NULL){
 			/* ler o ip e o port do primario
 			   inicializar as tabelas vazias
 			   mandar hello ao primario
 			   sincronizacao dos servidores TODO:
 			*/
-			infos = fopen(nome_ficheiro,"r");
 			fgets(in,15,infos);
 			token = strdup(strtok(in," "));
 			port_ip[0] = control;
 			token = strdup(strtok(NULL," "));
 			port_ip[1] = control;
-
-			fclose(infos);
 		}
 		else{
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			infos = fopen(nome_ficheiro,"w");
-
+			
 			if((fputs(argv[0],infos)) < 0){
 				fprintf(stderr,"Failed writing in file\n");
 				return -1;
@@ -325,6 +312,7 @@ int main(int argc, char **argv){
 			  escrever no ficheiro  port e ip
 			*/
 		}
+		fclose(infos);
 	}
 	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
 	//TODO: verificar o resultado da funcao de sec_connect
