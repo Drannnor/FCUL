@@ -18,7 +18,7 @@ Ricardo Cruz 47871
 #define MAX_SIZE 1000
 
 static int quit = 0; 
-int primary;
+int primary, secondary_up;
 
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -221,6 +221,7 @@ int main(int argc, char **argv){
 
 	if (argc >= 4){//servidor primario
 		primary = 1;
+		secondary_up = 0;
 	} else if (argc == 2){//servidor secundario
 		primary = 0;
 	} else {//input invalido
