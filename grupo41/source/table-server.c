@@ -10,6 +10,7 @@ Ricardo Cruz 47871
    Exemplo de uso: ./table_server 54321 10 15 20 25
 */
 #include <error.h>
+#include <stdio.h>
 #include "table-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
@@ -20,6 +21,21 @@ Ricardo Cruz 47871
 static int quit = 0; 
 int primary, secondary_up;
 
+
+struct thread_params{
+	struct rtables_t rtables;
+	char **n_tables;
+}
+
+int existe(char* nome_ficheiro){
+    /* tenta abrir o ficheiro */
+    FILE *ficheiro;
+    if (file = fopen(filename, "w")){
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
 int make_server_socket(short port){
@@ -212,12 +228,19 @@ int main(int argc, char **argv){
 	char **n_tables;
 
 	struct pollfd connections[NFDESC];
+	struct thread_params params;
+	struct sockaddr *p_server;
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
-	sigemptyset( &a.sa_mask );
-	sigaction( SIGINT, &a, NULL );
+	sigemptyset(&a.sa_mask);
+	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
+	pthread_t sec_connect;
+	socklen_t primary_size = sizeof(p_server);
+	FILE *infos;
+	char *in, token, *nome_ficheiro = "grupo41/serv_info.txt";
+	char *port_ip[2];
 
 	if (argc >= 4){//servidor primario
 		primary = 1;
@@ -260,16 +283,51 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
+		if((params = (struct thread_params) malloc(sizeof(struct thread_params)))!= NULL){
+			fprintf(stderr,"Failed malloc thread_params\n");
+			return -1;
+		}
+		params.n_tables = n_tables;
+		//params.rtables = rtables_bind(argv[2]) FIXME: 
+
+		if (pthread_create(&sec_connect, NULL,&contacta_sec,(void*) params) != 0){
+			perror("Thread não criada.\n");
+			exit(EXIT_FAILURE);
+		}
 		//noutra thread contacta_secundario(n_tables,ip e tal);
 		//e verificar o resultadoTODO:
 	} else{//Servidor Secundario
-		//se existe ficheiro ficheiro com as informacoes do servidor
-			//fazer hello ao servidor principal a indicar que voltaste dos mortosTODO:
-		//caso contario
-			//n_tables = messagem_do_primario(ip e tal);//TODO:
-			//guardar o a informacao das tabelas, e do servidor primario num ficheiro em disco.TODO:
+		if(existe(nome_ficheiro)){
+			/* ler o ip e o port do primario
+			   inicializar as tabelas vazias
+			   mandar hello ao primario
+			   sincronizacao dos servidores TODO:
+			*/
+			infos = fopen(nome_ficheiro,"r");
+			fgets(in,15,infos);
+			token = strdup(strtok(in," "));
+			port_ip[0] = control;
+			token = strdup(strtok(NULL," "))
+			port_ip[1] = control;
+
+			fclose(infos);
+		}
+		else{
+			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
+			infos = fopen(nome_ficheiro,"w");
+
+			if((fputs(argv[0],infos)) < 0){
+				fprintf(stderr,"Failed writing in file\n");
+				return -1;
+			}
+
+			/*n_tables = messagem_do_primario(ip e tal);//TODO:
+			  escrever no ficheiro  port e ip
+			*/
+		}
 	}
-	
+	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
+	//TODO: verificar o resultado da funcao de sec_connect
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
 		return -1;
@@ -287,7 +345,7 @@ int main(int argc, char **argv){
 		connections[i].revents = 0;
 		connections[i].events = 0;
 	}
-
+	//TODO: talvez adicionar o socket do outro servidor	
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
@@ -315,7 +373,7 @@ int main(int argc, char **argv){
             	}
         		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
           			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){//TODO: noutra thread
+					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){//TODO: noutra thread??
 						if (res == 0){
 							close(connections[i].fd);
 							connections[i].fd = connections[nfds-1].fd;
