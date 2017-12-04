@@ -230,7 +230,7 @@ int main(int argc, char **argv){
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	FILE *infos;
-	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
+	char *in, token, *nome_ficheiro = "grupo41/serv_info";
 	char *port_ip[2];
 
 	if (argc >= 4){//servidor primario
@@ -274,34 +274,27 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-		if((params = (struct thread_params*) malloc(sizeof(struct thread_params)))!= NULL){
-			fprintf(stderr,"Failed malloc thread_params\n");
-			return -1;
-		}
-		params->n_tables = n_tables;
+
 		//params.rtables = rtables_bind(argv[2]) FIXME: 
 
 		if (pthread_create(&sec_connect, NULL,&contacta_sec,(void*) params) != 0){
 			perror("Thread não criada.\n");
 			exit(EXIT_FAILURE);
 		}
-		//noutra thread contacta_secundario(n_tables,ip e tal);
-		//e verificar o resultadoTODO:
+		//contacta_secundario(n_tables,ip e tal);TODO:
+		
 	} else{//Servidor Secundario
-		if((infos = fopen(nome_ficheiro,"r+"))!= NULL){
+		if(existe(nome_ficheiro)){
 			/* ler o ip e o port do primario
 			   inicializar as tabelas vazias
 			   mandar hello ao primario
 			   sincronizacao dos servidores TODO:
 			*/
-			fgets(in,15,infos);
-			token = strdup(strtok(in," "));
-			port_ip[0] = token;
-			token = strdup(strtok(NULL," "));
-			port_ip[1] = token;
+			
 		}
 		else{
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
+			infos = fopen(nome_ficheiro,"w");
 
 			if((fputs(argv[0],infos)) < 0){
 				fprintf(stderr,"Failed writing in file\n");
@@ -312,7 +305,6 @@ int main(int argc, char **argv){
 			  escrever no ficheiro  port e ip
 			*/
 		}
-		fclose(infos);
 	}
 	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
 	//TODO: verificar o resultado da funcao de sec_connect
@@ -413,3 +405,14 @@ int main(int argc, char **argv){
 	
 	return table_skel_destroy();
 }
+
+ int read_file(FILE *f, char **adrport, char*** n_tables){
+	infos = fopen(nome_ficheiro,"r");
+	fgets(in,15,infos);
+	token = strdup(strtok(in," "));
+	port_ip[0] = token;
+	token = strdup(strtok(NULL," "));
+	port_ip[1] = token;
+
+	fclose(infos);
+ }
