@@ -247,13 +247,15 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	int table_num = argc - 3;
-	if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
-		fprintf(stderr, "Failed malloc tables1\n");
-		return -1;
-	}
+
 
 	if(primary){//Servidor Primario
+		int table_num = argc - 3;
+		if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+			fprintf(stderr, "Failed malloc tables1\n");
+			return -1;
+		}
+		
 		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
 			fprintf(stderr, "Failed malloc tables2\n");
 			free(n_tables);
@@ -277,10 +279,6 @@ int main(int argc, char **argv){
 
 		//params.rtables = rtables_bind(argv[2]) FIXME: 
 
-		if (pthread_create(&sec_connect, NULL,&contacta_sec,(void*) params) != 0){
-			perror("Thread não criada.\n");
-			exit(EXIT_FAILURE);
-		}
 		//contacta_secundario(n_tables,ip e tal);TODO:
 		
 	} else{//Servidor Secundario
@@ -306,6 +304,8 @@ int main(int argc, char **argv){
 			*/
 		}
 	}
+
+
 	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
 	//TODO: verificar o resultado da funcao de sec_connect
 	if((table_skel_init(n_tables) < 0)){
