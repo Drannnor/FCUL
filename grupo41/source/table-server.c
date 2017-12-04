@@ -296,13 +296,13 @@ int main(int argc, char **argv){
 			*/
 			fgets(in,15,infos);
 			token = strdup(strtok(in," "));
-			port_ip[0] = control;
+			port_ip[0] = token;
 			token = strdup(strtok(NULL," "));
-			port_ip[1] = control;
+			port_ip[1] = token;
 		}
 		else{
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			
+
 			if((fputs(argv[0],infos)) < 0){
 				fprintf(stderr,"Failed writing in file\n");
 				return -1;
