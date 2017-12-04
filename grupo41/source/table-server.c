@@ -17,6 +17,8 @@ Ricardo Cruz 47871
 
 #define NFDESC 6
 #define MAX_SIZE 1000
+#define ADDRPORT_SIZE 15
+#define	N_TABLES_MSIZE 180
 
 static int quit = 0; 
 int primary, secondary_up;
@@ -27,6 +29,33 @@ struct thread_params{
 	char **n_tables;
 };
 
+FILE read_file(FILE *f,char *file_name,char **adrport,char ***n_tables){
+	int i,n;
+	char *in;
+
+	if((fopen(file_name,"r")) == NULL){
+		return NULL;
+	}
+	fgets(in,ADDRPORT_SIZE,f);
+
+	if((adrport = (char**)malloc(ADDRPORT_SIZE)) == NULL){
+		fprintf(stderr,"Failed malloc.\n");
+		return -1;
+	}
+
+	adrport = in;
+	fgets(in,N_TABLES_MSIZE,f);
+	i = atoi(in);
+	n_tables[]
+	for(i = 0;i < n;i++){
+		//percorrer as ntables
+		i--;
+		}
+	}
+	else{
+
+	}
+}
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
 int make_server_socket(short port){
@@ -230,7 +259,7 @@ int main(int argc, char **argv){
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	FILE *infos;
-	char *in, token, *nome_ficheiro = "grupo41/serv_info";
+	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
 	char *port_ip[2];
 
 	if (argc >= 4){//servidor primario
@@ -281,22 +310,23 @@ int main(int argc, char **argv){
 			perror("Thread não criada.\n");
 			exit(EXIT_FAILURE);
 		}
-		//contacta_secundario(n_tables,ip e tal);TODO:
-		
+		//noutra thread contacta_secundario(n_tables,ip e tal);
+		//e verificar o resultadoTODO:
 	} else{//Servidor Secundario
-		if(existe(nome_ficheiro)){
+		if((infos = fopen(nome_ficheiro,"r"))!= NULL){
 			/* ler o ip e o port do primario
 			   inicializar as tabelas vazias
 			   mandar hello ao primario
 			   sincronizacao dos servidores TODO:
 			*/
-			
+			int read_file(FILE *f,char *, char** n_tables);
+
 		}
 		else{
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
 			infos = fopen(nome_ficheiro,"w");
 
-			if((fputs(argv[0],infos)) < 0){
+			if((fputs(n_tables[1],infos)) < 0){
 				fprintf(stderr,"Failed writing in file\n");
 				return -1;
 			}
@@ -405,14 +435,3 @@ int main(int argc, char **argv){
 	
 	return table_skel_destroy();
 }
-
- int read_file(FILE *f, char **adrport, char*** n_tables){
-	infos = fopen(nome_ficheiro,"r");
-	fgets(in,15,infos);
-	token = strdup(strtok(in," "));
-	port_ip[0] = token;
-	token = strdup(strtok(NULL," "));
-	port_ip[1] = token;
-
-	fclose(infos);
- }
