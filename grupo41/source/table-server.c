@@ -149,6 +149,7 @@ int network_receive_send(int sockfd){
 	}
 	
 	print_message(msg_pedido);
+	// se estivermos no servidor secundario asegurar exclusao mutua TODO:
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
 		free(buff_pedido);
@@ -156,7 +157,11 @@ int network_receive_send(int sockfd){
 		return -2;
 	}
 	print_message(msg_resposta);
-	
+
+	/*se estivermos no servidor primarioTODO:
+		inicializar a estrutura com os paramentros necessarios, e
+		criar a thread que vai enviar a msg ao client
+	*/
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
@@ -244,6 +249,28 @@ int tratar_input(){
 	return 0;
 }
 
+//escreve o ficheiro com a configuracao do servidor TODO:
+int write_file(char *file_name,char **adrport,char ***n_tables){
+
+}
+
+//rtable_bind mas para server TODO:
+struct idk server_bind(const char *addrport){
+
+}
+
+//espera que o servidor primario envie os tamanhos das tabelas TODO:
+char **get_table_sizes(int socket_fd){
+
+}
+
+//devolve uma string da forma <ip>:<port> pronto para escrever TODO:
+char *get_addres_port(sockaddr *p_server){
+
+}
+
+
+
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
@@ -289,7 +316,7 @@ int main(int argc, char **argv){
 
 	} else {
 		first_time = 1;
-		if(primary){//Servidor Primario
+		if(primary){//Servidor Primario, primeira vez
 			int table_num = argc - 3;
 			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
 				fprintf(stderr, "Failed malloc tables1\n");
@@ -318,9 +345,9 @@ int main(int argc, char **argv){
 			n_tables[table_num + 1] = NULL;
 			addrport = argv[2];//FIXME: verificar se ]e valido
 
-		} else {//Servidor Secundario 
+		} else {//Servidor Secundario, primeira vez 
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			n_tables = get_table_size(ip e tal);//TODO: verificar o resultado da funcao de sec_connect1
+			n_tables = get_table_size(server_fd);//TODO: verificar o resultado da funcao de sec_connect1
 			addrport = get_addres_port(p_server);
 		}
 	}
@@ -336,7 +363,7 @@ int main(int argc, char **argv){
 			fprinf(stderr, "Failed to write server.conf");
 			return -1;
 		}
-	} else {
+	} else {//sync
 		stables = server_bind(addrport);
 		hello(stables.server);
 	}
@@ -379,9 +406,11 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
+        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ? TODO: guardar a o sockaddr do cliente, 
+																					  // se for a secundario verificar se o client se trata do servidor primario
+																					  // caso negativo passa a ser o servidor primario
           			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){//TODO: noutra thread??
+					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
 						if (res == 0){
 							close(connections[i].fd);
 							connections[i].fd = connections[nfds-1].fd;
@@ -404,7 +433,7 @@ int main(int argc, char **argv){
 				if(i == 1){
 					tratar_input();
 				} else {
-					res = network_receive_send(connections[i].fd);//TODO: noutra thread
+					res = network_receive_send(connections[i].fd);
 					//se for o primario, criar uma thread que envia para o secundario TODO:
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		

@@ -111,9 +111,6 @@ int main(int argc, char **argv){
 					fprintf(stderr, "put - data_create2 failed\n");
 					continue;
 
-				//FIXME: Como diferenciar o secundario do primario aqui???
-				//FIXME: Criacao de threads???
-
 				if((rtables_put(rtables, key_o, value_o)) < 0){
 					if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
@@ -297,7 +294,6 @@ int main(int argc, char **argv){
 	}
 	free(primary);
 	free(secondary);
-	//FIXME: É este o ack para o client?
 	return rtables_unbind(rtables); 
 }
 
