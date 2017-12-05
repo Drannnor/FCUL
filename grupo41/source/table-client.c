@@ -35,9 +35,9 @@ int isNumber(char *token){
 }
 
 void ol_switcheroo(char **primary, char **secondary){
-	char* amigo = *primary;
+	char* bff = *primary;
 	*primary = *secondary;
-	*secondary = amigo;
+	*secondary = bff;
 }
 
 int main(int argc, char **argv){
@@ -73,6 +73,16 @@ int main(int argc, char **argv){
 	while (1){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 
+		if(rtables == NULL){
+			if(rtables = rtables_bind(primary) == NULL){
+				if(rtables = rtables_bind(secondary) == NULL){
+					fprintf(stderr, "Unable to connect to server!");
+					continue;
+				}
+				ol_switcheroo(&primary,&secondary);
+			}
+		}
+
 		/* Receber o comando introduzido pelo utilizador
 		   Sugestão: usar fgets de stdio.h
 		   Quando pressionamos enter para finalizar a entrada no
@@ -104,11 +114,11 @@ int main(int argc, char **argv){
 				}
 				if((key_o = strdup(tokens[1])) == NULL){
 					fprintf(stderr, "put - strdup failed\n");
-					return -1;
+					continue;
 				}
 				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2])) == NULL){
 					fprintf(stderr, "put - data_create2 failed\n");
-					return -1;
+					continue;
 
 				//FIXME: Como diferenciar o secundario do primario aqui???
 				//FIXME: Criacao de threads???
@@ -117,12 +127,12 @@ int main(int argc, char **argv){
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
 						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 					ol_switcheroo(&primary,&secondary);
 					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
 						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 				}
 			}
@@ -144,7 +154,7 @@ int main(int argc, char **argv){
 				} else {
 					if((key_o = strdup(tokens[1])) == NULL){
 						fprintf(stderr, "get - strdup failed\n");
-						return -1;
+						continue;
 					}
 					data_destroy(rtables_get(rtables, key_o));//FIXME: arranjar return
 				}
@@ -164,22 +174,22 @@ int main(int argc, char **argv){
 				}
 				if((key_o = strdup(tokens[1])) == NULL){
 					fprintf(stderr, "strdup failed\n");
-					return -1;
+					continue;
 				}
 				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2]))==NULL){
 					fprintf(stderr, "update - data_create2 failed\n");
-					return -1;
+					continue;
 				}
 				if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
 						fprintf(stderr, "update - lost connection to server");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 					ol_switcheroo(&primary,&secondary);
 					if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
 						fprintf(stderr, "update - rtables_update failed\n");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 				}
 			}
@@ -192,7 +202,8 @@ int main(int argc, char **argv){
 					printf("Input inválido: número de tabela tem de ser um inteiro");
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
+				if(rtables->table_index > rtables->numberOfTables){A fertilização in vitro já é um tratamento mais complexo, realizado totalmente em laboratório. Na técnica o óvulo é retirado do ovário através de uma punção por via transvaginal e é fecundado pelo espermatozoide no laboratório, fora do corpo feminino. Após alguns dias de desenvolvimento o embrião no laboratório é transferido para o útero, que foi previamente preparado para aceitar o embrião. A fertilização in vitro está indicada para casais em que a mulher apresenta alterações nas trompas ou nos casos do homem ter uma alteração importante no sêmen, como baixa concentração de espermatozoides ou baixa motilidade.
+
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
@@ -200,12 +211,12 @@ int main(int argc, char **argv){
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
 						fprintf(stderr, "size - lost connection to server");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 					ol_switcheroo(&primary,&secondary);
 					if((rtables_size(rtables, key_o, value_o)) == -2){//FIXME: alterar return
 						fprintf(stderr, "size - rtables_size failed\n");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 				}
 			}
@@ -227,12 +238,12 @@ int main(int argc, char **argv){
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
 						fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 					ol_switcheroo(&primary,&secondary);
 					if((rtables_collisions(rtables, key_o, value_o)) == -2){//FIXME: alterar return
 						fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
-						return -1;
+						continue;
 					}
 				}
 			}
