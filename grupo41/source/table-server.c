@@ -240,7 +240,8 @@ int tratar_input(){
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-
+	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
+	char *port_ip[2];
 	char **n_tables;
 
 	struct pollfd connections[NFDESC];
@@ -255,10 +256,8 @@ int main(int argc, char **argv){
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	FILE *infos;
-	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
-	char *port_ip[2];
-
-	if (argc >= 4){//servidor primario
+	
+	if (argc >= 3){//servidor primario
 		primary = 1;
 		secondary_up = 0;
 	} else if (argc == 2){//servidor secundario
@@ -301,9 +300,9 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-		
-		//params.rtables = rtables_bind(argv[2]) FIXME: 
-		//contacta_secundario(n_tables,ip e tal);TODO:
+
+		rtables = rtables_bind(argv[2]);// FIXME: 
+		contacta_secundario(rtables,n_tables);TODO:
 
 	} else{//Servidor Secundario
 		if((infos = fopen(nome_ficheiro,"r"))!= NULL){
@@ -330,9 +329,8 @@ int main(int argc, char **argv){
 		}
 	}
 
-
 	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
-	//TODO: verificar o resultado da funcao de sec_connect
+	//TODO: verificar o resultado da funcao de sec_connect1
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
 		return -1;
