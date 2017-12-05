@@ -59,15 +59,6 @@ int main(int argc, char **argv){
 	struct rtables_t *rtables;
 	primary = strdup(argv[1]);
 	secondary = strdup(argv[2]);
-	//TODO: receber ip e porta secundario
-	if((rtables = rtables_bind(primary) == NULL){
-		if((rtables = rtables_bind(secondary) == NULL){
-			fprintf(stderr, "Unable to connect to server (theres more than one but shhh!");
-			return -1;
-		}
-		ol_switcheroo(&primary,&secondary);
-	}
-
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	while (1){
@@ -129,11 +120,11 @@ int main(int argc, char **argv){
 						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
 						continue;
 					}
-					ol_switcheroo(&primary,&secondary);
 					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
 						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
 						continue;
 					}
+					ol_switcheroo(&primary,&secondary);
 				}
 			}
 		}
@@ -186,15 +177,15 @@ int main(int argc, char **argv){
 						fprintf(stderr, "update - lost connection to server");//FIXME: alterar msg_error
 						continue;
 					}
-					ol_switcheroo(&primary,&secondary);
+				
 					if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
 						fprintf(stderr, "update - rtables_update failed\n");//FIXME: alterar msg_error
 						continue;
 					}
+					ol_switcheroo(&primary,&secondary);
 				}
 			}
 		} else if(strcasecmp(tok_opc, "size") == 0){
-			int i;
 			if(count_param < 1){
 				printf("Input inválido: size <table_num>\n");
 			} else {
@@ -202,26 +193,25 @@ int main(int argc, char **argv){
 					printf("Input inválido: número de tabela tem de ser um inteiro");
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){A fertilização in vitro já é um tratamento mais complexo, realizado totalmente em laboratório. Na técnica o óvulo é retirado do ovário através de uma punção por via transvaginal e é fecundado pelo espermatozoide no laboratório, fora do corpo feminino. Após alguns dias de desenvolvimento o embrião no laboratório é transferido para o útero, que foi previamente preparado para aceitar o embrião. A fertilização in vitro está indicada para casais em que a mulher apresenta alterações nas trompas ou nos casos do homem ter uma alteração importante no sêmen, como baixa concentração de espermatozoides ou baixa motilidade.
+				if(rtables->table_index > rtables->numberOfTables){
 
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((i = rtables_size(rtables)) == -2){//FIXME: alterar return
+				if((rtables_size(rtables)) == -2){//FIXME: alterar return
 					rtables_unbind(rtables);
 					if((rtables = rtables_bind(secondary)) == NULL){
 						fprintf(stderr, "size - lost connection to server");//FIXME: alterar msg_error
 						continue;
 					}
-					ol_switcheroo(&primary,&secondary);
-					if((rtables_size(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+					if((rtables_size(rtables)) == -2){//FIXME: alterar return
 						fprintf(stderr, "size - rtables_size failed\n");//FIXME: alterar msg_error
 						continue;
 					}
+					ol_switcheroo(&primary,&secondary);
 				}
 			}
 		} else if(strcasecmp(tok_opc, "collisions") == 0){
-			int i;
 			if(count_param < 1){
 				printf("Input inválido: collisions <table_num>\n");
 			}
@@ -234,17 +224,29 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((i = rtables_collisions(rtables)) == -2){//FIXME: alterar return 
-					rtables_unbind(rtables);
-					if((rtables = rtables_bind(secondary)) == NULL){
-						fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
-						continue;
-					}
-					ol_switcheroo(&primary,&secondary);
-					if((rtables_collisions(rtables, key_o, value_o)) == -2){//FIXME: alterar return
+				if((rtables_collisions(rtables)) < 0){//FIXME: alterar return
+					if(err == CError){
+						rtables_unbind(rtables);
+						if((rtables = rtables_bind(secondary)) == NULL){
+							fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
+							continue;
+						}
+						if((rtables_collisions(rtables)) == < 0){//FIXME: alterar return
+							if(err == CError){
+								rtables_unbind(rtables);
+								fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
+								continue;
+							} 
+							fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
+							continue;
+						}
+						ol_switcheroo(&primary,&secondary);
+
+					} else {
 						fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
 						continue;
 					}
+					
 				}
 			}
 		} else if(strcasecmp(tok_opc, "quit") == 0){

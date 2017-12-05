@@ -117,7 +117,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Write failed - size write_all\n");
 				free(message_out);
-				return message_error();
+				return message_error();//TODO:
 			}
 			
 		} else { 
@@ -138,7 +138,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Write failed - message write_all\n");
 				free(message_out);
-				return message_error();
+				return message_error();//TODO:
 			}	
 		}else { 
 			break;
@@ -159,7 +159,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Read failed - size read_all\n");
 				free(message_out);
-				return message_error();
+				return message_error();//TODO:
 			}	
 		} else { 
 			break;
@@ -190,7 +190,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				fprintf(stderr, "Read failed - message read_all\n");
 				free(message_out);
 				free(message_in);
-				return message_error();
+				return message_error();//TODO:
 			}	
 		} else { 
 			break;
