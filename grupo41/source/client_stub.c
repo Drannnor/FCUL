@@ -97,7 +97,7 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     print_message(msg_res);
 
     int res = msg_res->content.result;
-    free(key);
+    free(key);FIXME:
     data_destroy(value);
     free_message(msg_res);
     free_message(msg_out);

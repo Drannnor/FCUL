@@ -10,15 +10,55 @@ Ricardo Cruz 47871
    Exemplo de uso: ./table_server 54321 10 15 20 25
 */
 #include <error.h>
+#include <stdio.h>
 #include "table-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
 
 #define NFDESC 6
 #define MAX_SIZE 1000
+#define ADDRPORT_SIZE 15
+#define	N_TABLES_MSIZE 180
 
-static int quit = 0;
+static int quit = 0; 
+int primary, secondary_up;
 
+
+struct thread_params{
+	struct rtables_t *rtables;
+	char **n_tables;
+};
+
+int read_file(char *file_name,char **adrport,char ***n_tables){
+	int i,n;
+	char *in, *n_tables_read[n];
+
+	if((fopen(file_name,"r")) == NULL){
+		return 0;//FIXME:
+	}
+	fgets(in,ADDRPORT_SIZE,f);
+
+	if((adrport = (char**)malloc(ADDRPORT_SIZE)) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;//FIXME:
+	}
+
+	adrport = in;
+	fgets(in,N_TABLES_MSIZE,f);
+	n = atoi(in)+2;
+	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+			fprintf(stderr,"Failed malloc\n");
+			return -1;//FIXME:
+	}
+	for(i = 1;i < n;i++){
+		fgets(in,N_TABLES_MSIZE,f);
+		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+			fprintf(stderr,"Failed malloc\n");
+			return -1;//FIXME:
+		}
+	}
+	return 1;
+}
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
 int make_server_socket(short port){
@@ -39,13 +79,13 @@ int make_server_socket(short port){
 	server.sin_port = htons(port);  
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
+	if(bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
 		fprintf(stderr, "Erro ao fazer bind.\n");
 		close(socket_fd);
 		return -1;
 	}
 
-	if (listen(socket_fd, 0) < 0){
+	if(listen(socket_fd, 0) < 0){
 		fprintf(stderr, "Erro ao executar listen.\n");
 		close(socket_fd);
 		return -1;
@@ -206,23 +246,102 @@ int tratar_input(){
 
 int main(int argc, char **argv){
 	struct sigaction a;
-	int socket_de_escuta, i, nfds, res;
-
+	int socket_de_escuta, i, j, nfds, res;
+	char *in, *token, *nome_ficheiro = "serv_info";
+	char *port_ip[2];
 	char **n_tables;
+	char **n_tables, **addrport;
 
 	struct pollfd connections[NFDESC];
+	struct thread_params *params;
+	struct sockaddr *p_server;
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
-	sigemptyset( &a.sa_mask );
-	sigaction( SIGINT, &a, NULL );
+	sigemptyset(&a.sa_mask);
+	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
+	pthread_t sec_connect;
+	socklen_t primary_size = sizeof(p_server);
+	
+	if (argc >= 3){//servidor primario
 
-	if (argc < 3){
-		printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
-		printf("Exemplo de uso: ./table-server 54321 10 15 20 25\n");
+		primary = 1;
+		secondary_up = 0;
+	} else if (argc == 2){//servidor secundario
+		primary = 0;
+	} else {//input invalido
+		printf("Uso para servidor primario: ./server <porta TCP> <IP do secundario:porta TCP do secundario> <table1_size> [<table2_size> ...]\n");
+		printf("Exemplo de uso: ./server 54321 127.0.0.1:54322 10 15 20 25\n");
+		printf("-----------------------------------------------------\n");
+		printf("Uso para servidor secundario: ./server <porta TCP>\n");
+		printf("Exemplo de uso: ./server 54322\n");
 		return -1;
 	}
+
+
+
+	if(primary){//Servidor Primario
+		int table_num = argc - 3;
+		if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+			fprintf(stderr, "Failed malloc tables1\n");
+			return -1;
+		}
+		
+		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+			fprintf(stderr, "Failed malloc tables2\n");
+			free(n_tables);
+			return -1;
+		}
+
+		sprintf(n_tables[0], "%d", table_num);
+
+		for(i = 1; i <= table_num; i++){
+			if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+				for(j = 0; j < i; j++){
+					free(n_tables[j]);
+				}
+				free(n_tables);
+				fprintf(stderr, "Failed malloc tables3\n");
+				return -1;
+			}
+			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
+		}
+		n_tables[table_num + 1] = NULL;
+		
+		rtables = rtables_bind(argv[2]);// FIXME: 
+		contacta_secundario(rtables,n_tables);TODO:
+
+	} else{//Servidor Secundario
+		if((read_file(nome_ficheiro,addrport,n_tables) != 0){
+			/* ler o ip e o port do primario e o n_tables em disco
+			   inicializar as tabelas vazias
+			   mandar hello ao primario
+			   sincronizacao dos servidores TODO:
+			*/
+		}
+		else{
+			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
+			f = fopen(nome_ficheiro,"w");
+
+			if((fputs(n_tables[1],f)) < 0){
+				fprintf(stderr,"Failed writing in file\n");
+				return -1;
+			}
+
+			/*n_tables = messagem_do_primario(ip e tal);//TODO:
+			  escrever no ficheiro  port e ip
+			*/
+		}
+	}
+
+	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
+	//TODO: verificar o resultado da funcao de sec_connect1
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		return -1;
+	}
+
 
 	/* inicialização */
 	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
@@ -230,47 +349,13 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	/* inicializar o n_tables*/
-	if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
-		fprintf(stderr, "Failed malloc tables1\n");
-		return -1;
-	}
-
-	if((n_tables[0] = (char *)malloc(_INT)) == NULL){
-		fprintf(stderr, "Failed malloc tables2\n");
-		free(n_tables);
-		return -1;
-	}
-
-	sprintf(n_tables[0], "%d", argc-2);
-	int count;
-	for(i = 1; i <= argc - 2; i++){
-		count = i-1;
-		if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
-			while(count >= 1){
-				free(n_tables[count]);
-				count--;
-			}
-			free(n_tables);
-			fprintf(stderr, "Failed malloc tables3\n");
-			return -1;
-		}
-		//verificar os mallocs TODO???
-    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
-	 } 
-
-	if((table_skel_init(n_tables) < 0)){
-		fprintf(stderr, "Failed to init\n");
-		return -1;
-	}
-
-	//initializacao da lista de connections
+	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++){
     	connections[i].fd = -1; // poll ignora estruturas com fd < 0
 		connections[i].revents = 0;
 		connections[i].events = 0;
 	}
-
+	//TODO: talvez adicionar o socket do outro servidor	
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
@@ -298,7 +383,7 @@ int main(int argc, char **argv){
             	}
         		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
           			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
+					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){//TODO: noutra thread??
 						if (res == 0){
 							close(connections[i].fd);
 							connections[i].fd = connections[nfds-1].fd;
@@ -321,7 +406,8 @@ int main(int argc, char **argv){
 				if(i == 1){
 					tratar_input();
 				} else {
-					res = network_receive_send(connections[i].fd);
+					res = network_receive_send(connections[i].fd);//TODO: noutra thread
+					//se for o primario, criar uma thread que envia para o secundario TODO:
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		
 							close(connections[i].fd);
