@@ -15,8 +15,10 @@ Ricardo Cruz 47871
 #include "table-private.h"
 
 #define OC_RT_ERROR 99
+#define SERVER_ERROR -1
+#define CLIENT_ERROR -2
 #define CONNECTION_ERROR -3
-#define ERROR -1
+
 
 struct message_t* message_error(int errcode);
 void print_message(struct message_t *msg);

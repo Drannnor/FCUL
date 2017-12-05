@@ -21,7 +21,7 @@ Ricardo Cruz 47871
 #define	N_TABLES_MSIZE 180
 
 static int quit = 0; 
-int primary, secondary_up;
+int primary, secondary_up, first_time;
 
 
 struct thread_params{
@@ -247,8 +247,8 @@ int tratar_input(){
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *in, *token, *nome_ficheiro = "serv_info";
-	char *port_ip[2];
+	char *in, *token, *nome_ficheiro = "server.conf";//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores, 
+	char *port_ip[2];								 //caso sejam criados na mesma maquina
 	char **n_tables;
 	char **n_tables, **addrport;
 
@@ -279,69 +279,67 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-
-
-	if(primary){//Servidor Primario
-		int table_num = argc - 3;
-		if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
-			fprintf(stderr, "Failed malloc tables1\n");
+	int res;
+	if(((res = read_file(nome_ficheiro,addrport,n_tables))){//se existe o ficheiro 
+		if ( res == -1 ){
+			fprintf(stderr, "Unable to read file");
 			return -1;
 		}
-		
-		if((n_tables[0] = (char *)malloc(_INT)) == NULL){
-			fprintf(stderr, "Failed malloc tables2\n");
-			free(n_tables);
-			return -1;
-		}
+		first_time = 0;
 
-		sprintf(n_tables[0], "%d", table_num);
-
-		for(i = 1; i <= table_num; i++){
-			if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
-				for(j = 0; j < i; j++){
-					free(n_tables[j]);
-				}
+	} else {
+		first_time = 1;
+		if(primary){//Servidor Primario
+			int table_num = argc - 3;
+			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+				fprintf(stderr, "Failed malloc tables1\n");
+				return -1;
+			}
+			
+			if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+				fprintf(stderr, "Failed malloc tables2\n");
 				free(n_tables);
-				fprintf(stderr, "Failed malloc tables3\n");
 				return -1;
 			}
-			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
-		}
-		n_tables[table_num + 1] = NULL;
-		
-		rtables = rtables_bind(argv[2]);// FIXME: 
-		contacta_secundario(rtables,n_tables);TODO:
 
-	} else{//Servidor Secundario
-		if((read_file(nome_ficheiro,addrport,n_tables) != 0){
-			/* ler o ip e o port do primario e o n_tables em disco
-			   inicializar as tabelas vazias
-			   mandar hello ao primario
-			   sincronizacao dos servidores TODO:
-			*/
-		}
-		else{
+			sprintf(n_tables[0], "%d", table_num);
+
+			for(i = 1; i <= table_num; i++){
+				if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+					for(j = 0; j < i; j++){
+						free(n_tables[j]);
+					}
+					free(n_tables);
+					fprintf(stderr, "Failed malloc tables3\n");
+					return -1
+				}
+				memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
+			}
+			n_tables[table_num + 1] = NULL;
+			addrport = argv[2];//FIXME: verificar se ]e valido
+
+		} else {//Servidor Secundario 
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			f = fopen(nome_ficheiro,"w");
-
-			if((fputs(n_tables[1],f)) < 0){
-				fprintf(stderr,"Failed writing in file\n");
-				return -1;
-			}
-
-			/*n_tables = messagem_do_primario(ip e tal);//TODO:
-			  escrever no ficheiro  port e ip
-			*/
+			n_tables = get_table_size(ip e tal);//TODO: verificar o resultado da funcao de sec_connect1
+			addrport = get_addres_port(p_server);
 		}
 	}
 
-	//escrever em disco o conteudo de n_tables e o ip e port do outro servidor
-	//TODO: verificar o resultado da funcao de sec_connect1
+	
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
-		return -1;
+		return -1
 	}
 
+	if(first_time){
+		if((write_file(nome_ficheiro, addrport, n_tables)) < 0){
+			fprinf(stderr, "Failed to write server.conf");
+			return -1;
+		}
+	} else {
+		stables = server_bind(addrport);
+		hello(stables.server);
+	}
 
 	/* inicialização */
 	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){

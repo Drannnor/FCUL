@@ -72,13 +72,13 @@ int rtables_unbind(struct rtables_t *rtables){
 int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
         fprintf(stderr, "NULL params");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     msg_out->opcode = OC_PUT;
@@ -110,13 +110,13 @@ int rtables_put(struct rtables_t *rtables, char *key, struct data_t *value){
 int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     if(rtables == NULL || key == NULL || value == NULL){
         fprintf(stderr, "NULL params");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     msg_out->opcode = OC_UPDATE;
@@ -194,13 +194,13 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 int rtables_size(struct rtables_t *rtables){
     if(rtables == NULL){
         fprintf(stderr, "NULL params");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     msg_out->opcode = OC_SIZE;
@@ -224,13 +224,13 @@ int rtables_size(struct rtables_t *rtables){
 int rtables_collisions(struct rtables_t *rtables){
     if(rtables == NULL){
         fprintf(stderr, "NULL params");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     struct message_t *msg_out;
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Failed to malloc!\n");
-        return -2;
+        return CLIENT_ERROR;
     }
 
     msg_out->opcode = OC_COLLS;
