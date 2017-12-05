@@ -29,28 +29,35 @@ struct thread_params{
 	char **n_tables;
 };
 
-FILE read_file(FILE *f,char *file_name,char **adrport,char ***n_tables){
+int read_file(char *file_name,char **adrport,char ***n_tables){
 	int i,n;
-	char *in;
+	char *in, *n_tables_read[n];
 
 	if((fopen(file_name,"r")) == NULL){
-		return NULL;FIXME:
+		return 0;//FIXME:
 	}
 	fgets(in,ADDRPORT_SIZE,f);
 
 	if((adrport = (char**)malloc(ADDRPORT_SIZE)) == NULL){
-		fprintf(stderr,"Failed malloc.\n");
+		fprintf(stderr,"Failed malloc\n");
 		return -1;//FIXME:
 	}
 
 	adrport = in;
 	fgets(in,N_TABLES_MSIZE,f);
-	i = atoi(in);
-	//n_tables[];
-	for(i = 0;i < n;i++){
-		//percorrer as ntables
-		i--;
+	n = atoi(in)+2;
+	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+			fprintf(stderr,"Failed malloc\n");
+			return -1;//FIXME:
 	}
+	for(i = 1;i < n;i++){
+		fgets(in,N_TABLES_MSIZE,f);
+		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+			fprintf(stderr,"Failed malloc\n");
+			return -1;//FIXME:
+		}
+	}
+	return 1;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -72,13 +79,13 @@ int make_server_socket(short port){
 	server.sin_port = htons(port);  
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
+	if(bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
 		fprintf(stderr, "Erro ao fazer bind.\n");
 		close(socket_fd);
 		return -1;
 	}
 
-	if (listen(socket_fd, 0) < 0){
+	if(listen(socket_fd, 0) < 0){
 		fprintf(stderr, "Erro ao executar listen.\n");
 		close(socket_fd);
 		return -1;
@@ -240,9 +247,10 @@ int tratar_input(){
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *in, *token, *nome_ficheiro = "grupo41/serv_info";
+	char *in, *token, *nome_ficheiro = "serv_info";
 	char *port_ip[2];
 	char **n_tables;
+	char **n_tables, **addrport;
 
 	struct pollfd connections[NFDESC];
 	struct thread_params *params;
@@ -255,9 +263,9 @@ int main(int argc, char **argv){
 	signal(SIGPIPE,SIG_IGN);
 	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
-	FILE *infos;
 	
 	if (argc >= 3){//servidor primario
+
 		primary = 1;
 		secondary_up = 0;
 	} else if (argc == 2){//servidor secundario
@@ -300,25 +308,23 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-
+		
 		rtables = rtables_bind(argv[2]);// FIXME: 
 		contacta_secundario(rtables,n_tables);TODO:
 
 	} else{//Servidor Secundario
-		if((infos = fopen(nome_ficheiro,"r"))!= NULL){
-			/* ler o ip e o port do primario
+		if((read_file(nome_ficheiro,addrport,n_tables) != 0){
+			/* ler o ip e o port do primario e o n_tables em disco
 			   inicializar as tabelas vazias
 			   mandar hello ao primario
 			   sincronizacao dos servidores TODO:
 			*/
-			//int read_file(FILE *f,char *, char** n_tables);//FIXME:
-
 		}
 		else{
 			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			infos = fopen(nome_ficheiro,"w");
+			f = fopen(nome_ficheiro,"w");
 
-			if((fputs(n_tables[1],infos)) < 0){
+			if((fputs(n_tables[1],f)) < 0){
 				fprintf(stderr,"Failed writing in file\n");
 				return -1;
 			}
