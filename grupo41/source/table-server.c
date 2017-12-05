@@ -34,26 +34,22 @@ FILE read_file(FILE *f,char *file_name,char **adrport,char ***n_tables){
 	char *in;
 
 	if((fopen(file_name,"r")) == NULL){
-		return NULL;
+		return NULL;FIXME:
 	}
 	fgets(in,ADDRPORT_SIZE,f);
 
 	if((adrport = (char**)malloc(ADDRPORT_SIZE)) == NULL){
 		fprintf(stderr,"Failed malloc.\n");
-		return -1;
+		return -1;//FIXME:
 	}
 
 	adrport = in;
 	fgets(in,N_TABLES_MSIZE,f);
 	i = atoi(in);
-	n_tables[]
+	//n_tables[];
 	for(i = 0;i < n;i++){
 		//percorrer as ntables
 		i--;
-		}
-	}
-	else{
-
 	}
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
@@ -305,10 +301,10 @@ int main(int argc, char **argv){
 			memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 		}
 		n_tables[table_num + 1] = NULL;
-
+		
 		//params.rtables = rtables_bind(argv[2]) FIXME: 
 		//contacta_secundario(n_tables,ip e tal);TODO:
-		
+
 	} else{//Servidor Secundario
 		if((infos = fopen(nome_ficheiro,"r"))!= NULL){
 			/* ler o ip e o port do primario
@@ -316,7 +312,7 @@ int main(int argc, char **argv){
 			   mandar hello ao primario
 			   sincronizacao dos servidores TODO:
 			*/
-			int read_file(FILE *f,char *, char** n_tables);
+			//int read_file(FILE *f,char *, char** n_tables);//FIXME:
 
 		}
 		else{
