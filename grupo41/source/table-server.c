@@ -149,7 +149,15 @@ int network_receive_send(int sockfd){
 	}
 	
 	print_message(msg_pedido);
+
+	/*se estivermos no servidor primario e a operacao for um put ou update, e o servidor secundario nao estiver DOWN TODO:
+		inicializar a estrutura com os paramentros necessarios, e
+		criar a thread que vai enviar a msg ao client
+	*/
+
+
 	// se estivermos no servidor secundario asegurar exclusao mutua TODO:
+
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
 		free(buff_pedido);
@@ -158,10 +166,8 @@ int network_receive_send(int sockfd){
 	}
 	print_message(msg_resposta);
 
-	/*se estivermos no servidor primarioTODO:
-		inicializar a estrutura com os paramentros necessarios, e
-		criar a thread que vai enviar a msg ao client
-	*/
+	//verificar que a a thread secundario vez o seu trabalho TODO:
+	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){

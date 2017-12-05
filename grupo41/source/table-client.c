@@ -90,6 +90,17 @@ int main(int argc, char **argv){
 			count_param++;
 		}
 
+		/*
+		Quando um cliente deteta a falha do primário:
+		a. faz o mesmo pedido para o secundário.
+		i. se o secundário também não responde então o serviço não está
+		disponível. Nesta situação o cliente tenta outra vez RETRY_TIME
+		depois (novamente tentando primeiro o servidor primário e só depois o
+		servidor secundário). Caso a falha de serviço persista o cliente desiste
+		da operação.
+		ii. Se o secundário está ativo, então o secundário responde normalmente ao
+		cliente e o cliente marca esse servidor como primário a partir daí. FIXME:
+		*/
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
 				printf("Input inválido: put <table_num> <key> <value>\n");
