@@ -11,8 +11,6 @@ Ricardo Cruz 47871
 #include "network_client.h"
 
 #define RETRY_TIME 5
-#define CONNECTION_ERROR -3
-#define ERROR -1
 
 struct server_t{
 	/* Atributos importantes para interagir com o servidor, */

@@ -114,17 +114,28 @@ int main(int argc, char **argv){
 				//FIXME: Como diferenciar o secundario do primario aqui???
 				//FIXME: Criacao de threads???
 
-				if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
-					rtables_unbind(rtables);
-					if((rtables = rtables_bind(secondary)) == NULL){
-						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
+				if((rtables_put(rtables, key_o, value_o)) < 0){
+					if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
+						rtables_unbind(rtables);
+						if((rtables = rtables_bind(secondary)) == NULL){
+							fprintf(stderr, "put - lost connection to server\n");
+							continue;
+						}
+						if((rtables_put(rtables, key_o, value_o)) < 0){
+							if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
+								rtables_unbind(rtables);
+								fprintf(stderr, "put - lost connection to server\n");
+								continue;
+							} 
+							fprintf(stderr, "put - rtables_put failed\n");
+							continue;
+						}
+						ol_switcheroo(&primary,&secondary);
+
+					} else {
+						fprintf(stderr, "put - rtables_put failed\n");
 						continue;
 					}
-					if((rtables_put(rtables, key_o, value_o)) == -2){//FIXME: valor do return
-						fprintf(stderr, "put - lost connection to server");//FIXME: alterar msg_error
-						continue;
-					}
-					ol_switcheroo(&primary,&secondary);
 				}
 			}
 		}
@@ -171,18 +182,28 @@ int main(int argc, char **argv){
 					fprintf(stderr, "update - data_create2 failed\n");
 					continue;
 				}
-				if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
-					rtables_unbind(rtables);
-					if((rtables = rtables_bind(secondary)) == NULL){
-						fprintf(stderr, "update - lost connection to server");//FIXME: alterar msg_error
+				if((rtables_update(rtables, key_o, value_o)) < 0){
+					if(rtables_update(rtables, key_o, value_o) == CONNECTION_ERROR){
+						rtables_unbind(rtables);
+						if((rtables = rtables_bind(secondary)) == NULL){
+							fprintf(stderr, "update - lost connection to server\n");
+							continue;
+						}
+						if((rtables_update(rtables, key_o, value_o)) < 0){
+							if(rtables_update(rtables, key_o, value_o) == CONNECTION_ERROR){
+								rtables_unbind(rtables);
+								fprintf(stderr, "update - lost connection to server\n");
+								continue;
+							} 
+							fprintf(stderr, "update - rtables_update failed\n");
+							continue;
+						}
+						ol_switcheroo(&primary,&secondary);
+
+					} else {
+						fprintf(stderr, "update - rtables_update failed\n");
 						continue;
 					}
-				
-					if((rtables_update(rtables, key_o, value_o)) == -2){//FIXME: alterar return
-						fprintf(stderr, "update - rtables_update failed\n");//FIXME: alterar msg_error
-						continue;
-					}
-					ol_switcheroo(&primary,&secondary);
 				}
 			}
 		} else if(strcasecmp(tok_opc, "size") == 0){
@@ -198,18 +219,30 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((rtables_size(rtables)) == -2){//FIXME: alterar return
-					rtables_unbind(rtables);
-					if((rtables = rtables_bind(secondary)) == NULL){
-						fprintf(stderr, "size - lost connection to server");//FIXME: alterar msg_error
+				if((rtables_size(rtables)) < 0){
+					if(rtables_size(rtables) == CONNECTION_ERROR){
+						rtables_unbind(rtables);
+						if((rtables = rtables_bind(secondary)) == NULL){
+							fprintf(stderr, "size - lost connection to server\n");
+							continue;
+						}
+						if((rtables_size(rtables)) < 0){
+							if(rtables_size(rtables) == CONNECTION_ERROR){
+								rtables_unbind(rtables);
+								fprintf(stderr, "size - lost connection to server\n");
+								continue;
+							} 
+							fprintf(stderr, "size - rtables_size failed\n");
+							continue;
+						}
+						ol_switcheroo(&primary,&secondary);
+
+					} else {
+						fprintf(stderr, "size - rtables_size failed\n");
 						continue;
 					}
-					if((rtables_size(rtables)) == -2){//FIXME: alterar return
-						fprintf(stderr, "size - rtables_size failed\n");//FIXME: alterar msg_error
-						continue;
-					}
-					ol_switcheroo(&primary,&secondary);
 				}
+				
 			}
 		} else if(strcasecmp(tok_opc, "collisions") == 0){
 			if(count_param < 1){
@@ -217,36 +250,35 @@ int main(int argc, char **argv){
 			}
 			else{
 				if(!isNumber(tokens[0])){
-					printf("Input inválido: número de tabela tem de ser um inteiro");
+					printf("Input inválido: número de tabela tem de ser um inteiro\n");
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((rtables_collisions(rtables)) < 0){//FIXME: alterar return
-					if(err == CError){
+				if((rtables_collisions(rtables)) < 0){
+					if(rtables_collisions(rtables) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
 						if((rtables = rtables_bind(secondary)) == NULL){
-							fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
+							fprintf(stderr, "collisions - lost connection to server\n");
 							continue;
 						}
-						if((rtables_collisions(rtables)) == < 0){//FIXME: alterar return
-							if(err == CError){
+						if((rtables_collisions(rtables)) < 0){
+							if(rtables_collisions(rtables) == CONNECTION_ERROR){
 								rtables_unbind(rtables);
-								fprintf(stderr, "collisions - lost connection to server");//FIXME: alterar msg_error
+								fprintf(stderr, "collisions - lost connection to server\n");
 								continue;
 							} 
-							fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
+							fprintf(stderr, "collisions - rtables_collisions failed\n");
 							continue;
 						}
 						ol_switcheroo(&primary,&secondary);
 
 					} else {
-						fprintf(stderr, "collisions - rtables_collisions failed\n");//FIXME: alterar msg_error
+						fprintf(stderr, "collisions - rtables_collisions failed\n");
 						continue;
 					}
-					
 				}
 			}
 		} else if(strcasecmp(tok_opc, "quit") == 0){

@@ -83,12 +83,12 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	/* Verificar parâmetros de entrada */
 	if (server == NULL){
 		fprintf(stderr, "Server dado eh invalido\n");
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	if(msg == NULL){
 		fprintf(stderr, "Mensagem dada eh invalida\n");
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	/* Serializar a mensagem recebida */
@@ -97,7 +97,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if((message_size = message_to_buffer(msg, &message_out)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
 		free(message_out);
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	/* Enviar ao servidor o tamanho da mensagem que será enviada
@@ -117,7 +117,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Write failed - size write_all\n");
 				free(message_out);
-				return message_error();//TODO:
+				return message_error(CONNECTION_ERROR);
 			}
 			
 		} else { 
@@ -138,7 +138,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Write failed - message write_all\n");
 				free(message_out);
-				return message_error();//TODO:
+				return message_error(CONNECTION_ERROR);
 			}	
 		}else { 
 			break;
@@ -159,7 +159,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			else{
 				fprintf(stderr, "Read failed - size read_all\n");
 				free(message_out);
-				return message_error();//TODO:
+				return message_error(CONNECTION_ERROR);
 			}	
 		} else { 
 			break;
@@ -175,7 +175,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 	if((message_in = (char *)malloc(ntohl(msg_size))) == NULL){
 		printf("Failed malloc - message_in\n");
 		free(message_out);
-		return message_error();
+		return message_error(ERROR);
 	}
 	
 	/* Verificar se a receção teve sucesso */
@@ -190,7 +190,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				fprintf(stderr, "Read failed - message read_all\n");
 				free(message_out);
 				free(message_in);
-				return message_error();//TODO:
+				return message_error(CONNECTION_ERROR);
 			}	
 		} else { 
 			break;
@@ -205,7 +205,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		fprintf(stderr, "Failed unmarshalling\n");
 		free(message_out);
 		free(message_in);
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	/* Libertar memória */

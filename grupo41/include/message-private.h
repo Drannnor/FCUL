@@ -15,8 +15,10 @@ Ricardo Cruz 47871
 #include "table-private.h"
 
 #define OC_RT_ERROR 99
+#define CONNECTION_ERROR -3
+#define ERROR -1
 
-struct message_t* message_error();
+struct message_t* message_error(int errcode);
 void print_message(struct message_t *msg);
 
 /* Função que recebe uma tabela e uma mensagem de pedido e:

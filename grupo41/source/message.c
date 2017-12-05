@@ -408,7 +408,7 @@ int read_all(int sock, char *buf, int len){
 	return bufsize;
 }
 
-struct message_t* message_error(){
+struct message_t* message_error(int errcode){
     struct message_t *msg;
     if((msg = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
 		fprintf(stderr, "Failed malloc message_pedido\n");
@@ -417,7 +417,7 @@ struct message_t* message_error(){
 	msg->opcode = OC_RT_ERROR;
     msg->c_type = CT_RESULT;
     msg->table_num = 0;
-	msg->content.result = -1;
+	msg->content.result = errcode;
 	return msg;
 }
 
@@ -465,12 +465,12 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 	/* Verificar parâmetros de entrada - verificar se os parametros sao null*/
 	if(msg_pedido == NULL){
 		fprintf(stderr, "msg_pedido dada igual a NULL.\n");
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	if(tabela == NULL){
 		fprintf(stderr, "Tabela dada igual a NULL\n");
-		return message_error();
+		return message_error(ERROR);
 	}
 
 	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
@@ -490,7 +490,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 		case OC_SIZE:
             if(msg_pedido->c_type != CT_RESULT){
                 fprintf(stderr, "size - c_type errado!\n");
-                return message_error();
+                return message_error(ERROR);
             }
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = table_size(tabela);
@@ -498,14 +498,14 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 		case OC_UPDATE:
             if(msg_pedido->c_type != CT_ENTRY){
                 fprintf(stderr, "update - c_type errado!\n");
-                return message_error();
+                return message_error(ERROR);
             }
 			key_p = msg_pedido->content.entry->key;
 			value_p = msg_pedido->content.entry->value;
 			result_r = table_update(tabela, key_p, value_p);
 			if(result_r < 0){
 				free(msg_resposta);
-				return message_error();
+				return message_error(ERROR);
 			}
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
@@ -513,7 +513,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 		case OC_GET:
             if(msg_pedido->c_type != CT_KEY){
                 fprintf(stderr, "get - c_type errado!\n");
-                return message_error();
+                return message_error(ERROR);
             }
 			if(strcmp(msg_pedido->content.key,"*") == 0){
 				msg_resposta->content.keys = table_get_keys(tabela);
@@ -530,14 +530,14 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 		case OC_PUT:
             if(msg_pedido->c_type != CT_ENTRY){
                 fprintf(stderr, "put - c_type errado!\n");
-                return message_error();
+                return message_error(ERROR);
             }
 			key_p = msg_pedido->content.entry->key;
 			value_p = msg_pedido->content.entry->value;
 			result_r = table_put(tabela, key_p, value_p);
 			if(result_r < 0){
 				free(msg_resposta);
-				return message_error();
+				return message_error(ERROR);
 			}
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = result_r;
@@ -545,14 +545,14 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 		case OC_COLLS:
             if(msg_pedido->c_type != CT_RESULT){
                 fprintf(stderr, "collisions - c_type errado!\n");
-                return message_error();
+                return message_error(ERROR);
             }
 			msg_resposta->c_type = CT_RESULT;
 			msg_resposta->content.result = tabela->collisions;
 			break;
 		default:
 			free(msg_resposta);
-			return message_error();
+			return message_error(ERROR);
 	}
 
 	/* Preparar mensagem de resposta */
