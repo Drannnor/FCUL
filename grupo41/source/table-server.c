@@ -583,7 +583,7 @@ int main(int argc, char **argv){
 	} else {//sync
 		other_server = server_bind(address_port);
 		printf("oh oh :("); //FIXME: para tirar
-		//hello(other_server);
+		//hello(other_server);TODO: fazer o hello e o update
 	}
 
 	/* inicialização */

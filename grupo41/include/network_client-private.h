@@ -13,9 +13,6 @@ Ricardo Cruz 47871
 #define RETRY_TIME 5
 
 struct server_t{
-	/* Atributos importantes para interagir com o servidor, */
-	/* tanto antes da ligação estabelecida, como depois.    */
-    //lista de tableas
     int socket_fd;
 };
 

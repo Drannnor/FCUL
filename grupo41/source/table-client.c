@@ -121,7 +121,8 @@ int main(int argc, char **argv){
 				if((value_o = data_create2(strlen(tokens[2]),(void*)tokens[2])) == NULL){
 					fprintf(stderr, "put - data_create2 failed\n");
 					continue;
-
+				}
+				
 				if((rtables_put(rtables, key_o, value_o)) < 0){
 					if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
