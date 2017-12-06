@@ -57,7 +57,7 @@ struct message_t *invoke(struct message_t *msg_in){
 	if(msg_in != NULL){	
 		if(tb_num >= tablenum){
 			fprintf(stderr, "Tabela nao existe.\n");
-			msg_resposta = message_error();
+			msg_resposta = message_error(SERVER_ERROR);
 		}
 		else{
 			msg_resposta = process_message(msg_in, tables[tb_num]);

@@ -11,6 +11,7 @@ Ricardo Cruz 47871
 */
 #include <error.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "table-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
@@ -31,37 +32,61 @@ struct thread_params{
 	struct message_t *msg;
 };
 
+//funcao que verifica se a mensagem se trata de uma put ou de um updatez
+//se for esse o caso devolve 1
+//caso contrario devolve 0
+int is_write(struct message_t *msg){ 
+	return msg->opcode == OC_PUT || msg->opcode == OC_UPDATE;
+}
+
+//main da thread -- vai enviar uma msg ao servidor secundario 
+void *secondary_update(void *params){
+	struct thread_params *tp = (struct thread_params *) params;
+	struct message_t *msg_in;
+
+	msg_in = network_send_receive(tp->server, tp->msg);
+
+	int *res = (int *) malloc(sizeof(int));
+	*res = msg_in->content.result;
+
+    free_message(msg_in);
+    free_message(tp->msg);
+	free(params);
+    return res;
+}
+
 int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cruz Cruuuuuzz!!!!!!! eh favor corrigir!!! ctrl + shift + p --> toggle error squiggles, e pensar um bocadinho
-	int i,n;
-	char *in, *n_tables_read[n];
+	// int i,n;
+	// char *in, *n_tables_read[n];
 
-	return NULL; //FIXME: para apagar
 
-	if((fopen(file_name,"r")) == NULL){
-		return 0;//FIXME:
-	}
-	//fgets(in,adress_port_SIZE,f);
+	// if((fopen(file_name,"r")) == NULL){
+	// 	return 0;//FIXME:
+	// }
+	// //fgets(in,adress_port_SIZE,f);
 
-	if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
-		fprintf(stderr,"Failed malloc\n");
-		return -1;//FIXME:
-	}
+	// if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
+	// 	fprintf(stderr,"Failed malloc\n");
+	// 	return -1;//FIXME:
+	// }
 
-	adrport = in;
-	//fgets(in,N_TABLES_MSIZE,f);
-	n = atoi(in)+2;
-	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
-			fprintf(stderr,"Failed malloc\n");
-			return -1;//FIXME:
-	}
-	for(i = 1;i < n;i++){
-		//fgets(in,N_TABLES_MSIZE,f);
-		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
-			fprintf(stderr,"Failed malloc\n");
-			return -1;//FIXME:
-		}
-	}
-	return 1;
+	// adrport = in;
+	// //fgets(in,N_TABLES_MSIZE,f);
+	// n = atoi(in)+2;
+	// if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+	// 		fprintf(stderr,"Failed malloc\n");
+	// 		return -1;//FIXME:
+	// }
+	// for(i = 1;i < n;i++){
+	// 	//fgets(in,N_TABLES_MSIZE,f);
+	// 	if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+	// 		fprintf(stderr,"Failed malloc\n");
+	// 		return -1;//FIXME:
+	// 	}
+	// }
+	// return 1;
+
+	return -1; //FIXME: para apagar
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -116,7 +141,7 @@ int network_receive_send(int socket_fd){
 
 	if(socket_fd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
-		return NULL;
+		return -2;
 	}
 
 	/* Com a função read_all, receber num inteiro o tamanho da 
@@ -132,7 +157,7 @@ int network_receive_send(int socket_fd){
 	   mensagem de pedido. */
 	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
 		fprintf(stderr, "Failedmalloc buff_pedido \n");
-		return NULL;
+		return -2;
 	}
 
 	/* Com a função read_all, receber a mensagem de resposta. */
@@ -150,7 +175,7 @@ int network_receive_send(int socket_fd){
 		fprintf(stderr, "Failed unmarshalling\n");
 		free(buff_pedido);
 		free(msg_pedido);
-		return NULL;
+		return -2;
 	}
 	
 	print_message(msg_pedido);
@@ -161,7 +186,7 @@ int network_receive_send(int socket_fd){
 		fprintf(stderr, "Failed invoke\n");
 		free(buff_pedido);
 		free(msg_pedido);
-		return NULL;
+		return -2;
 	}
 	print_message(msg_resposta);
 
@@ -194,7 +219,7 @@ int network_receive_send(int socket_fd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return NULL;
+		return -2;
 	}
 
 	/* Enviar ao cliente o tamanho da mensagem que será enviada
@@ -208,7 +233,7 @@ int network_receive_send(int socket_fd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return NULL;
+		return -2;
 	}
 
 	/* Enviar a mensagem que foi previamente serializada */
@@ -219,7 +244,7 @@ int network_receive_send(int socket_fd){
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
-		return NULL;
+		return -2;
 	}
 
 	//verificar que a a thread vez o seu trabalho TODO:
@@ -280,7 +305,7 @@ int tratar_input(){
 
 //escreve o ficheiro com a configuracao do servidor TODO: pelo Cruz
 int write_file(char *file_name,char **adrport,char ***n_tables){
-
+	return -1;
 }
 
 //bind to the other server
@@ -297,32 +322,9 @@ struct server_t *server_bind(const char *address_port){
     return server;
 }
 
-//main da thread -- vai enviar uma msg ao servidor secundario 
-void *secondary_update(void *params){
-	struct thread_params *tp = (struct thread_params *) params;
-	struct message_t *msg_in;
-
-	msg_in = network_send_receive(&(tp->server), tp->msg);
-
-	int res = (int *) malloc(sizeof(int));
-	res = msg_in->content.result;
-
-    free_message(msg_in);
-    free_message(tp->msg);
-	free(params);
-    return res;
-}
-
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
 char *get_addres_port(struct sockaddr *p_server){
-
-}
-
-//funcao que verifica se a mensagem se trata de uma put ou de um updatez
-//se for esse o caso devolve 1
-//caso contrario devolve 0
-int is_write(struct message_t *msg){ 
-	return msg->opcode == OC_PUT || msg->opcode == OC_UPDATE;
+	return NULL;
 }
 
 //envia a informacao das tabelas para o servidor secundario
@@ -337,7 +339,7 @@ int send_table_info(struct server_t *server, char **n_tables){
 
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
         fprintf(stderr, "Send_table_info - Failed to malloc!\n");
-        return NULL;
+        return -1;
     }
 
 	msg_out->opcode = OC_TABLE_INFO;
@@ -401,7 +403,7 @@ char **get_table_info(int socket_fd){ //FIXME: este copy paste todo estah a dar-
 	int opc = msg_pedido->opcode;
 
 	if(opc != OC_TABLE_INFO){
-		fprinf(stderr, "send_table_info - wrong opcode");
+		fprintf(stderr, "send_table_info - wrong opcode");
 		msg_resposta = message_error(SERVER_ERROR);
 	} else {
 		int n_tables_size = atoi(msg_pedido->content.keys[0]) + 2;
@@ -474,14 +476,12 @@ char **get_table_info(int socket_fd){ //FIXME: este copy paste todo estah a dar-
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *in, *token, *nome_ficheiro = "server.conf";//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores, 
-	char *port_ip[2];								 //caso sejam criados na mesma maquina
+	char *nome_ficheiro = "server.conf" , *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
 	char **n_tables;
-	char **n_tables, **address_port;
 	//FIXME: arrumar esta merda
 
 	struct pollfd connections[NFDESC];
-	struct sockaddr *p_server;
+	struct sockaddr *p_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*));
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
 	sigemptyset(&a.sa_mask);
@@ -503,7 +503,12 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	if((res = read_file(nome_ficheiro,address_port,n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
+	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
+		fprintf(stderr, "Error creating server socket");
+		return -1;
+	}
+
+	if((res = read_file(nome_ficheiro,&address_port,&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
 			fprintf(stderr, "Unable to read file");
 			return -1;
@@ -540,7 +545,7 @@ int main(int argc, char **argv){
 			}
 			n_tables[table_num + 1] = NULL;
 
-			address_port = argv[2];//FIXME: verificar se eh valido
+			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
 			if((other_server = server_bind(address_port))){
 				secondary_up = 1;
 				if((send_table_info(other_server,n_tables)) < 0){
@@ -553,13 +558,14 @@ int main(int argc, char **argv){
 			//malloc do secondary server TODO:
 			if (( other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
 				fprintf(stderr, "Failed malloc other_server\n");
-				return NULL;
-			}
-			other_server->sockfd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
+				secondary_up = 0;
+			} else {
+				other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
 
-			address_port = get_addres_port(p_server);//FIXME: verificar o resutlado
-			n_tables = get_table_info(other_server->sockfd);//FIXME: verificar o resultado da funcao
-			secondary_up = 1;
+				address_port = get_addres_port(p_server);//FIXME: verificar o resutlado
+				n_tables = get_table_info(other_server->socket_fd);//FIXME: verificar o resultado da funcao
+				secondary_up = 1;
+			}
 		}
 	}
 
@@ -571,19 +577,16 @@ int main(int argc, char **argv){
 
 	if(first_time){
 		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
-		// 	fprinf(stderr, "Failed to write server.conf");
+		// 	fprintf(stderr, "Failed to write server.conf");
 		// 	return -1;
 		// }
 	} else {//sync
 		other_server = server_bind(address_port);
-		hello(other_server);
+		printf("oh oh :("); //FIXME: para tirar
+		//hello(other_server);
 	}
 
 	/* inicialização */
-	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
-		fprintf(stderr, "Error creating server socket");
-		return -1;
-	}
 
 	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++){
