@@ -14,6 +14,7 @@ Ricardo Cruz 47871
 #include "table-private.h"
 #include "message-private.h"
 #include "table_skel-private.h"
+#include "primary_backup-private.h"
 
 #define NFDESC 6
 #define MAX_SIZE 1000
@@ -22,11 +23,12 @@ Ricardo Cruz 47871
 
 static int quit = 0; 
 int primary, secondary_up, first_time;
+struct server_t secondary_server_fd;
 
 
 struct thread_params{
-	struct rtables_t *rtables;
-	char **n_tables;
+	int sockfd;
+	struct message_t *msg;
 };
 
 int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cruz Cruuuuuzz!!!!!!! eh favor corrigir!!! ctrl + shift + p --> toggle error squiggles
@@ -106,7 +108,8 @@ int network_receive_send(int sockfd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result;
   	struct message_t *msg_pedido, *msg_resposta;
-
+	struct thread_params *t_params;
+	pthread_t thread;
 	/* Verificar parâmetros de entrada */
 
 	if(sockfd < 0){
@@ -126,7 +129,7 @@ int network_receive_send(int sockfd){
 	/* Alocar memória para receber o número de bytes da
 	   mensagem de pedido. */
 	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
-		fprintf(stderr, "Failed malloc buff_pedido \n");
+		fprintf(stderr, "Failedmalloc buff_pedido \n");
 		return -2;
 	}
 
@@ -165,11 +168,26 @@ int network_receive_send(int sockfd){
 		inicializar a estrutura com os paramentros necessarios, e
 		criar a thread que vai enviar a msg ao client
 	*/
-
 	if(primary && is_write(msg_pedido) && secondary_up){
-		//initializar a estrutura com os paramentros da funcao da thread TODO:
 
-		//criar a thread
+		if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
+			fprintf(stderr, "Failed malloc thread_params\n");
+			free(buff_pedido);
+			free_message(msg_pedido);
+			free_message(msg_resposta);
+			secondary_up = 0;
+
+		} else {
+
+			t_params->msg = msg_pedido;
+			t_params->sockfd = secondary_server_fd.sockfd;
+
+			//criar a thread
+			if (pthread_create(&thread, NULL, &secondary_update, (void *) &t_params) != 0){
+				perror("\nThread não criada.\n");
+				secondary_up = 0;
+			}
+		}		
 	}
 
 
@@ -267,11 +285,17 @@ int write_file(char *file_name,char **adrport,char ***n_tables){
 
 }
 
-//rtable_bind mas para server TODO:
-struct rtables_t server_bind(const char *adress_port){
+//bind to the other server TODO:
+int server_bind(const char *adress_port){
 
 }
 
+//main da thread -- vai enviar uma msg ao servidor secundario
+void *secondary_update(void *params){
+	struct thread_params *tp = (struct thread_params *) params;
+	
+
+}
 //espera que o servidor primario envie os tamanhos das tabelas TODO:
 char **get_table_sizes(int socket_fd){
 
@@ -300,16 +324,14 @@ int main(int argc, char **argv){
 	char **n_tables;
 	char **n_tables, **adress_port;
 	//FIXME: arrumar esta merda
+
 	struct pollfd connections[NFDESC];
-	struct thread_params *params;
 	struct sockaddr *p_server;
-	rtables_t stables;
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
 	sigemptyset(&a.sa_mask);
 	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
-	pthread_t sec_connect;
 	socklen_t primary_size = sizeof(p_server);
 	
 	if (argc >= 3){//servidor primario
