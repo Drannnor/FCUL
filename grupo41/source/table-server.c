@@ -23,11 +23,11 @@ Ricardo Cruz 47871
 
 static int quit = 0; 
 int primary, secondary_up, first_time;
-struct server_t secondary_server_fd;
+struct server_t *other_server;
 
 
 struct thread_params{
-	int sockfd;
+	struct server_t *server;
 	struct message_t *msg;
 };
 
@@ -180,7 +180,7 @@ int network_receive_send(int sockfd){
 		} else {
 
 			t_params->msg = msg_pedido;
-			t_params->sockfd = secondary_server_fd.sockfd;
+			t_params->server = other_server;
 
 			//criar a thread
 			if (pthread_create(&thread, NULL, &secondary_update, (void *) &t_params) != 0){
@@ -285,16 +285,25 @@ int write_file(char *file_name,char **adrport,char ***n_tables){
 
 }
 
-//bind to the other server TODO:
-int server_bind(const char *adress_port){
+//bind to the other server
 
+struct server_t *server_bind(const char *address_port){
+	struct server_t *server;
+    if(address_port == NULL){
+        return NULL;
+    }
+    if((server = network_connect(address_port)) == NULL){
+		free(server);
+        return NULL;
+    }
+    return server;
 }
 
-//main da thread -- vai enviar uma msg ao servidor secundario
+//main da thread -- vai enviar uma msg ao servidor secundario FIXME:
 void *secondary_update(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
-	
 
+	free(network_send_receive(&(tp->server), tp->msg));
 }
 //espera que o servidor primario envie os tamanhos das tabelas TODO:
 char **get_table_sizes(int socket_fd){
@@ -322,7 +331,7 @@ int main(int argc, char **argv){
 	char *in, *token, *nome_ficheiro = "server.conf";//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores, 
 	char *port_ip[2];								 //caso sejam criados na mesma maquina
 	char **n_tables;
-	char **n_tables, **adress_port;
+	char **n_tables, **address_port;
 	//FIXME: arrumar esta merda
 
 	struct pollfd connections[NFDESC];
@@ -348,8 +357,7 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	int res;
-	if((res = read_file(nome_ficheiro,adress_port,n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
+	if((res = read_file(nome_ficheiro,address_port,n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
 			fprintf(stderr, "Unable to read file");
 			return -1;
@@ -386,13 +394,17 @@ int main(int argc, char **argv){
 			}
 			n_tables[table_num + 1] = NULL;
 
-			adress_port = argv[2];//FIXME: verificar se ]e valido
-			stables = server_bind(adress_port);
+			address_port = argv[2];//FIXME: verificar se ]e valido
+			other_server = server_bind(address_port);
+			
 
-		} else {//Servidor Secundario, primeira vez 
-			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
-			n_tables = get_table_size(server_fd);//FIXME: verificar o resultado da funcao
-			adress_port = get_addres_port(p_server);//FIXME: verificar o resutlado
+		} else {//Servidor Secundario, primeira vez
+
+			//malloc do secondary server TODO:
+			other_server->sockfd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
+			
+			n_tables = get_table_size(other_server->sockfd);//FIXME: verificar o resultado da funcao
+			address_port = get_addres_port(p_server);//FIXME: verificar o resutlado
 			secondary_up = 1;
 		}
 	}
@@ -404,13 +416,13 @@ int main(int argc, char **argv){
 	}
 
 	if(first_time){
-		if((write_file(nome_ficheiro, adress_port, n_tables)) < 0){
-			fprinf(stderr, "Failed to write server.conf");
-			return -1;
-		}
+		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+		// 	fprinf(stderr, "Failed to write server.conf");
+		// 	return -1;
+		// }
 	} else {//sync
-		stables = server_bind(adress_port);
-		hello(stables.server);
+		other_server = server_bind(address_port);
+		hello(other_server);
 	}
 
 	/* inicialização */
