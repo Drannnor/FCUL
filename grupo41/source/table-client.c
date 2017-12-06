@@ -99,7 +99,7 @@ int main(int argc, char **argv){
 		servidor secundário). Caso a falha de serviço persista o cliente desiste
 		da operação.
 		ii. Se o secundário está ativo, então o secundário responde normalmente ao
-		cliente e o cliente marca esse servidor como primário a partir daí. FIXME:
+		cliente e o cliente marca esse servidor como primário a partir daí. FIXME: Burno
 		*/
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
@@ -146,8 +146,7 @@ int main(int argc, char **argv){
 					}
 				}
 			}
-		}
-		else if(strcasecmp(tok_opc, "get") == 0){
+		} else if(strcasecmp(tok_opc, "get") == 0){
 			if(count_param < 2){
 				printf("Input inválido: get <table_num> <key>\n");
 			} else {

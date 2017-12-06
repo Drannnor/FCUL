@@ -17,7 +17,7 @@ Ricardo Cruz 47871
 
 #define NFDESC 6
 #define MAX_SIZE 1000
-#define ADDRPORT_SIZE 15
+#define adress_port_SIZE 15
 #define	N_TABLES_MSIZE 180
 
 static int quit = 0; 
@@ -29,16 +29,16 @@ struct thread_params{
 	char **n_tables;
 };
 
-int read_file(char *file_name,char **adrport,char ***n_tables){
+int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cruz Cruuuuuzz!!!!!!! eh favor corrigir!!! ctrl + shift + p --> toggle error squiggles
 	int i,n;
 	char *in, *n_tables_read[n];
 
 	if((fopen(file_name,"r")) == NULL){
 		return 0;//FIXME:
 	}
-	fgets(in,ADDRPORT_SIZE,f);
+	fgets(in,adress_port_SIZE,f);
 
-	if((adrport = (char**)malloc(ADDRPORT_SIZE)) == NULL){
+	if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
 		fprintf(stderr,"Failed malloc\n");
 		return -1;//FIXME:
 	}
@@ -150,12 +150,6 @@ int network_receive_send(int sockfd){
 	
 	print_message(msg_pedido);
 
-	/*se estivermos no servidor primario e a operacao for um put ou update, e o servidor secundario nao estiver DOWN TODO:
-		inicializar a estrutura com os paramentros necessarios, e
-		criar a thread que vai enviar a msg ao client
-	*/
-
-
 	// se estivermos no servidor secundario asegurar exclusao mutua TODO:
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
@@ -166,8 +160,18 @@ int network_receive_send(int sockfd){
 	}
 	print_message(msg_resposta);
 
-	//verificar que a a thread secundario vez o seu trabalho TODO:
-	//com sucesso, caso contrario, marca o servidor secundario com DOWN
+	/*
+		se estivermos no servidor primario e a operacao for um put ou update, e o servidor secundario nao estiver DOWN TODO:
+		inicializar a estrutura com os paramentros necessarios, e
+		criar a thread que vai enviar a msg ao client
+	*/
+
+	if(primary && is_write(msg_pedido) && secondary_up){
+		//initializar a estrutura com os paramentros da funcao da thread TODO:
+
+		//criar a thread
+	}
+
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
@@ -202,6 +206,9 @@ int network_receive_send(int sockfd){
 		free_message(msg_resposta);
 		return -2;
 	}
+
+	//verificar que a a thread secundario vez o seu trabalho TODO:
+	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 
 	/* Libertar memória */
 	free(buff_resposta);
@@ -255,23 +262,31 @@ int tratar_input(){
 	return 0;
 }
 
-//escreve o ficheiro com a configuracao do servidor TODO:
+//escreve o ficheiro com a configuracao do servidor TODO: pelo Cruz
 int write_file(char *file_name,char **adrport,char ***n_tables){
 
 }
 
 //rtable_bind mas para server TODO:
-struct idk server_bind(const char *addrport){
+struct rtables_t server_bind(const char *adress_port){
 
 }
 
 //espera que o servidor primario envie os tamanhos das tabelas TODO:
 char **get_table_sizes(int socket_fd){
 
+
 }
 
-//devolve uma string da forma <ip>:<port> pronto para escrever TODO:
-char *get_addres_port(sockaddr *p_server){
+//devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
+char *get_addres_port(struct sockaddr *p_server){
+
+}
+
+//funcao que verifica se a mensagem se trata de uma put ou de um update TODO: pelo Cruz
+//se for esse o caso devolve 1
+//caso contrario devolve 0
+int is_write(struct message_t *msg){ 
 
 }
 
@@ -283,12 +298,12 @@ int main(int argc, char **argv){
 	char *in, *token, *nome_ficheiro = "server.conf";//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores, 
 	char *port_ip[2];								 //caso sejam criados na mesma maquina
 	char **n_tables;
-	char **n_tables, **addrport;
-
+	char **n_tables, **adress_port;
+	//FIXME: arrumar esta merda
 	struct pollfd connections[NFDESC];
 	struct thread_params *params;
 	struct sockaddr *p_server;
-
+	rtables_t stables;
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
 	sigemptyset(&a.sa_mask);
@@ -298,7 +313,6 @@ int main(int argc, char **argv){
 	socklen_t primary_size = sizeof(p_server);
 	
 	if (argc >= 3){//servidor primario
-
 		primary = 1;
 		secondary_up = 0;
 	} else if (argc == 2){//servidor secundario
@@ -313,14 +327,14 @@ int main(int argc, char **argv){
 	}
 
 	int res;
-	if(((res = read_file(nome_ficheiro,addrport,n_tables))){//se existe o ficheiro 
+	if((res = read_file(nome_ficheiro,adress_port,n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
 			fprintf(stderr, "Unable to read file");
 			return -1;
 		}
 		first_time = 0;
 
-	} else {
+	} else {//primeira execucao
 		first_time = 1;
 		if(primary){//Servidor Primario, primeira vez
 			int table_num = argc - 3;
@@ -344,33 +358,36 @@ int main(int argc, char **argv){
 					}
 					free(n_tables);
 					fprintf(stderr, "Failed malloc tables3\n");
-					return -1
+					return -1;
 				}
 				memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
 			}
 			n_tables[table_num + 1] = NULL;
-			addrport = argv[2];//FIXME: verificar se ]e valido
+
+			adress_port = argv[2];//FIXME: verificar se ]e valido
+			stables = server_bind(adress_port);
 
 		} else {//Servidor Secundario, primeira vez 
-			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num
-			n_tables = get_table_size(server_fd);//TODO: verificar o resultado da funcao de sec_connect1
-			addrport = get_addres_port(p_server);
+			int server_fd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
+			n_tables = get_table_size(server_fd);//FIXME: verificar o resultado da funcao
+			adress_port = get_addres_port(p_server);//FIXME: verificar o resutlado
+			secondary_up = 1;
 		}
 	}
 
 	
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
-		return -1
+		return -1;
 	}
 
 	if(first_time){
-		if((write_file(nome_ficheiro, addrport, n_tables)) < 0){
+		if((write_file(nome_ficheiro, adress_port, n_tables)) < 0){
 			fprinf(stderr, "Failed to write server.conf");
 			return -1;
 		}
 	} else {//sync
-		stables = server_bind(addrport);
+		stables = server_bind(adress_port);
 		hello(stables.server);
 	}
 
@@ -440,7 +457,6 @@ int main(int argc, char **argv){
 					tratar_input();
 				} else {
 					res = network_receive_send(connections[i].fd);
-					//se for o primario, criar uma thread que envia para o secundario TODO:
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		
 							close(connections[i].fd);
