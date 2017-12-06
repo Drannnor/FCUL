@@ -260,6 +260,7 @@ int tratar_input(){
 	}
 	if(strcasecmp( tok, "quit") == 0){
 		quit = 1;
+		//apagar o ficheiro server.conf, remove() TODO:
 		
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
@@ -299,16 +300,14 @@ struct server_t *server_bind(const char *address_port){
     return server;
 }
 
-//main da thread -- vai enviar uma msg ao servidor secundario FIXME:
+//main da thread -- vai enviar uma msg ao servidor secundario 
 void *secondary_update(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
 
-	free(network_send_receive(&(tp->server), tp->msg));
-}
-//espera que o servidor primario envie os tamanhos das tabelas TODO:
-char **get_table_sizes(int socket_fd){
+	free(network_send_receive(&(tp->server), tp->msg));//FIXME: talvez tenhamos que fazer uma nova funcao
+													   //verificar o output, para saber se correy bem;
 
-
+	//TODO: return para saber se correu tudo bem duvidas quanto a isso em threads
 }
 
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
@@ -323,7 +322,39 @@ int is_write(struct message_t *msg){
 
 }
 
+//envia a informacao das tabelas para o servidor secundario
+int send_table_info(struct server_t *server, char **n_tables){
+	//initializar a msg a enviar
+	struct message_t *msg_out, *msg_in;
 
+	if(server == NULL || n_tables == NULL){
+		fprintf(stderr,"send_table_info - bad params");
+		return -1;
+	}
+
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Send_table_info - Failed to malloc!\n");
+        return NULL;
+    }
+
+	msg_out->opcode = OC_TABLE_INFO;
+    msg_out->c_type = CT_KEYS;
+	msg_out->table_num = 0;
+    msg_out->content.keys = n_tables;	
+
+	msg_in = network_send_receive(server, msg_out);
+
+	int res = msg_in->content.result;
+    free_message(msg_in);
+    free_message(msg_out);
+    return res;
+}
+
+//espera que o servidor primario envie os tamanhos das tabelas TODO:
+char **get_table_info(int socket_fd){
+
+
+}
 
 int main(int argc, char **argv){
 	struct sigaction a;
@@ -394,17 +425,21 @@ int main(int argc, char **argv){
 			}
 			n_tables[table_num + 1] = NULL;
 
-			address_port = argv[2];//FIXME: verificar se ]e valido
-			other_server = server_bind(address_port);
-			
+			address_port = argv[2];//FIXME: verificar se eh valido
+			if((other_server = server_bind(address_port))){
+				secondary_up = 1;
+				if((send_table_info(other_server,n_tables)) < 0){
+					secondary_up = 0;
+				}
+			}
 
 		} else {//Servidor Secundario, primeira vez
 
 			//malloc do secondary server TODO:
 			other_server->sockfd = accept(argv[1],&p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
-			
-			n_tables = get_table_size(other_server->sockfd);//FIXME: verificar o resultado da funcao
+
 			address_port = get_addres_port(p_server);//FIXME: verificar o resutlado
+			n_tables = get_table_info(other_server->sockfd);//FIXME: verificar o resultado da funcao
 			secondary_up = 1;
 		}
 	}
