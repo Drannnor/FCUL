@@ -4,12 +4,12 @@ TEST_DIR = testes
 INC_DIR = include
 OBJ_DIR = object
 SRC_DIR = source
-CFLAGS = -Wall -I $(INC_DIR)
+CFLAGS = -Wall -lpthread -I $(INC_DIR)
 
 all: clean server client
 
 server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.o
-	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.0-o $(BIN_DIR)/$@
+	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.o -o $(BIN_DIR)/$@
 
 
 client: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-client.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o

@@ -21,6 +21,8 @@ char **get_table_info(int socket_fd);
 
 int update_successful(pthread_t thread);
 
+struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg);
+
 
 #endif
 

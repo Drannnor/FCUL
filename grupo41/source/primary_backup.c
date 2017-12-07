@@ -8,11 +8,9 @@ Ricardo Cruz 47871
 #include <error.h>
 #include <stdio.h>
 #include <pthread.h>
-#include "primary_backup-private.h"
 #include "table-private.h"
 #include "message-private.h"
-
-
+#include "primary_backup-private.h"
 
 struct thread_params{
 	struct server_t *server;
@@ -29,7 +27,7 @@ int update_state(struct server_t *server){//TODO:
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
-    pthread_t *thread;
+    pthread_t *thread = NULL;
     
     if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
         fprintf(stderr, "backup_update - failed malloc.\n");
@@ -52,7 +50,7 @@ void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
     struct message_t *msg_in;
 
-	msg_in = network_send_receive(tp->server, tp->msg);
+	msg_in = server_backup_send_receive(tp->server, tp->msg);
 
     int *res = (int *) malloc(sizeof(int));//FIXME:
     *res = msg_in -> content.result;
@@ -64,19 +62,70 @@ void *backup_update_thread(void *params){
 }
 
 struct server_t *server_bind(const char *address_port){
+    int socket_fd;
+	struct sockaddr_in *p_server;
+	char *delim = ":";
 	struct server_t *server;
+    
     if(address_port == NULL){
         return NULL;
     }
-    if((server = network_connect(address_port)) == NULL){
+
+    if (( server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
+		fprintf(stderr, "Failed malloc\n");
+		return NULL;
+	}
+
+	if (( p_server = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in))) == NULL){
+		fprintf(stderr, "Failed malloc\n");
 		free(server);
-        return NULL;
-    }
-    return server;
+		return NULL;
+	}
+
+	/* Estabelecer ligação ao server:
+	
+	Preencher estrutura struct sockaddr_in com dados do
+	endereço do server. */
+	p_server->sin_family = AF_INET;
+	
+	char *adr_p = strdup(address_port);
+	if (inet_pton(AF_INET, strtok(adr_p,delim), &p_server->sin_addr) < 1) { // Endereço IP
+		printf("Erro ao converter IP\n");
+		free(server);
+		free(server);
+		free(adr_p);
+		return NULL;
+	}
+	p_server->sin_port = htons(atoi(strtok(NULL,delim)));
+
+	//Criar a socket.
+	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+		fprintf(stderr, "Unable to create socket\n");
+		free(server);
+		free(server);
+		free(adr_p);
+		return NULL;
+	}
+	
+	//Estabelecer ligação.
+	if (connect(socket_fd,(struct sockaddr *)p_server, sizeof(*p_server)) < 0) {
+		fprintf(stderr, "Unable to connect to server\n");
+		close(socket_fd);
+		free(server);
+		free(server);
+		free(adr_p);
+		return NULL;
+	}
+
+	/* Se a ligação não foi estabelecida, retornar NULL */
+	free(server); 
+	free(adr_p);	
+	server->socket_fd = socket_fd;
+	return server;
 }
 
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
-char *get_address_port(struct sockaddr_t *p_server){
+char *get_address_port(struct sockaddr *p_server){
 	return NULL;
 }
 
@@ -100,7 +149,7 @@ int send_table_info(struct server_t *server, char **n_tables){
 	msg_out->table_num = 0;
     msg_out->content.keys = n_tables;	
 
-	msg_in = network_send_receive(server, msg_out);
+	msg_in = server_backup_send_receive(server, msg_out);
 
 	int res = msg_in->content.result;
     free_message(msg_in);
@@ -227,16 +276,20 @@ char **get_table_info(int socket_fd){
 }
 
 int update_successful(pthread_t thread){
-    void * result;
-    if((pthread_join(thread,result)) != 0){
-        return -1;
-    }
+ 	int *r, res;
+    if (pthread_join(thread, (void **) &r) != 0){
+		fprintf(stderr, "pthread_join error");
+	}
+
+	res = *r;
+	free(r);
+	return res;
 }
 
 
-struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
+struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg){
 	char *message_out;
-	int message_size, msg_size;
+	int message_size, msg_size, result;
 	struct message_t *msg_resposta;
 
 
@@ -264,9 +317,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
     logo de seguida
     */
     msg_size = htonl(message_size);
-
-    int result;
-    int first_try = 1;
     /* Verificar se o envio teve sucesso */
     if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
         fprintf(stderr, "Write failed - size write_all\n");
@@ -307,7 +357,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
         return message_error(CLIENT_ERROR);
     }
     
-    /* Verificar se a receção teve sucesso */{
+    /* Verificar se a receção teve sucesso */
     if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
         fprintf(stderr, "Read failed - message read_all\n");
         free(message_out);
