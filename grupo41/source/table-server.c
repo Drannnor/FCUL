@@ -56,37 +56,37 @@ void *secondary_update(void *params){
 }
 
 int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cruz Cruuuuuzz!!!!!!! eh favor corrigir!!! ctrl + shift + p --> toggle error squiggles, e pensar um bocadinho
-	// int i,n;
-	// char *in, *n_tables_read[n];
+	int i,n;
+	char *in, *n_tables_read[n];
+	FILE *fp;
 
+	if((fp = fopen(file_name,"r")) == NULL){
+		return 0;//FIXME:
+	}
+	fgets(in,adress_port_SIZE,fp);
 
-	// if((fopen(file_name,"r")) == NULL){
-	// 	return 0;//FIXME:
-	// }
-	// //fgets(in,adress_port_SIZE,f);
+	if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;//FIXME:
+	}
 
-	// if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
-	// 	fprintf(stderr,"Failed malloc\n");
-	// 	return -1;//FIXME:
-	// }
+	adrport = in;
+	fgets(in,N_TABLES_MSIZE,fp);
+	n = atoi(in)+2;
+	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;//FIXME:
+	}
 
-	// adrport = in;
-	// //fgets(in,N_TABLES_MSIZE,f);
-	// n = atoi(in)+2;
-	// if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
-	// 		fprintf(stderr,"Failed malloc\n");
-	// 		return -1;//FIXME:
-	// }
-	// for(i = 1;i < n;i++){
-	// 	//fgets(in,N_TABLES_MSIZE,f);
-	// 	if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
-	// 		fprintf(stderr,"Failed malloc\n");
-	// 		return -1;//FIXME:
-	// 	}
-	// }
-	// return 1;
-
-	return -1; //FIXME: para apagar
+	for(i = 1;i < n;i++){
+		fgets(in,N_TABLES_MSIZE,f);
+		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+			fprintf(stderr,"Failed malloc\n");
+			return -1;//FIXME:
+		}
+	}
+	//dar free aos mallocs?
+	return 1;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -304,8 +304,26 @@ int tratar_input(){
 }
 
 //escreve o ficheiro com a configuracao do servidor TODO: pelo Cruz
-int write_file(char *file_name,char **adrport,char ***n_tables){
-	return -1;
+int write_file(char *filename,char **adrport,char ***n_tables){
+	char* in;
+	FILE *fp;
+	int i,n;
+
+	if((fp = fopen(filename,"w")) == NULL){
+		return 0;//FIXME:
+	}
+	fgets(in,adress_port_SIZE,fp);
+	fputs(("%s\n",in),fp);
+	fgets(in,N_TABLES_MSIZE,fp);
+	fputs(("%s\n",in),fp);
+	n = atoi(in)+2;
+
+	for(i = 1;i < n;i++){
+		fgets(in,N_TABLES_MSIZE,fp);
+		fputs(("%s\n",in),fp);
+	}
+	return 1;
+
 }
 
 //bind to the other server
