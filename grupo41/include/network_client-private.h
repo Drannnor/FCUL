@@ -27,7 +27,6 @@ int write_all(int sock, char *buf, int len);
 // armazenando-os em buf.
 int read_all(int sock, char *buf, int len);
 
-
 int server_switcharoo(struct server_t *server);
 
 #endif
