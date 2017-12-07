@@ -27,7 +27,28 @@ int update_state(struct server_t *server){//TODO:
     return -1;
 }
 
-void *secondary_update(void *params){
+pthread_t backup_update(struct message_t *msg, struct server_t *server){
+    struct thread_params *t_params;
+    pthread_t thread;
+    
+    if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
+        fprintf(stderr, "backup_update - failed malloc.\n");
+        return NULL;
+    }
+    
+    t_params->msg = msg;
+    t_params->server = server;
+
+    //criar a thread
+    if (pthread_create(&thread, NULL, &backup_update_thread, (void *) &t_params) != 0){
+        fprintf(stderr,"\nThread não criada.\n");
+        return NULL;
+    }
+    
+    return thread;
+}
+
+void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
 	struct message_t *msg_in;
 
@@ -205,3 +226,9 @@ char **get_table_info(int socket_fd){ //FIXME: este copy paste todo estah a dar-
 	return n_tables;
 }
 
+int update_successful(pthread_t thread){
+    void * result;
+    if((pthread_join(thread,result)) != 0){
+        return -1;
+    }
+}

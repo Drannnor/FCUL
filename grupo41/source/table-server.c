@@ -26,6 +26,7 @@ static int quit = 0;
 int primary, secondary_up, first_time;
 struct server_t *other_server;
 
+
 //funcao que verifica se a mensagem se trata de uma put ou de um updatez
 //se for esse o caso devolve 1
 //caso contrario devolve 0
@@ -115,7 +116,6 @@ int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result;
   	struct message_t *msg_pedido, *msg_resposta;
-	struct thread_params *t_params;
 	pthread_t thread;
 	/* Verificar parâmetros de entrada */
 
@@ -170,25 +170,11 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
-	if(primary && is_write(msg_pedido) && secondary_up){//TODO: funcao que inicializa a thread
-		if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
-			fprintf(stderr, "Failed malloc thread_params\n");
-			free(buff_pedido);
-			free_message(msg_pedido);
-			free_message(msg_resposta);
+	if(primary && is_write(msg_pedido) && secondary_up){
+		//TODO: funcao que inicializa a thread
+		if((thread = backup_update(msg_pedido, other_server)) == NULL){
 			secondary_up = 0;
-
-		} else {
-
-			t_params->msg = msg_pedido;
-			t_params->server = other_server;
-
-			//criar a thread
-			if (pthread_create(&thread, NULL, &secondary_update, (void *) &t_params) != 0){
-				perror("\nThread não criada.\n");
-				secondary_up = 0;
-			}
-		}		
+		}
 	}
 
 
@@ -226,7 +212,10 @@ int network_receive_send(int socket_fd){
 		return -2;
 	}
 
-	//verificar que a a thread vez o seu trabalho TODO:
+	// if(!update_successful(thread)){
+	// 	secondary_up = 0;
+	// }
+	//verificar que a thread vez o seu trabalho TODO:
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 
 	/* Libertar memória */
@@ -288,9 +277,10 @@ int write_file(char *filename,char *adrport,char **n_tables){
 	FILE *fp;
 	int i,n;
 
-	fp = fopen(filename,"w");
+	if((fp = fopen(filename,"w")) == NULL){
 		return 0;//FIXME:
 	}
+
 	fgets(in,adress_port_SIZE,fp);
 	fputs(("%s\n",in),fp);
 	fgets(in,N_TABLES_MSIZE,fp);
