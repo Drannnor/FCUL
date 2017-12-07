@@ -76,142 +76,161 @@ struct server_t *network_connect(const char *address_port){
 
 struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
 	char *message_out;
-	int message_size, msg_size;
+	int message_size, msg_size, error, n_tentativas = 0;
 	struct message_t *msg_resposta;
 	
+	do{
+		error = 0;
+		n_tentativas++;
 
-	/* Verificar parâmetros de entrada */
-	if (server == NULL){
-		fprintf(stderr, "Server dado eh invalido\n");
-		return message_error(CLIENT_ERROR);
-	}
+		if(n_tentativas == 3){
+			sleep(RETRY_TIME);
+			//if(server->)
+		}
+		/* Verificar parâmetros de entrada */
+		if (server == NULL){
+			fprintf(stderr, "Server dado eh invalido\n");
+			return message_error(CLIENT_ERROR); //FIXME: eh para retornar a msg com client_error ou contar isto como uma tentativa?
+		}
 
-	if(msg == NULL){
-		fprintf(stderr, "Mensagem dada eh invalida\n");
-		return message_error(CLIENT_ERROR);
-	}
+		if(msg == NULL){
+			fprintf(stderr, "Mensagem dada eh invalida\n");
+			return message_error(CLIENT_ERROR);
+		}
 
-	/* Serializar a mensagem recebida */
+		/* Serializar a mensagem recebida */
 
-	/* Verificar se a serialização teve sucesso */
-	if((message_size = message_to_buffer(msg, &message_out)) < 0){
-		fprintf(stderr, "Failed marshalling\n");
-		free(message_out);
-		return message_error(CLIENT_ERROR);
-	}
+		/* Verificar se a serialização teve sucesso */
+		if((message_size = message_to_buffer(msg, &message_out)) < 0){
+			fprintf(stderr, "Failed marshalling\n");
+			free(message_out);
+			return message_error(CLIENT_ERROR);
+		}
 
-	/* Enviar ao servidor o tamanho da mensagem que será enviada
-	   logo de seguida
-	*/
-	msg_size = htonl(message_size);
+		/* Enviar ao servidor o tamanho da mensagem que será enviada
+		logo de seguida
+		*/
+		msg_size = htonl(message_size);
 
-	int result;
-	int first_try = 1;
-	/* Verificar se o envio teve sucesso */
-	while(first_try >= 0){
-		if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-			if(result == 0 || first_try > 0){
-				sleep(RETRY_TIME);
-				first_try--;
+		int result;
+		int first_try = 1;
+		/* Verificar se o envio teve sucesso */
+		while(first_try >= 0){
+			if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+				if(result == 0 || first_try > 0){
+					sleep(RETRY_TIME);
+					first_try--;
+				}
+				else{
+					fprintf(stderr, "Write failed - size write_all\n");
+					free(message_out);
+					//return message_error(CONNECTION_ERROR);
+					error = CONNECTION_ERROR;
+					continue;
+				}
+				
+			} else { 
+				break;
 			}
-			else{
-				fprintf(stderr, "Write failed - size write_all\n");
-				free(message_out);
-				return message_error(CONNECTION_ERROR);//FIXME: 
+		}
+		
+
+		/* Enviar a mensagem que foi previamente serializada */
+		first_try = 1;
+		/* Verificar se o envio teve sucesso */
+		while(first_try >= 0){
+			if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
+				if(result == 0 || first_try > 0){
+					sleep(RETRY_TIME);
+					first_try--;
+				}
+				else{
+					fprintf(stderr, "Write failed - message write_all\n");
+					free(message_out);
+					//return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
+					error = CONNECTION_ERROR;
+					continue;
+				}	
+			}else { 
+				break;
+			}
+		}
+
+		/* De seguida vamos receber a resposta do servidor:
+
+			Com a função read_all, receber num inteiro o tamanho da 
+			mensagem de resposta. */
+		first_try = 1;
+		while(first_try >= 0){
+			if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+				if(result == 0 || first_try > 0){
+					sleep(RETRY_TIME);
+					first_try--;
+				}
+				else{
+					fprintf(stderr, "Read failed - size read_all\n");
+					free(message_out);
+					//return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
+					error = CONNECTION_ERROR;
+					continue;
+				}	
+			} else { 
+				break;
 			}
 			
-		} else { 
-			break;
 		}
-	}
-	
 
-	/* Enviar a mensagem que foi previamente serializada */
-	first_try = 1;
-	/* Verificar se o envio teve sucesso */
-	while(first_try >= 0){
-		if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
-			if(result == 0 || first_try > 0){
-				sleep(RETRY_TIME);
-				first_try--;
-			}
-			else{
-				fprintf(stderr, "Write failed - message write_all\n");
-				free(message_out);
-				return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
-			}	
-		}else { 
-			break;
-		}
-	}
-
-	/* De seguida vamos receber a resposta do servidor:
-
-		Com a função read_all, receber num inteiro o tamanho da 
+		/* Alocar memória para receber o número de bytes da
 		mensagem de resposta. */
-	first_try = 1;
-	while(first_try >= 0){
-		if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-			if(result == 0 || first_try > 0){
-				sleep(RETRY_TIME);
-				first_try--;
-			}
-			else{
-				fprintf(stderr, "Read failed - size read_all\n");
-				free(message_out);
-				return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
-			}	
-		} else { 
-			break;
+			
+		/* Com a função read_all, receber a mensagem de resposta. */
+		char *message_in;
+		if((message_in = (char *)malloc(ntohl(msg_size))) == NULL){
+			printf("Failed malloc - message_in\n");
+			free(message_out);
+			return message_error(CLIENT_ERROR);
 		}
 		
-	}
-
-	/* Alocar memória para receber o número de bytes da
-	mensagem de resposta. */
-		
-	/* Com a função read_all, receber a mensagem de resposta. */
-	char *message_in;
-	if((message_in = (char *)malloc(ntohl(msg_size))) == NULL){
-		printf("Failed malloc - message_in\n");
-		free(message_out);
-		return message_error(CLIENT_ERROR);
-	}
-	
-	/* Verificar se a receção teve sucesso */
-	first_try = 1;
-	while(first_try >= 0){
-		if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
-			if(result == 0 || first_try > 0){
-				sleep(RETRY_TIME);
-				first_try--;
+		/* Verificar se a receção teve sucesso */
+		first_try = 1;
+		while(first_try >= 0){
+			if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
+				if(result == 0 || first_try > 0){
+					sleep(RETRY_TIME);
+					first_try--;
+				}
+				else{
+					fprintf(stderr, "Read failed - message read_all\n");
+					free(message_out);
+					free(message_in);
+					//return message_error(CONNECTION_ERROR);
+					error = CONNECTION_ERROR;
+					continue;
+					//FIXME: sera que queremos fazer a segunda tentativa fora? risco de pedidos repetidos
+				}	
+			} else { 
+				break;
 			}
-			else{
-				fprintf(stderr, "Read failed - message read_all\n");
-				free(message_out);
-				free(message_in);
-				return message_error(CONNECTION_ERROR);//FIXME: sera que queremos fazer a segunda tentativa fora? risco de pedidos repetidos
-			}	
-		} else { 
-			break;
 		}
-	}
 
-	/* Desserializar a mensagem de resposta */
-	msg_resposta = buffer_to_message(message_in, ntohl(msg_size));
+		/* Desserializar a mensagem de resposta */
+		msg_resposta = buffer_to_message(message_in, ntohl(msg_size));
 
-	/* Verificar se a desserialização teve sucesso */
-	if (msg_resposta == NULL){
-		fprintf(stderr, "Failed unmarshalling\n");
-		free(message_out);
+		/* Verificar se a desserialização teve sucesso */
+		if (msg_resposta == NULL){
+			fprintf(stderr, "Failed unmarshalling\n");
+			free(message_out);
+			free(message_in);
+			return message_error(CLIENT_ERROR);
+		}
+		
+
+		/* Libertar memória */
 		free(message_in);
-		return message_error(CLIENT_ERROR);
-	}
-
-	/* Libertar memória */
-	free(message_in);
-	free(message_out);
-	return msg_resposta;
+		free(message_out);
+		return msg_resposta;
+	}while (error == CONNECTION_ERROR && n_tentativas <= 4);
+	return message_error(CONNECTION_ERROR); //Se correu tudo mal
 }
 
 int network_close(struct server_t *server){

@@ -57,14 +57,12 @@ int main(int argc, char **argv){
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
 	struct rtables_t *rtables;
-	primary = strdup(argv[1]);
-	secondary = strdup(argv[2]);
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	while (1){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 
-		if(rtables == NULL){
+		if(rtables == NULL){ //FIXME:
 			if(rtables = rtables_bind(primary) == NULL){
 				if(rtables = rtables_bind(secondary) == NULL){
 					fprintf(stderr, "Unable to connect to server!");
@@ -73,6 +71,9 @@ int main(int argc, char **argv){
 				ol_switcheroo(&primary,&secondary);
 			}
 		}
+
+		rtables -> server -> address_port_pri = strdup(argv[1]);
+		rtables -> server -> address_port_sec = strdup(argv[2]);
 
 		/* Receber o comando introduzido pelo utilizador
 		   Sugestão: usar fgets de stdio.h
@@ -306,5 +307,19 @@ int main(int argc, char **argv){
 	free(primary);
 	free(secondary);
 	return rtables_unbind(rtables); 
+}
+
+int server_switcharoo(struct server_t *server){
+	struct server_t *new_server;
+	if((new_server = network_connect(server->address_port_sec)) == NULL){
+		return -1;
+	}
+	new_server -> address_port_pri = server -> address_port_sec;
+	new_server -> address_port_sec = server -> address_port_pri;
+
+	network_close(server);
+	server = new_server;
+
+	return 0;
 }
 

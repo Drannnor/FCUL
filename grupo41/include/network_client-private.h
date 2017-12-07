@@ -14,6 +14,8 @@ Ricardo Cruz 47871
 
 struct server_t{
     int socket_fd;
+    char* address_port_pri;
+    char* address_port_sec;
 };
 
 /* Função que garante o envio de len bytes armazenados em buf,
