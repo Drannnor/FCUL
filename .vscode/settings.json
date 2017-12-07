@@ -9,7 +9,8 @@
         "entry-private.h": "c",
         "client_stub-private.h": "c",
         "client_stub.h": "c",
-        "data.h": "c"
+        "data.h": "c",
+        "primary_backup-private.h": "c"
     },
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.errorSquiggles": "Enabled"

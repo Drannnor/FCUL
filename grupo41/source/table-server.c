@@ -181,7 +181,7 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	// se estivermos no servidor secundario asegurar exclusao mutua TODO:
+	// se estivermos no servidor secundario assegurar exclusao mutua TODO:
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
@@ -571,11 +571,9 @@ int main(int argc, char **argv){
 			}
 
 		} else {//Servidor Secundario, primeira vez
-
-			//malloc do secondary server TODO:
 			if (( other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
 				fprintf(stderr, "Failed malloc other_server\n");
-				secondary_up = 0;
+				secondary_up = 0;//FIXME:
 			} else {
 				other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
 
@@ -586,7 +584,6 @@ int main(int argc, char **argv){
 		}
 	}
 
-	
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
 		return -1;
