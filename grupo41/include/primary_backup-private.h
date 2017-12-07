@@ -6,5 +6,9 @@ struct server_t{
     int socket_fd;
 };
 
+
+//main da thread -- vai enviar uma msg ao servidor secundario 
+void *secondary_update(void *params);
+
 #endif
 
