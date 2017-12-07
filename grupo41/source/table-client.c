@@ -16,6 +16,7 @@ Ricardo Cruz 47871
 #include "message-private.h"
 #include "client_stub-private.h"
 #include "client_stub.h"
+#include <ctype.h>
 
 #define MAX_SIZE 81
 
@@ -41,7 +42,7 @@ void ol_switcheroo(char **primary, char **secondary){
 
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
-	char *tok, *tok_opc, *key_o, *primary, *secondary;
+	char *tok, *tok_opc, *key_o;
 	int count_param,i;
 	struct data_t *value_o;
 	char *tokens[3];
@@ -62,8 +63,8 @@ int main(int argc, char **argv){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 
 		if(rtables == NULL){ //FIXME:
-			if(rtables = rtables_bind(primary) == NULL){
-				if(rtables = rtables_bind(secondary) == NULL){
+			if((rtables = rtables_bind(primary)) == NULL){
+				if((rtables = rtables_bind(secondary)) == NULL){
 					fprintf(stderr, "Unable to connect to server!");
 					continue;
 				}

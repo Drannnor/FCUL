@@ -68,7 +68,7 @@ int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: CRUZZ!! 
 	// //dar free aos mallocs?
 	//return 1;
 
-	return -1;
+	return 0;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
