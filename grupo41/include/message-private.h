@@ -11,7 +11,6 @@ Ricardo Cruz 47871
 #include <signal.h>
 #include "inet.h"
 #include "message.h"
-#include "network_client-private.h"
 #include "table-private.h"
 
 #define OC_RT_ERROR 99
@@ -22,6 +21,15 @@ Ricardo Cruz 47871
 
 struct message_t* message_error(int errcode);
 void print_message(struct message_t *msg);
+
+/* Função que garante o envio de len bytes armazenados em buf,
+   através da socket sock.
+*/
+int write_all(int sock, char *buf, int len);
+
+// Função que garante a receção de len bytes através da socket sock,
+// armazenando-os em buf.
+int read_all(int sock, char *buf, int len);
 
 /* Função que recebe uma tabela e uma mensagem de pedido e:
 	- aplica a operação na mensagem de pedido na tabela;

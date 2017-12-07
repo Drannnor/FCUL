@@ -8,12 +8,12 @@ CFLAGS = -Wall -I $(INC_DIR)
 
 all: clean server client
 
-server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o
-	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o -o $(BIN_DIR)/$@
+server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.o
+	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.0-o $(BIN_DIR)/$@
 
 
 client: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-client.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o
-	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o -o  $(BIN_DIR)/$@
+	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o  -o  $(BIN_DIR)/$@
 
 
 test_table: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/test_table.o

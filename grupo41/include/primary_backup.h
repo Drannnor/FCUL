@@ -1,7 +1,6 @@
 #ifndef _PRIMARY_BACKUP_H
 #define _PRIMARY_BACKUP_H
 
-
 struct server_t; /* Para definir em primary_backup-private.h */
 
 /* Função usada para um servidor avisar o servidor “server” de que

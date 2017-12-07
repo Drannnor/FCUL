@@ -13,9 +13,9 @@ Ricardo Cruz 47871
 #include <stdio.h>
 #include <pthread.h>
 #include "table-private.h"
-#include "message-private.h"
 #include "table_skel-private.h"
 #include "primary_backup-private.h"
+#include "message-private.h"
 
 #define NFDESC 6
 #define MAX_SIZE 1000
@@ -35,39 +35,41 @@ int is_write(struct message_t *msg){
 }
 
 
-int read_file(char *file_name,char **adrport,char ***n_tables){
-	int i,n;
-	char *in;
-	FILE *fp;
+int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: CRUZZ!! nao compila
+	// int i,n;
+	// char *in;
+	// FILE *fp;
 
-	if((fp = fopen(file_name,"r")) == NULL){
-		return 0;//FIXME:
-	}
-	fgets(in,adress_port_SIZE,fp);
+	// if((fp = fopen(file_name,"r")) == NULL){
+	// 	return 0;//FIXME:
+	// }
+	// fgets(in,adress_port_SIZE,fp);
 
-	if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
-		fprintf(stderr,"Failed malloc\n");
-		return -1;//FIXME:
-	}
+	// if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
+	// 	fprintf(stderr,"Failed malloc\n");
+	// 	return -1;//FIXME:
+	// }
 
-	adrport = in;
-	fgets(in,N_TABLES_MSIZE,fp);
-	n = atoi(in)+2;
-	char *n_tables_read[n];
-	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
-		fprintf(stderr,"Failed malloc\n");
-		return -1;//FIXME:
-	}
+	// adrport = in;
+	// fgets(in,N_TABLES_MSIZE,fp);
+	// n = atoi(in)+2;
+	// char *n_tables_read[n];
+	// if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+	// 	fprintf(stderr,"Failed malloc\n");
+	// 	return -1;//FIXME:
+	// }
 
-	for(i = 1;i < n;i++){
-		fgets(in,N_TABLES_MSIZE,fp);
-		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
-			fprintf(stderr,"Failed malloc\n");
-			return -1;//FIXME:
-		}
-	}
-	//dar free aos mallocs?
-	return 1;
+	// for(i = 1;i < n;i++){
+	// 	fgets(in,N_TABLES_MSIZE,fp);
+	// 	if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+	// 		fprintf(stderr,"Failed malloc\n");
+	// 		return -1;//FIXME:
+	// 	}
+	// }
+	// //dar free aos mallocs?
+	//return 1;
+
+	return -1;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -116,7 +118,7 @@ int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result;
   	struct message_t *msg_pedido, *msg_resposta;
-	pthread_t thread;
+	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
 
 	if(socket_fd < 0){
@@ -171,7 +173,6 @@ int network_receive_send(int socket_fd){
 	print_message(msg_resposta);
 
 	if(primary && is_write(msg_pedido) && secondary_up){
-		//TODO: funcao que inicializa a thread
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){
 			secondary_up = 0;
 		}
@@ -271,26 +272,25 @@ int tratar_input(){
 	return 0;
 }
 
-//escreve o ficheiro com a configuracao do servidor TODO: pelo Cruz
-int write_file(char *filename,char *adrport,char **n_tables){
-	char* in;
-	FILE *fp;
-	int i,n;
+int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
+	// char* in;
+	// FILE *fp;
+	// int i,n;
 
-	if((fp = fopen(filename,"w")) == NULL){
-		return 0;//FIXME:
-	}
+	// if((fp = fopen(filename,"w")) == NULL){
+	// 	return 0;//FIXME:
+	// }
 
-	fgets(in,adress_port_SIZE,fp);
-	fputs(("%s\n",in),fp);
-	fgets(in,N_TABLES_MSIZE,fp);
-	fputs(("%s\n",in),fp);
-	n = atoi(in)+2;
+	// fgets(in,adress_port_SIZE,fp);
+	// fputs(("%s\n",in),fp);
+	// fgets(in,N_TABLES_MSIZE,fp);
+	// fputs(("%s\n",in),fp);
+	// n = atoi(in)+2;
 
-	for(i = 1;i < n;i++){
-		fgets(in,N_TABLES_MSIZE,fp);
-		fputs(("%s\n",in),fp);
-	}
+	// for(i = 1;i < n;i++){
+	// 	fgets(in,N_TABLES_MSIZE,fp);
+	// 	fputs(("%s\n",in),fp);
+	// }
 	return 1;
 }
 

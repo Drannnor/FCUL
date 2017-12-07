@@ -5,10 +5,10 @@ Bruno Andrade 47829
 Ricardo Cruz 47871
 */
 
-#include "primary_backup-private.h"
 #include <error.h>
 #include <stdio.h>
 #include <pthread.h>
+#include "primary_backup-private.h"
 #include "table-private.h"
 #include "message-private.h"
 
@@ -27,9 +27,9 @@ int update_state(struct server_t *server){//TODO:
     return -1;
 }
 
-pthread_t backup_update(struct message_t *msg, struct server_t *server){
+pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
-    pthread_t thread;
+    pthread_t *thread;
     
     if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
         fprintf(stderr, "backup_update - failed malloc.\n");
@@ -40,7 +40,7 @@ pthread_t backup_update(struct message_t *msg, struct server_t *server){
     t_params->server = server;
 
     //criar a thread
-    if (pthread_create(&thread, NULL, &backup_update_thread, (void *) &t_params) != 0){
+    if (pthread_create(thread, NULL, &backup_update_thread, (void *) &t_params) != 0){
         fprintf(stderr,"\nThread não criada.\n");
         return NULL;
     }
@@ -50,12 +50,12 @@ pthread_t backup_update(struct message_t *msg, struct server_t *server){
 
 void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
-	struct message_t *msg_in;
+    struct message_t *msg_in;
 
 	msg_in = network_send_receive(tp->server, tp->msg);
 
-	int *res = (int *) malloc(sizeof(int));
-	*res = msg_in->content.result;
+    int *res = (int *) malloc(sizeof(int));//FIXME:
+    *res = msg_in -> content.result;
 
     free_message(msg_in);
     free_message(tp->msg);
@@ -108,7 +108,7 @@ int send_table_info(struct server_t *server, char **n_tables){
     return res;
 }
 
-char **get_table_info(int socket_fd){ //FIXME: este copy paste todo estah a dar-me cancro, talvez haja outra maneira.
+char **get_table_info(int socket_fd){
 	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result, i;
   	struct message_t *msg_pedido, *msg_resposta;
@@ -231,4 +231,104 @@ int update_successful(pthread_t thread){
     if((pthread_join(thread,result)) != 0){
         return -1;
     }
+}
+
+
+struct message_t *network_send_receive(struct server_t *server, struct message_t *msg){
+	char *message_out;
+	int message_size, msg_size;
+	struct message_t *msg_resposta;
+
+
+    /* Verificar parâmetros de entrada */
+    if (server == NULL){
+        fprintf(stderr, "Server dado eh invalido\n");
+        return message_error(CLIENT_ERROR); 
+    }
+
+    if(msg == NULL){
+        fprintf(stderr, "Mensagem dada eh invalida\n");
+        return message_error(CLIENT_ERROR);
+    }
+
+    /* Serializar a mensagem recebida */
+
+    /* Verificar se a serialização teve sucesso */
+    if((message_size = message_to_buffer(msg, &message_out)) < 0){
+        fprintf(stderr, "Failed marshalling\n");
+        free(message_out);
+        return message_error(CLIENT_ERROR);
+    }
+
+    /* Enviar ao servidor o tamanho da mensagem que será enviada
+    logo de seguida
+    */
+    msg_size = htonl(message_size);
+
+    int result;
+    int first_try = 1;
+    /* Verificar se o envio teve sucesso */
+    if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+        fprintf(stderr, "Write failed - size write_all\n");
+        free(message_out);
+        return message_error(CONNECTION_ERROR);
+    }
+    
+
+    /* Enviar a mensagem que foi previamente serializada */
+
+
+    /* Verificar se o envio teve sucesso */
+    if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
+        fprintf(stderr, "Write failed - message write_all\n");
+        free(message_out);
+        return message_error(CONNECTION_ERROR);
+    }
+   
+    /* De seguida vamos receber a resposta do servidor:
+
+        Com a função read_all, receber num inteiro o tamanho da 
+        mensagem de resposta. */
+
+    if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+        fprintf(stderr, "Read failed - size read_all\n");
+        free(message_out);
+        return message_error(CONNECTION_ERROR);
+    }
+
+    /* Alocar memória para receber o número de bytes da
+    mensagem de resposta. */
+        
+    /* Com a função read_all, receber a mensagem de resposta. */
+    char *message_in;
+    if((message_in = (char *)malloc(ntohl(msg_size))) == NULL){
+        printf("Failed malloc - message_in\n");
+        free(message_out);
+        return message_error(CLIENT_ERROR);
+    }
+    
+    /* Verificar se a receção teve sucesso */{
+    if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
+        fprintf(stderr, "Read failed - message read_all\n");
+        free(message_out);
+        free(message_in);
+        return message_error(CONNECTION_ERROR);
+    }
+
+    /* Desserializar a mensagem de resposta */
+    msg_resposta = buffer_to_message(message_in, ntohl(msg_size));
+
+    /* Verificar se a desserialização teve sucesso */
+    if (msg_resposta == NULL){
+        fprintf(stderr, "Failed unmarshalling\n");
+        free(message_out);
+        free(message_in);
+        return message_error(CLIENT_ERROR);
+    }
+    
+
+    /* Libertar memória */
+    free(message_in);
+    free(message_out);
+    return msg_resposta;
 }
