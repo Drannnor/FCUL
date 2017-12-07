@@ -247,3 +247,17 @@ int network_close(struct server_t *server){
 	return 0;
 }
 
+int server_switcharoo(struct server_t *server){
+	struct server_t *new_server;
+	if((new_server = network_connect(server->address_port_sec)) == NULL){
+		return -1;
+	}
+	new_server -> address_port_pri = server -> address_port_sec;
+	new_server -> address_port_sec = server -> address_port_pri;
+
+	network_close(server);
+	server = new_server;
+
+	return 0;
+}
+

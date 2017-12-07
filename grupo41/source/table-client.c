@@ -13,7 +13,6 @@ Ricardo Cruz 47871
 	Exemplo de uso: ./table_client 10.101.148.144:54321
 */
 
-#include "network_client-private.h"
 #include "message-private.h"
 #include "client_stub-private.h"
 #include "client_stub.h"
@@ -307,19 +306,5 @@ int main(int argc, char **argv){
 	free(primary);
 	free(secondary);
 	return rtables_unbind(rtables); 
-}
-
-int server_switcharoo(struct server_t *server){
-	struct server_t *new_server;
-	if((new_server = network_connect(server->address_port_sec)) == NULL){
-		return -1;
-	}
-	new_server -> address_port_pri = server -> address_port_sec;
-	new_server -> address_port_sec = server -> address_port_pri;
-
-	network_close(server);
-	server = new_server;
-
-	return 0;
 }
 
