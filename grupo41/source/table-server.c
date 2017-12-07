@@ -57,7 +57,7 @@ void *secondary_update(void *params){
 
 int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cruz Cruuuuuzz!!!!!!! eh favor corrigir!!! ctrl + shift + p --> toggle error squiggles, e pensar um bocadinho
 	int i,n;
-	char *in, *n_tables_read[n];
+	char *in;
 	FILE *fp;
 
 	if((fp = fopen(file_name,"r")) == NULL){
@@ -73,13 +73,14 @@ int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: pelo Cru
 	adrport = in;
 	fgets(in,N_TABLES_MSIZE,fp);
 	n = atoi(in)+2;
+	char *n_tables_read[n];
 	if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
 		fprintf(stderr,"Failed malloc\n");
 		return -1;//FIXME:
 	}
 
 	for(i = 1;i < n;i++){
-		fgets(in,N_TABLES_MSIZE,f);
+		fgets(in,N_TABLES_MSIZE,fp);
 		if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
 			fprintf(stderr,"Failed malloc\n");
 			return -1;//FIXME:
@@ -156,7 +157,7 @@ int network_receive_send(int socket_fd){
 	/* Alocar memória para receber o número de bytes da
 	   mensagem de pedido. */
 	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
-		fprintf(stderr, "Failedmalloc buff_pedido \n");
+		fprintf(stderr, "Failed malloc buff_pedido \n");
 		return -2;
 	}
 
@@ -309,9 +310,7 @@ int write_file(char *filename,char **adrport,char ***n_tables){
 	FILE *fp;
 	int i,n;
 
-	if((fp = fopen(filename,"w")) == NULL){
-		return 0;//FIXME:
-	}
+	fp = fopen(filename,"w");
 	fgets(in,adress_port_SIZE,fp);
 	fputs(("%s\n",in),fp);
 	fgets(in,N_TABLES_MSIZE,fp);
