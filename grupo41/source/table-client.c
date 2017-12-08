@@ -24,7 +24,7 @@ void print_message(struct message_t *msg);
 
 int isNumber(char *token){
 
-	while(token){
+	while(*token){
 		if(!isdigit(*token)){
 			return 0;
 		}
@@ -116,7 +116,8 @@ int main(int argc, char **argv){
 				printf("Input inválido: put <table_num> <key> <value>\n");
 			} else {
 				if(!isNumber(tokens[0])){
-					printf("Input inválido: número de tabela tem de ser um inteiro");
+					printf("Input inválido: número de tabela tem de ser um inteiro\n");
+					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
@@ -148,7 +149,8 @@ int main(int argc, char **argv){
 				printf("Input inválido: get <table_num> <key>\n");
 			} else {
 				if(!isNumber(tokens[0])){
-					printf("Input inválido: número de tabela tem de ser um inteiro");
+					printf("Input inválido: número de tabela tem de ser um inteiro\n");
+					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
@@ -171,7 +173,8 @@ int main(int argc, char **argv){
 				printf("Input inválido: update <table_num> <key> <value>\n");
 			} else {
 				if(!isNumber(tokens[0])){
-					printf("Input inválido: número de tabela tem de ser um inteiro");
+					printf("Input inválido: número de tabela tem de ser um inteiro\n");
+					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
@@ -202,7 +205,8 @@ int main(int argc, char **argv){
 				printf("Input inválido: size <table_num>\n");
 			} else {
 				if(!isNumber(tokens[0])){
-					printf("Input inválido: número de tabela tem de ser um inteiro");
+					printf("Input inválido: número de tabela tem de ser um inteiro\n");
+					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
