@@ -27,7 +27,7 @@ int update_state(struct server_t *server){//TODO:
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
-    pthread_t *thread = NULL;
+    pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));//FIXME:
     
     if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
         fprintf(stderr, "backup_update - failed malloc.\n");
@@ -48,15 +48,14 @@ pthread_t *backup_update(struct message_t *msg, struct server_t *server){
 
 void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
-    struct message_t *msg_in;
+    struct message_t *msg_out;
 
-	msg_in = server_backup_send_receive(tp->server, tp->msg);
+	msg_out = server_backup_send_receive(tp->server, tp->msg);
 
     int *res = (int *) malloc(sizeof(int));//FIXME:
-    *res = msg_in -> content.result;
+    *res = msg_out -> content.result;
 
-    free_message(msg_in);
-    free_message(tp->msg);
+    free_message(msg_out);
 	free(params);
     return res;
 }
@@ -152,6 +151,7 @@ int send_table_info(struct server_t *server, char **n_tables){
 	msg_in = server_backup_send_receive(server, msg_out);
 
 	int res = msg_in->content.result;
+	msg_out->content.keys = NULL;
     free_message(msg_in);
     free_message(msg_out);
     return res;

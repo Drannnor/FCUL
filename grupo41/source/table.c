@@ -127,10 +127,12 @@ char **table_get_keys(struct table_t *table){
 
 void table_free_keys(char **keys){
     char **ptr= keys;
-    while(*keys){
-        free(*keys++);
+    if(keys != NULL){
+        while(*keys){
+            free(*keys++);
+        }
+        free(ptr);
     }
-    free(ptr);
 }
 
 /*

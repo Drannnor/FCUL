@@ -323,6 +323,8 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
+	
+
 	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
 		fprintf(stderr, "Error creating server socket");
 		return -1;
