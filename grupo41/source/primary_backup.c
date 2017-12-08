@@ -56,7 +56,7 @@ void *backup_update_thread(void *params){
     *res = msg_out -> content.result;
 
     free_message(msg_out);
-	free(params);
+	//free(tp);FIXME: not wortking
     return res;
 }
 
@@ -125,13 +125,14 @@ struct server_t *server_bind(const char *address_port){
 
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
 char *get_address_port(struct sockaddr *p_server){
-	char *ip_add,*port,*ip = inet_ntoa((struct sockaddr_in)p_server.sin_addr);
+	struct sockaddr_in = (struct sockaddr_in)p_server;
+	char *ip_add,*port,*ip = inet_ntoa();
 	int s, len = strlen(ip), sockaddr_len = sizeof(p_server);
       
 	if(getpeername(s, &p_server, &sockaddr_len) == -1) {
-      perror("getpeername() failed");
-      return -1;
-	   }
+    	perror("getpeername() failed");
+    	return -1;
+	}
 	   
     if((ip_add = malloc(len + 2)) == NULL){
 		fprintf(stderr,"Failed malloc\n");

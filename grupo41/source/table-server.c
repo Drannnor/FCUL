@@ -389,7 +389,7 @@ int main(int argc, char **argv){
 				fprintf(stderr, "Failed malloc other_server\n");
 				secondary_up = 0;
 			} else {
-				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) != NULL){//FIXME: esta certo? -Bruno
+				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) > 0){//FIXME: esta certo? -Bruno
 					if((address_port = get_address_port(p_server)) != NULL){
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
@@ -398,7 +398,8 @@ int main(int argc, char **argv){
 				}
 				secondary_up = 0;
 			}
-
+		}
+	}
 	
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
