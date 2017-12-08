@@ -45,8 +45,8 @@ struct entry_t *entry_create(char *key, struct data_t *value){
             fprintf(stderr, "Failed malloc!\n");
             return NULL;
         }
-        ent->key = strdup(key);
-        ent->value = data_dup(value);
+        ent->key = key;
+        ent->value = value;
         ent->next = NULL;
     }
     
