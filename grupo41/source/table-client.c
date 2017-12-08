@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 		}
 
 		n_tentativas = 0;
-		while(rtables == NULL && n_tentativas < 4){ //FIXME:
+		while(rtables == NULL && n_tentativas < 4){ //FIXME:arranjar os prints
 			if(n_tentativas == 2){
 				sleep(RETRY_TIME);
 			}
@@ -134,6 +134,7 @@ int main(int argc, char **argv){
 				if((result = rtables_put(rtables, key_o, value_o)) < 0){
 					if(result == CONNECTION_ERROR){
 						rtables_unbind(rtables);
+						rtables = NULL;
 						fprintf(stderr, "put - lost connection to server\n");
 						continue;
 					} else {
