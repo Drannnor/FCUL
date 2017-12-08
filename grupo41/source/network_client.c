@@ -121,7 +121,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		/* Verificar se o envio teve sucesso */
 		while(first_try >= 0){
 			if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-				if(result == 0 || first_try > 0){
+				if(result == 0 && first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				}
@@ -130,13 +130,14 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					continue;
-				}
-				
+					break;//FIXME:S
+				}	
 			} else { 
 				break;
 			}
 		}
+
+		if(result == 0){continue;}
 		
 
 		/* Enviar a mensagem que foi previamente serializada */
@@ -144,7 +145,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		/* Verificar se o envio teve sucesso */
 		while(first_try >= 0){
 			if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
-				if(result == 0 || first_try > 0){
+				if(result == 0 && first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				}
@@ -153,12 +154,14 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					continue;
+					break;//FIXME:S
 				}	
 			}else { 
 				break;
 			}
 		}
+
+		if(result == 0){continue;}		
 
 		/* De seguida vamos receber a resposta do servidor:
 
@@ -167,7 +170,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		first_try = 1;
 		while(first_try >= 0){
 			if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-				if(result == 0 || first_try > 0){
+				if(result == 0 && first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				} else {
@@ -175,13 +178,15 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					continue;
+					break;//FIXME:S
 				}	
 			} else { 
 				break;
-			}
-			
+			}			
 		}
+
+
+		if(result == 0){continue;}
 
 		/* Alocar memória para receber o número de bytes da
 		mensagem de resposta. */
@@ -198,7 +203,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		first_try = 1;
 		while(first_try >= 0){
 			if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
-				if(result == 0 || first_try > 0){
+				if(result == 0 && first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				}
@@ -208,12 +213,14 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_in);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					continue;
+					break;//FIXME:S
 				}	
 			} else { 
 				break;
 			}
 		}
+
+		if(result == 0){continue;}
 
 		/* Desserializar a mensagem de resposta */
 		msg_resposta = buffer_to_message(message_in, ntohl(msg_size));

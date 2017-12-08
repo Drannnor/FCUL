@@ -93,7 +93,7 @@ int main(int argc, char **argv){
 		}
 
 		if(rtables == NULL){
-			fprintf(stderr, "Unable to connect to server!");
+			fprintf(stderr, "Unable to connect to server!\n");
 			continue;
 		}
 		
