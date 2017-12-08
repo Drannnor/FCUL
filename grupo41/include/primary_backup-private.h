@@ -13,7 +13,7 @@ void *backup_update_thread(void *params);
 
 struct server_t *server_bind(const char *address_port);
 
-char *get_address_port(struct sockaddr *p_server);
+char *get_address_port(struct server_t *server, struct sockaddr *p_server);
 
 int send_table_info(struct server_t *server, char **n_tables);
 

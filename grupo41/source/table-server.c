@@ -390,7 +390,7 @@ int main(int argc, char **argv){
 				secondary_up = 0;
 			} else {
 				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) > 0){//FIXME: esta certo? -Bruno
-					if((address_port = get_address_port(p_server)) != NULL){
+					if((address_port = get_address_port(other_server, p_server)) != NULL){
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
 						}

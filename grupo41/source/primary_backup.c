@@ -124,27 +124,25 @@ struct server_t *server_bind(const char *address_port){
 }
 
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
-char *get_address_port(struct sockaddr *p_server){
-	struct sockaddr_in = (struct sockaddr_in)p_server;
-	char *ip_add,*port,*ip = inet_ntoa();
-	int s, len = strlen(ip), sockaddr_len = sizeof(p_server);
-      
-	if(getpeername(s, &p_server, &sockaddr_len) == -1) {
+char *get_address_port(struct server_t *server, struct sockaddr *p_server){
+	unsigned int sockaddr_len = sizeof(p_server);
+	struct sockaddr_in *sk_in = (struct sockaddr_in*)p_server;
+	char *ip = inet_ntoa(sk_in->sin_addr);
+	int len = strlen(ip);
+    char *ip_add[strlen(ip) + 2];
+
+	if(getpeername(server->socket_fd, p_server, &sockaddr_len) == -1) {
     	perror("getpeername() failed");
-    	return -1;
-	}
-	   
-    if((ip_add = malloc(len + 2)) == NULL){
-		fprintf(stderr,"Failed malloc\n");
-		return -1;
+    	return NULL;
 	}
 
-    strcpy(ip_add,ip);
+    strcpy(*ip_add,ip);
     ip_add[len] = ':';
     ip_add[len + 1] = '\0';
-	sprintf(port, "%d", ((int) ntohs((struct sockaddr_in)p_server.sin_port)));
 
-	free(ip_add);
+	char *port[6];
+	sprintf(port, "%d", ((int) ntohs(sk_in->sin_port)));
+
 	return strcat(ip_add,port);
 }
 
