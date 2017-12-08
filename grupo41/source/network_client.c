@@ -59,7 +59,7 @@ struct server_t *network_connect(const char *address_port){
 	
 	//Estabelecer ligação.
 	if (connect(sockfd,(struct sockaddr *)server, sizeof(*server)) < 0) {
-		fprintf(stderr, "Unable to connect to server\n");
+		//fprintf(stderr, "Unable to connect to server\n");
 		close(sockfd);
 		free(servidor);
 		free(server);

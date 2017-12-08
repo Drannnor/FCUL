@@ -23,7 +23,8 @@ Ricardo Cruz 47871
 #define PRIMARY_FILE "server-primary.conf"
 #define BACKUP_FILE "server-backup.conf"
 
-static int quit = 0; 
+static int quit = 0;
+static char* nome_ficheiro;
 int primary, secondary_up, first_time;
 struct server_t *other_server;
 
@@ -252,7 +253,7 @@ int tratar_input(){
 	}
 	if(strcasecmp( tok, "quit") == 0){
 		quit = 1;
-		//apagar o ficheiro server.conf, remove() TODO:
+		while(remove(nome_ficheiro) != 0){} //FIXME: verificar se isto se pode fazer -Burno <3
 		
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
@@ -298,7 +299,7 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *nome_ficheiro, *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
+	char *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
 	char **n_tables;
 	//FIXME: arrumar esta merda
 
@@ -386,14 +387,15 @@ int main(int argc, char **argv){
 				fprintf(stderr, "Failed malloc other_server\n");
 				secondary_up = 0;
 			} else {
-				other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size);//FIXME: verificar se o argv1 é um num, e se o accpet nao deu erro
-
-				address_port = get_address_port(p_server);//FIXME: verificar o resutlado
-				n_tables = get_table_info(other_server->socket_fd);//FIXME: verificar o resultado da funcao
-				secondary_up = 1;
+				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) != NULL){//FIXME: esta certo? -Bruno
+					if((address_port = get_address_port(p_server)) != NULL){
+						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
+							secondary_up = 1;
+						}
+					}
+				}
+				secondary_up = 0;
 			}
-		}
-	}
 
 	
 	if((table_skel_init(n_tables) < 0)){
