@@ -30,7 +30,6 @@ int isNumber(char *token){
 		}
 		token++;
 	}
-
 	return 1;
 }
 

@@ -20,6 +20,8 @@ Ricardo Cruz 47871
 #define MAX_SIZE 1000
 #define adress_port_SIZE 15
 #define	N_TABLES_MSIZE 180
+#define PRIMARY_FILE "server-primary.conf"
+#define BACKUP_FILE "server-backup.conf"
 
 static int quit = 0; 
 int primary, secondary_up, first_time;
@@ -296,7 +298,7 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *nome_ficheiro = "server.conf" , *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
+	char *nome_ficheiro, *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
 	char **n_tables;
 	//FIXME: arrumar esta merda
 
@@ -321,6 +323,11 @@ int main(int argc, char **argv){
 		printf("Uso para servidor secundario: ./server <porta TCP>\n");
 		printf("Exemplo de uso: ./server 54322\n");
 		return -1;
+	}
+	if(primary){
+		nome_ficheiro = PRIMARY_FILE;
+	} else {
+		nome_ficheiro = BACKUP_FILE;
 	}
 
 	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
@@ -396,13 +403,13 @@ int main(int argc, char **argv){
 	}
 
 	if(first_time){
-		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
-		// 	fprintf(stderr, "Failed to write server.conf");
-		// 	return -1;
-		// }
+		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+			fprintf(stderr, "Failed to write configuration file");
+			return -1;
+		}
 	} else {//sync
 		other_server = server_bind(address_port);
-		printf("oh oh :("); //FIXME: para tirar
+		printf("Couldn't sync!"); //FIXME: para tirar
 		//hello(other_server);TODO: fazer o hello e o update
 	}
 
