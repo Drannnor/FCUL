@@ -30,7 +30,6 @@ int isNumber(char *token){
 		}
 		token++;
 	}
-
 	return 1;
 }
 
@@ -82,7 +81,7 @@ int main(int argc, char **argv){
 		}
 
 		n_tentativas = 0;
-		while(rtables == NULL && n_tentativas < 4){ //FIXME:arranjar os prints
+		while(rtables == NULL && n_tentativas < 4){
 			if(n_tentativas == 2){
 				sleep(RETRY_TIME);
 			}
@@ -100,17 +99,6 @@ int main(int argc, char **argv){
 		rtables -> server -> address_port_pri = primary;
 		rtables -> server -> address_port_sec = secondary;
 
-		/*
-		Quando um cliente deteta a falha do primário:
-		a. faz o mesmo pedido para o secundário.
-		i. se o secundário também não responde então o serviço não está
-		disponível. Nesta situação o cliente tenta outra vez RETRY_TIME
-		depois (novamente tentando primeiro o servidor primário e só depois o
-		servidor secundário). Caso a falha de serviço persista o cliente desiste
-		da operação.
-		ii. Se o secundário está ativo, então o secundário responde normalmente ao
-		cliente e o cliente marca esse servidor como primário a partir daí. FIXME: Burno
-		*/
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
 				printf("Input inválido: put <table_num> <key> <value>\n");
