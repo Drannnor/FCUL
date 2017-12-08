@@ -83,14 +83,18 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		error = 0;
 		n_tentativas++;
 
-		if(n_tentativas == 3){
+		if(n_tentativas > 1){
 			sleep(RETRY_TIME);
-			//if(server->)
+			if(server_switcharoo(server) == -1){
+				error = CONNECTION_ERROR;
+				continue;
+			}
 		}
+
 		/* Verificar parâmetros de entrada */
 		if (server == NULL){
 			fprintf(stderr, "Server dado eh invalido\n");
-			return message_error(CLIENT_ERROR); //FIXME: eh para retornar a msg com client_error ou contar isto como uma tentativa?
+			return message_error(CLIENT_ERROR);
 		}
 
 		if(msg == NULL){
@@ -147,7 +151,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				else{
 					fprintf(stderr, "Write failed - message write_all\n");
 					free(message_out);
-					//return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
+					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
 					continue;
 				}	
@@ -170,7 +174,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				else{
 					fprintf(stderr, "Read failed - size read_all\n");
 					free(message_out);
-					//return message_error(CONNECTION_ERROR);//FIXME: acho que nao eh necessario no write
+					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
 					continue;
 				}	
@@ -206,7 +210,6 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
 					continue;
-					//FIXME: sera que queremos fazer a segunda tentativa fora? risco de pedidos repetidos
 				}	
 			} else { 
 				break;
@@ -224,12 +227,11 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			return message_error(CLIENT_ERROR);
 		}
 		
-
 		/* Libertar memória */
 		free(message_in);
 		free(message_out);
 		return msg_resposta;
-	}while (error == CONNECTION_ERROR && n_tentativas <= 4);
+	}while (error == CONNECTION_ERROR && n_tentativas < 4);
 	return message_error(CONNECTION_ERROR); //Se correu tudo mal
 }
 

@@ -161,7 +161,7 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	// se estivermos no servidor secundario asegurar exclusao mutua TODO:
+	// se estivermos no servidor secundario assegurar exclusao mutua TODO:
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");

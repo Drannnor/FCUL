@@ -43,7 +43,7 @@ void ol_switcheroo(char **primary, char **secondary){
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
 	char *tok, *tok_opc, *key_o;
-	int count_param,i;
+	int count_param,i,n_tentativas;
 	struct data_t *value_o;
 	char *tokens[3];
 
@@ -57,23 +57,31 @@ int main(int argc, char **argv){
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
 	struct rtables_t *rtables;
+	char* primary = strdup(argv[1]);
+	char* secondary = strdup(argv[2]);
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
 	while (1){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
-
-		if(rtables == NULL){ //FIXME:
+		
+		n_tentativas = 0;
+		while(rtables == NULL && n_tentativas < 4){ //FIXME:
+			if(n_tentativas == 2){
+				sleep(RETRY_TIME);
+			}
 			if((rtables = rtables_bind(primary)) == NULL){
-				if((rtables = rtables_bind(secondary)) == NULL){
-					fprintf(stderr, "Unable to connect to server!");
-					continue;
-				}
+				n_tentativas++;
 				ol_switcheroo(&primary,&secondary);
 			}
 		}
 
-		rtables -> server -> address_port_pri = strdup(argv[1]);
-		rtables -> server -> address_port_sec = strdup(argv[2]);
+		if(rtables == NULL){
+			fprintf(stderr, "Unable to connect to server!");
+			continue;
+		}
+		
+		rtables -> server -> address_port_pri = primary;
+		rtables -> server -> address_port_sec = secondary;
 
 		/* Receber o comando introduzido pelo utilizador
 		   Sugestão: usar fgets de stdio.h
@@ -105,7 +113,6 @@ int main(int argc, char **argv){
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
 				printf("Input inválido: put <table_num> <key> <value>\n");
-
 			} else {
 				if(!isNumber(tokens[0])){
 					printf("Input inválido: número de tabela tem de ser um inteiro");
@@ -123,25 +130,11 @@ int main(int argc, char **argv){
 					fprintf(stderr, "put - data_create2 failed\n");
 					continue;
 				}
-				
 				if((rtables_put(rtables, key_o, value_o)) < 0){
 					if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
-						if((rtables = rtables_bind(secondary)) == NULL){
-							fprintf(stderr, "put - lost connection to server\n");
-							continue;
-						}
-						if((rtables_put(rtables, key_o, value_o)) < 0){
-							if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
-								rtables_unbind(rtables);
-								fprintf(stderr, "put - lost connection to server\n");
-								continue;
-							} 
-							fprintf(stderr, "put - rtables_put failed\n");
-							continue;
-						}
-						ol_switcheroo(&primary,&secondary);
-
+						fprintf(stderr, "put - lost connection to server\n");
+						continue;
 					} else {
 						fprintf(stderr, "put - rtables_put failed\n");
 						continue;
@@ -194,21 +187,8 @@ int main(int argc, char **argv){
 				if((rtables_update(rtables, key_o, value_o)) < 0){
 					if(rtables_update(rtables, key_o, value_o) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
-						if((rtables = rtables_bind(secondary)) == NULL){
-							fprintf(stderr, "update - lost connection to server\n");
-							continue;
-						}
-						if((rtables_update(rtables, key_o, value_o)) < 0){
-							if(rtables_update(rtables, key_o, value_o) == CONNECTION_ERROR){
-								rtables_unbind(rtables);
-								fprintf(stderr, "update - lost connection to server\n");
-								continue;
-							} 
-							fprintf(stderr, "update - rtables_update failed\n");
-							continue;
-						}
-						ol_switcheroo(&primary,&secondary);
-
+						fprintf(stderr, "update - lost connection to server\n");
+						continue;
 					} else {
 						fprintf(stderr, "update - rtables_update failed\n");
 						continue;
@@ -224,28 +204,14 @@ int main(int argc, char **argv){
 				}
 				rtables->table_index = atoi(tokens[0]);
 				if(rtables->table_index > rtables->numberOfTables){
-
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
 				if((rtables_size(rtables)) < 0){
 					if(rtables_size(rtables) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
-						if((rtables = rtables_bind(secondary)) == NULL){
-							fprintf(stderr, "size - lost connection to server\n");
-							continue;
-						}
-						if((rtables_size(rtables)) < 0){
-							if(rtables_size(rtables) == CONNECTION_ERROR){
-								rtables_unbind(rtables);
-								fprintf(stderr, "size - lost connection to server\n");
-								continue;
-							} 
-							fprintf(stderr, "size - rtables_size failed\n");
-							continue;
-						}
-						ol_switcheroo(&primary,&secondary);
-
+						fprintf(stderr, "size - lost connection to server\n");
+						continue;
 					} else {
 						fprintf(stderr, "size - rtables_size failed\n");
 						continue;
@@ -256,8 +222,7 @@ int main(int argc, char **argv){
 		} else if(strcasecmp(tok_opc, "collisions") == 0){
 			if(count_param < 1){
 				printf("Input inválido: collisions <table_num>\n");
-			}
-			else{
+			} else {
 				if(!isNumber(tokens[0])){
 					printf("Input inválido: número de tabela tem de ser um inteiro\n");
 				}
@@ -269,21 +234,8 @@ int main(int argc, char **argv){
 				if((rtables_collisions(rtables)) < 0){
 					if(rtables_collisions(rtables) == CONNECTION_ERROR){
 						rtables_unbind(rtables);
-						if((rtables = rtables_bind(secondary)) == NULL){
-							fprintf(stderr, "collisions - lost connection to server\n");
-							continue;
-						}
-						if((rtables_collisions(rtables)) < 0){
-							if(rtables_collisions(rtables) == CONNECTION_ERROR){
-								rtables_unbind(rtables);
-								fprintf(stderr, "collisions - lost connection to server\n");
-								continue;
-							} 
-							fprintf(stderr, "collisions - rtables_collisions failed\n");
-							continue;
-						}
-						ol_switcheroo(&primary,&secondary);
-
+						fprintf(stderr, "collisions - lost connection to server\n");
+						continue;
 					} else {
 						fprintf(stderr, "collisions - rtables_collisions failed\n");
 						continue;
