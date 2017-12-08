@@ -43,7 +43,7 @@ void ol_switcheroo(char **primary, char **secondary){
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
 	char *tok, *tok_opc, *key_o;
-	int count_param,i,n_tentativas;
+	int count_param,i,n_tentativas,result;
 	struct data_t *value_o;
 	char *tokens[3];
 
@@ -131,8 +131,8 @@ int main(int argc, char **argv){
 					fprintf(stderr, "put - data_create2 failed\n");
 					continue;
 				}
-				if((rtables_put(rtables, key_o, value_o)) < 0){
-					if(rtables_put(rtables, key_o, value_o) == CONNECTION_ERROR){
+				if((result = rtables_put(rtables, key_o, value_o)) < 0){
+					if(result == CONNECTION_ERROR){
 						rtables_unbind(rtables);
 						fprintf(stderr, "put - lost connection to server\n");
 						continue;
@@ -185,8 +185,8 @@ int main(int argc, char **argv){
 					fprintf(stderr, "update - data_create2 failed\n");
 					continue;
 				}
-				if((rtables_update(rtables, key_o, value_o)) < 0){
-					if(rtables_update(rtables, key_o, value_o) == CONNECTION_ERROR){
+				if((result = rtables_update(rtables, key_o, value_o)) < 0){
+					if(result == CONNECTION_ERROR){
 						rtables_unbind(rtables);
 						fprintf(stderr, "update - lost connection to server\n");
 						continue;
@@ -208,8 +208,8 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((rtables_size(rtables)) < 0){
-					if(rtables_size(rtables) == CONNECTION_ERROR){
+				if((result = rtables_size(rtables)) < 0){
+					if(result == CONNECTION_ERROR){
 						rtables_unbind(rtables);
 						fprintf(stderr, "size - lost connection to server\n");
 						continue;
@@ -232,8 +232,8 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Tabela nao existe.\n");
 					continue;
 				}
-				if((rtables_collisions(rtables)) < 0){
-					if(rtables_collisions(rtables) == CONNECTION_ERROR){
+				if((result = rtables_collisions(rtables)) < 0){
+					if(result == CONNECTION_ERROR){
 						rtables_unbind(rtables);
 						fprintf(stderr, "collisions - lost connection to server\n");
 						continue;
