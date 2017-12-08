@@ -64,6 +64,23 @@ int main(int argc, char **argv){
 	while (1){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 		
+
+		/* Receber o comando introduzido pelo utilizador
+		   Sugestão: usar fgets de stdio.h
+		   Quando pressionamos enter para finalizar a entrada no
+		   comando fgets, o carater \n é incluido antes do \0.
+		   Convém retirar o \n substituindo-o por \0.
+		*/
+		fgets(in,MAX_SIZE,stdin);
+		in[strlen(in) - 1] = '\0';
+		tok_opc = strdup(strtok(in," "));
+
+		count_param = 0;
+		while((tok = strtok(NULL, " ")) != NULL){
+			tokens[count_param] = strdup(tok);
+			count_param++;
+		}
+
 		n_tentativas = 0;
 		while(rtables == NULL && n_tentativas < 4){ //FIXME:
 			if(n_tentativas == 2){
@@ -82,22 +99,6 @@ int main(int argc, char **argv){
 		
 		rtables -> server -> address_port_pri = primary;
 		rtables -> server -> address_port_sec = secondary;
-
-		/* Receber o comando introduzido pelo utilizador
-		   Sugestão: usar fgets de stdio.h
-		   Quando pressionamos enter para finalizar a entrada no
-		   comando fgets, o carater \n é incluido antes do \0.
-		   Convém retirar o \n substituindo-o por \0.
-		*/
-		fgets(in,MAX_SIZE,stdin);
-		in[strlen(in) - 1] = '\0';
-		tok_opc = strdup(strtok(in," "));
-
-		count_param = 0;
-		while((tok = strtok(NULL, " ")) != NULL){
-			tokens[count_param] = strdup(tok);
-			count_param++;
-		}
 
 		/*
 		Quando um cliente deteta a falha do primário:
