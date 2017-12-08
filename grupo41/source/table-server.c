@@ -52,15 +52,15 @@ int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: CRUZZ!! 
 	// adrport = in;
 	// fgets(in,N_TABLES_MSIZE,fp);
 	// n = atoi(in)+2;
-	// char *n_tables_read[n];
-	// if((n_tables_read[0] = (char*)malloc(strlen(in))) == NULL){
+	// char *n_tables_read[n]; uso este ou o n_tables?
+	// if((n_tables[0] = (char*)malloc(strlen(in))) == NULL){
 	// 	fprintf(stderr,"Failed malloc\n");
 	// 	return -1;//FIXME:
 	// }
 
 	// for(i = 1;i < n;i++){
 	// 	fgets(in,N_TABLES_MSIZE,fp);
-	// 	if((n_tables_read[n] = (char*)malloc(strlen(in))) == NULL){
+	// 	if((n_tables[i] = (char*)malloc(strlen(in))) == NULL){ estava n em vez do i logo estava mal
 	// 		fprintf(stderr,"Failed malloc\n");
 	// 		return -1;//FIXME:
 	// 	}
@@ -215,7 +215,7 @@ int network_receive_send(int socket_fd){
 	// if(!update_successful(thread)){
 	// 	secondary_up = 0;
 	// }
-	//verificar que a thread vez o seu trabalho TODO:
+	//verificar que a thread fez o seu trabalho TODO:
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 
 	/* Libertar memória */
