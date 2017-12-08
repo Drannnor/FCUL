@@ -170,8 +170,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 				if(result == 0 || first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
-				}
-				else{
+				} else {
 					fprintf(stderr, "Read failed - size read_all\n");
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);

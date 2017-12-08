@@ -25,7 +25,7 @@ void print_message(struct message_t *msg);
 int isNumber(char *token){
 
 	while(token){
-		if(!isdigit(token)){
+		if(!isdigit(*token)){
 			return 0;
 		}
 		token++;
