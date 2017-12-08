@@ -91,7 +91,7 @@ struct server_t *server_bind(const char *address_port){
 	char *adr_p = strdup(address_port);
 	if (inet_pton(AF_INET, strtok(adr_p,delim), &p_server->sin_addr) < 1) { // Endereço IP
 		printf("Erro ao converter IP\n");
-		free(server);
+		free(p_server);
 		free(server);
 		free(adr_p);
 		return NULL;
@@ -101,7 +101,7 @@ struct server_t *server_bind(const char *address_port){
 	//Criar a socket.
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Unable to create socket\n");
-		free(server);
+		free(p_server);
 		free(server);
 		free(adr_p);
 		return NULL;
@@ -111,14 +111,14 @@ struct server_t *server_bind(const char *address_port){
 	if (connect(socket_fd,(struct sockaddr *)p_server, sizeof(*p_server)) < 0) {
 		fprintf(stderr, "Unable to connect to server\n");
 		close(socket_fd);
-		free(server);
+		free(p_server);
 		free(server);
 		free(adr_p);
 		return NULL;
 	}
 
 	/* Se a ligação não foi estabelecida, retornar NULL */
-	free(server); 
+	free(p_server); 
 	free(adr_p);	
 	server->socket_fd = socket_fd;
 	return server;
