@@ -166,7 +166,7 @@ struct message_t *buffer_to_message(char *msg_buf, int msg_size)
     // msg_size tem tamanho mínimo ?
 
     if (msg_buf == NULL || msg_size < _MIN_SIZE){
-        printf("fuckoff1");
+        printf("Buffer to msg - invalido input");
         return NULL;
     }
 
