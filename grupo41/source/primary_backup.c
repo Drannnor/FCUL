@@ -126,7 +126,26 @@ struct server_t *server_bind(const char *address_port){
 
 //devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
 char *get_address_port(struct sockaddr *p_server){
-	return NULL;
+	char *ip_add,*port,*ip = inet_ntoa((struct sockaddr_in)p_server.sin_addr);
+	int s, len = strlen(ip), sockaddr_len = sizeof(p_server);
+      
+	if(getpeername(s, &p_server, &sockaddr_len) == -1) {
+      perror("getpeername() failed");
+      return -1;
+	   }
+	   
+    if((ip_add = malloc(len + 2)) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;
+	}
+
+    strcpy(ip_add,ip);
+    ip_add[len] = ':';
+    ip_add[len + 1] = '\0';
+	sprintf(port, "%d", ((int) ntohs((struct sockaddr_in)p_server.sin_port)));
+
+	free(ip_add);
+	return strcat(ip_add,port);
 }
 
 //envia a informacao das tabelas para o servidor secundario
