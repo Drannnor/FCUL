@@ -382,7 +382,6 @@ int main(int argc, char **argv){
 
 		} else {//Servidor Secundario, primeira vez
 
-			//malloc do secondary server TODO:
 			if (( other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
 				fprintf(stderr, "Failed malloc other_server\n");
 				secondary_up = 0;
