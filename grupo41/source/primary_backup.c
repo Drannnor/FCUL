@@ -18,6 +18,11 @@ struct thread_params{
 };
 
 int hello(struct server_t *server){//TODO:
+	struct message_t *msg_pedido;
+
+	msg_pedido -> opcode = OC_HELLO;
+	msg_pedido -> c_type = CT_RESULT;
+	msg_pedido -> table_num = 
     //manda uma sms ao primary, a dizer que esta up
 	//update-state(server)
 	//verificar o resultado e devolver accordingly
@@ -25,11 +30,14 @@ int hello(struct server_t *server){//TODO:
 }
 
 int update_state(struct server_t *server){//TODO:espera pelos puts
+	int size;
 	//para cada tabela
 		//receber o tamanho n
 		//e receber n puts
 	//devolver um resultado accordingly	
 	for(i = 0; i < (server -> ntabelas); i++){
+		if((size = table_skel_size(i)) > 0){
+			//puts
 	}
 	return 0;
 }
