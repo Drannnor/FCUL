@@ -21,6 +21,7 @@ int hello(struct server_t *server){//TODO:
     //manda uma sms ao primary, a dizer que esta up
 	//update-state(server)
 	//verificar o resultado e devolver accordingly
+	return 0;
 }
 
 int update_state(struct server_t *server){//TODO:espera pelos puts
@@ -30,6 +31,7 @@ int update_state(struct server_t *server){//TODO:espera pelos puts
 	//devolver um resultado accordingly	
 	for(i = 0; i < (server -> ntabelas); i++){
 	}
+	return 0;
 }
 
 int sync_backup(struct server_t *server){//TODO: envia os puts de todas as tabelas
