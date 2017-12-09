@@ -2,6 +2,7 @@
 #define _PRIMARY_BACKUP_PRIVATE_H
 
 //#include "primary_backup.h"
+#include "message-private.h" //FIXME:
 
 struct server_t{
     int up;
@@ -25,6 +26,8 @@ int update_successful(pthread_t *thread);
 
 struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg);
 
+int sync_backup(struct server_t *server);
 
+int server_backup_put(struct server_t *server, struct entry_t *entry, int tablenum);
 #endif
 

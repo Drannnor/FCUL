@@ -195,6 +195,25 @@ void print_table(struct table_t *table){
     printf("-------------------\n");
 }
 
-struct entry_t *table_get_entries(struct table_t *table){//TODO: get all entries from this table
- return NULL;
+struct entry_t **table_get_entries(struct table_t *table){//TODO: get all entries from this table
+    struct entry_t **entries;
+    struct entry_t *hashtable;
+    int size = table->size_table;
+    int i,j = 0;
+
+    if((entries = (struct entry_t**)malloc(sizeof(struct entry_t)*(table->num_entries))) == NULL){
+        fprintf(stderr, "Failed malloc\n");
+        return NULL;
+    }
+
+    hashtable = table->hash_table;
+
+    for(i = 0; i < size; i++){
+        if(hashtable[i].key != NULL){
+            entries[j] = entry_dup(&hashtable[i]);
+            j++;
+        }
+    }
+
+    return entries;
 }

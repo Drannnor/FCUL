@@ -31,12 +31,4 @@ int write_all(int sock, char *buf, int len);
 // armazenando-os em buf.
 int read_all(int sock, char *buf, int len);
 
-/* Função que recebe uma tabela e uma mensagem de pedido e:
-	- aplica a operação na mensagem de pedido na tabela;
-	- devolve uma mensagem de resposta com oresultado.
-*/
-struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela);
-
-struct message_t *copy_message(struct message_t *msg);
-
 #endif
