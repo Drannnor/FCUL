@@ -10,71 +10,129 @@ Ricardo Cruz 47871
 #include <pthread.h>
 #include "table-private.h"
 #include "message-private.h"
+#include "primary_backup.h"
 #include "primary_backup-private.h"
+#include "table_skel-private.h"
 
 struct thread_params{
 	struct server_t *server;
 	struct message_t *msg;
 };
 
-int hello(struct server_t *server){//TODO:
-	struct message_t *msg_pedido;
+int hello(struct server_t *server){//FIXME: server_bind?
+	struct message_t *msg_pedido, *msg_resposta;
 
 	msg_pedido -> opcode = OC_HELLO;
 	msg_pedido -> c_type = CT_RESULT;
-	msg_pedido -> table_num = 
-    //manda uma sms ao primary, a dizer que esta up
-	//update-state(server)
-	//verificar o resultado e devolver accordingly
-	return 0;
-}
+	msg_pedido -> table_num = 0;
+	msg_pedido -> content.result = 0;
 
-int update_state(struct server_t *server){//TODO:espera pelos puts
-	int size;
-	//para cada tabela
-		//receber o tamanho n
-		//e receber n puts
-	//devolver um resultado accordingly	
-	int i;
-	for(i = 0; i < (server -> ntabelas); i++){
-		if((size = table_skel_size(i)) > 0){
-			//puts
+	msg_resposta = server_backup_send_receive(server, msg_pedido);
+	if((msg_resposta -> opcode) == OC_RT_ERROR){ 
+			fprintf(stderr, "sync_backup - msg_resposta error");
+			return -1;
 	}
-	return 0;
+
+	return update_state(server);
 }
 
-int sync_backup(struct server_t *server){//TODO: envia os puts de todas as tabelas
+int update_state(struct server_t *server){
+	int size;
+	int i,j;
+	struct entry_t **tables_entries;
+
+	for(i = 0; i < (server -> ntabelas); i++){
+		if((size = server_backup_receive_send(server)) <= 0){
+			fprintf(stderr, "update_state - incorrect size");
+			return -1;
+		}
+		if((tables_entries = table_skel_get_entries(i)) == NULL){
+			fprintf(stderr, "update_state - tables_entries empty");
+			return -1;
+		}
+		for(int j = 0; j < size; j++){
+			if((server_backup_put(server, tables_entries[j], i)) < 0){
+				fprintf(stderr, "update_state - put failed");
+				free(tables_entries);
+				return -1;
+			}	
+		}
+		return 0;
+	}
+}
+
+int sync_backup(struct server_t *server){
 	int size;
 	int i, j;
-	struct entry_t *tables_entries;
+	struct entry_t **tables_entries;
 	struct message_t *msg_pedido, *msg_resposta;
-	//para cada tabela{
-		//size = table_skel_size(n) :check;
-		//mandar para o sec o tabel size
-		//ir buscar as entrys :check:
-		//para cada entry{ :check:
-			//executar um bonito put :check:
-		//}
-	for(i = 0; i < (server -> ntabelas); i++){
-		if((size = table_skel_size(i)) > 0){   	//FIXME: verificar erros
-			msg_pedido -> opcode = OC_SIZE;
-			msg_pedido -> c_type = CT_RESULT;
-			msg_pedido -> table_num = i;
-			msg_pedido -> content.result = size;
 
-			msg_resposta = server_backup_send_receive(server, msg_pedido);
-			if((msg_resposta -> opcode) != OC_RT_ERROR){ //FIXME: verificar erros
-				if((tables_entries = table_skel_get_entries(i)) != NULL){   //FIXME: verificar erros
-					for(j = 0; j < size; j++){
-						//faz put de tables_entries[j]
-						//write para socket - funcao propria
-					}
-				}
-			}
+	for(i = 0; i < (server -> ntabelas); i++){
+		if((size = table_skel_size(i)) <= 0){
+			fprintf(stderr, "sync_backup - incorrect size");
+			return -1;
+		}
+		msg_pedido -> opcode = OC_SIZE;
+		msg_pedido -> c_type = CT_RESULT;
+		msg_pedido -> table_num = i;
+		msg_pedido -> content.result = size;
+
+		msg_resposta = server_backup_send_receive(server, msg_pedido);
+		if((msg_resposta -> opcode) == OC_RT_ERROR){ 
+			fprintf(stderr, "sync_backup - msg_resposta error");
+			return -1;
+		}
+		if((tables_entries = table_skel_get_entries(i)) == NULL){
+			fprintf(stderr, "sync_backup - tables_entries empty");
+			return -1;
+		}
+		for(j = 0; j < size; j++){
+				//faz put de tables_entries[j]
+			if((server_backup_put(server, tables_entries[j], i)) < 0){
+				fprintf(stderr, "sync_backup - put failed");
+				free(tables_entries);
+				return -1;
+			}	
 		}
 	}
+	free(tables_entries);
 	return 0;
-}	
+}
+
+int server_backup_put(struct server_t *server, struct entry_t *entry, int tablenum){
+    if(server == NULL || entry == NULL){
+        fprintf(stderr, "NULL params");
+        return CLIENT_ERROR;
+    }
+
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
+        return CLIENT_ERROR;
+    }
+
+    msg_out->opcode = OC_PUT;
+    msg_out->c_type = CT_ENTRY;
+	msg_out->table_num = tablenum;
+
+    if((msg_out->content.entry = entry_dup(entry)) == NULL){
+        fprintf(stderr, "Failed to create entry!\n");
+        free_message(msg_out);
+    }
+    
+    print_message(msg_out);
+
+    struct message_t *msg_res;
+    msg_res = server_backup_send_receive(server,msg_out);
+    print_message(msg_res);
+
+    int res = msg_res->content.result;
+	free(entry);
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
+}
+
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
@@ -409,7 +467,6 @@ int update_successful(pthread_t *thread){
 	return res;
 }
 
-
 struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg){
 	char *message_out;
 	int message_size, msg_size, result;
@@ -447,9 +504,7 @@ struct message_t *server_backup_send_receive(struct server_t *server, struct mes
         return message_error(CONNECTION_ERROR);
     }
     
-
     /* Enviar a mensagem que foi previamente serializada */
-
 
     /* Verificar se o envio teve sucesso */
     if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
@@ -503,4 +558,119 @@ struct message_t *server_backup_send_receive(struct server_t *server, struct mes
     free(message_in);
     free(message_out);
     return msg_resposta;
+}
+
+int server_backup_receive_send(struct server_t *server){
+  	char *buff_resposta, *buff_pedido;
+  	int message_size, msg_size, result, res = 0;
+  	struct message_t *msg_pedido, *msg_resposta;
+	pthread_t *thread;
+
+	/* Verificar parâmetros de entrada */
+	if(server->socket_fd < 0){
+		fprintf(stderr, "server_backup_receive_send - Socket dada eh menor que zero\n");
+		return -2;
+	}
+
+	/* Com a função read_all, receber num inteiro o tamanho da 
+	   mensagem de pedido que será recebida de seguida.*/
+
+	/* Verificar se a receção teve sucesso */
+	if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
+		if(result < 0){
+			fprintf(stderr, "Read failed - size read_all\n");
+			return -2;
+		}
+		fprintf(stderr, "Read failed - size - disconnected\n");
+		return -1;
+	}
+
+	/* Alocar memória para receber o número de bytes da
+	   mensagem de pedido. */
+	if((buff_pedido = (char *) malloc(htonl(msg_size))) == NULL){
+		fprintf(stderr, "Failed malloc buff_pedido \n");
+		return -2;
+	}
+
+	/* Com a função read_all, receber a mensagem de resposta. */
+
+	/* Verificar se a receção teve sucesso */
+	if((result = read_all(server->socket_fd, buff_pedido, ntohl(msg_size))) < 0){
+		if(result < 0) {
+			fprintf(stderr, "Read failed - message read_all\n");
+			free(buff_pedido);
+			return -2;
+		}
+		fprintf(stderr, "Read failed - msg - disconnected2\n");
+		free(buff_pedido);
+		return -1;
+	}
+
+	/* Desserializar a mensagem do pedido */
+	/* Verificar se a desserialização teve sucesso */
+	if ((msg_pedido = buffer_to_message(buff_pedido, msg_size)) == NULL){
+		fprintf(stderr, "Failed unmarshalling\n");
+		free(buff_pedido);
+		free(msg_pedido);
+		return -2;
+	}
+	
+	print_message(msg_pedido);
+
+	if(msg_pedido -> opcode == OC_SIZE){
+		memcpy(res, msg_pedido->content.result, _INT);
+	} else if(msg_pedido -> opcode != OC_PUT){
+		fprintf(stderr, "Not a 'put' or a 'size'");
+		return -2;
+	}
+
+	if((msg_resposta = invoke(msg_pedido)) == NULL){
+		fprintf(stderr, "Failed invoke\n");
+		free(buff_pedido);
+		free(msg_pedido);
+		return -2;
+	}
+	print_message(msg_resposta);
+
+	/* Verificar se a serialização teve sucesso */
+	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
+		fprintf(stderr, "Failed marshalling\n");
+		free(buff_pedido);
+		free_message(msg_pedido);
+		free_message(msg_resposta);
+		return -2;
+	}
+
+	/* Enviar ao cliente o tamanho da mensagem que será enviada
+	   logo de seguida
+	*/
+	msg_size = htonl(message_size);
+
+	/* Verificar se o envio teve sucesso */
+	if(write_all(server->socket_fd, (char *) &msg_size, _INT) < 0){
+		fprintf(stderr, "Write failed - size write_all\n");
+		free(buff_pedido);
+		free_message(msg_pedido);
+		free_message(msg_resposta);
+		return -2;
+	}
+
+	/* Enviar a mensagem que foi previamente serializada */
+
+	/* Verificar se o envio teve sucesso */
+	if(write_all(server->socket_fd, buff_resposta, message_size) < 0){
+		fprintf(stderr, "Write failed - message write_all\n");
+		free(buff_pedido);
+		free_message(msg_pedido);
+		free_message(msg_resposta);
+		return -2;
+	}
+	
+	/* Libertar memória */
+	free(buff_resposta);
+	free(buff_pedido);
+	free_message(msg_resposta);
+	free_message(msg_pedido);
+
+	return res;
 }
