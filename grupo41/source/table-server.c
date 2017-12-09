@@ -233,7 +233,7 @@ int network_receive_send(int socket_fd){
 		return -2;
 	}
 
-	if(!primary && !update_successful(thread)){
+	if(primary && !update_successful(thread)){
 		fprintf(stderr, "Fail to send message to backup");
 		secondary_up = 0;
 	}
