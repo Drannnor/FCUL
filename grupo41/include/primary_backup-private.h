@@ -19,7 +19,7 @@ int send_table_info(struct server_t *server, char **n_tables);
 
 char **get_table_info(int socket_fd);
 
-int update_successful(pthread_t thread);
+int update_successful(pthread_t *thread);
 
 struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg);
 
