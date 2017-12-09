@@ -299,13 +299,26 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 	int i;
 	int n = atoi(n_tables[0]);
 
-	fp = fopen(filename,"w");
+	if((fp = fopen(filename,"w")) == NULL){
+		fprintf(stderr, "Cannot open output file\n");
+		return 0;
+	}
 
-	fputs(adrport,fp);
-	fputs(n_tables[0],fp);
+	if((fprintf(fp,"%s\n",adrport)) < 0){
+		fprintf(stderr,"Couldn't write ip:port\n");
+		return 0;
+	}
+
+	if((fprintf(fp,"%s\n",n_tables[0])) < 0){
+		fprintf(stderr,"Couldn't write number of tables\n");
+		return 0;
+	}
 
 	for(i = 1;i < n;i++){
-		fputs(n_tables[i],fp);
+		if((fprintf(fp,"%s\n",n_tables[i])) < 0){
+			fprintf(stderr,"Couldn't write table size\n");
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -393,7 +406,7 @@ int main(int argc, char **argv){
 			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
 			if((other_server = server_bind(address_port))){
 				secondary_up = 1;
-
+				other_server -> ntabelas = atoi(n_tables[0]);
 				if((send_table_info(other_server,n_tables)) < 0){
 					secondary_up = 0;
 				}
@@ -411,15 +424,19 @@ int main(int argc, char **argv){
 						printf("getting tables ...\n");
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
-							//
+							other_server -> ntabelas = atoi(n_tables[0]);
 						}
 					}
 				}
 			}
 		}
 	}
-	
-	
+
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		return -1;
+	}
+
 	if(first_time){
 		fprintf(stderr, "Writting file...\n");
 		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
@@ -429,14 +446,9 @@ int main(int argc, char **argv){
 		fprintf(stderr, "done\n");
 	} else {//sync
 		other_server = server_bind(address_port);
-		//hello(other_server);TODO: fazer o hello e o update
+		other_server -> ntabelas = atoi(n_tables[0]);
+		printf("Couldn't sync!"); //FIXME: para tirar
 	}
-
-	if((table_skel_init(n_tables) < 0)){
-		fprintf(stderr, "Failed to init\n");
-		return -1;
-	}
-
 
 	/* inicialização */
 

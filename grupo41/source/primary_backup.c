@@ -28,19 +28,42 @@ int update_state(struct server_t *server){//TODO:espera pelos puts
 	//para cada tabela
 		//receber o tamanho n
 		//e receber n puts
-	//devolver um resultado accordingly
-	return 0;	
+	//devolver um resultado accordingly	
+	for(i = 0; i < (server -> ntabelas); i++){
+	}
+	return 0;
 }
 
-int sync_backup(struct server_t *server ){//TODO: envia os puts de todas as tabelas
+int sync_backup(struct server_t *server){//TODO: envia os puts de todas as tabelas
+	int size;
+	int i, j;
+	struct entry_t *tables_entries;
+	struct message_t *msg_pedido, *msg_resposta;
 	//para cada tabela{
-		//size = table_skel_size(n)
+		//size = table_skel_size(n) :check;
 		//mandar para o sec o tabel size
-		//ir buscar as entrys
-		//para cada entry{
-			//executar um bonito put
+		//ir buscar as entrys :check:
+		//para cada entry{ :check:
+			//executar um bonito put :check:
 		//}
-    //}
+	for(i = 0; i < (server -> ntabelas); i++){
+		if((size = table_skel_size(i)) > 0){   	//FIXME: verificar erros
+			msg_pedido -> opcode = OC_SIZE;
+			msg_pedido -> c_type = CT_RESULT;
+			msg_pedido -> table_num = i;
+			msg_pedido -> content.result = size;
+
+			msg_resposta = server_backup_send_receive(server, msg_pedido);
+			if((msg_resposta -> opcode) != OC_RT_ERROR){ //FIXME: verificar erros
+				if((tables_entries = table_skel_get_entries(i)) != NULL){   //FIXME: verificar erros
+					for(j = 0; j < size; j++){
+						//faz put de tables_entries[j]
+						//write para socket - funcao propria
+					}
+				}
+			}
+		}
+	}
 	return 0;
 }	
 
@@ -466,7 +489,6 @@ struct message_t *server_backup_send_receive(struct server_t *server, struct mes
         free(message_in);
         return message_error(CLIENT_ERROR);
     }
-    
 
     /* Libertar memória */
     free(message_in);
