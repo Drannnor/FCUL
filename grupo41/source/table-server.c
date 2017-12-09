@@ -190,6 +190,8 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
+	//TODO: copiar msg
+
 	if(primary && is_write(msg_pedido) && secondary_up){
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){
 			secondary_up = 0;
@@ -291,12 +293,19 @@ int tratar_input(){
 }
 
 int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
+<<<<<<< HEAD
 	FILE *fp;
 	int i;
 	int n = sizeof(*n_tables)/sizeof(*n_tables[0]);
+=======
+	// char* in;
+	// FILE *fp;
+	// int i,n;
+>>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
 
-	fp = fopen(filename,"w");
+	// fp = fopen(filename,"w");
 
+<<<<<<< HEAD
 	fputs(adrport,fp);
 	fputs(("%d\n",n),fp);
 
@@ -304,6 +313,21 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 		fputs(*n_tables[i],fp);
 	}
 	return 1;
+=======
+	// fgets(in, MAX_ADDRESS_SIZE,fp);
+
+	// fputs(("%s\n",in),fp);
+	// fgets(in,N_TABLES_MSIZE,fp);
+	// fputs(("%s\n",in),fp);
+	// n = atoi(in)+2;
+
+	// for(i = 1;i < n;i++){
+	// 	fgets(in,N_TABLES_MSIZE,fp);
+	// 	fputs(("%s\n",in),fp);
+	// }
+	// return 1;
+	return -1;
+>>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
 }
 
 int main(int argc, char **argv){
@@ -419,10 +443,10 @@ int main(int argc, char **argv){
 	}
 
 	if(first_time){
-		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
-			fprintf(stderr, "Failed to write configuration file");
-			return -1;
-		}
+		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+		// 	fprintf(stderr, "Failed to write configuration file");
+		// 	return -1;
+		// }
 	} else {//sync
 		other_server = server_bind(address_port);
 		printf("Couldn't sync!"); //FIXME: para tirar
