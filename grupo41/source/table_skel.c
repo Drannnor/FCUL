@@ -84,17 +84,23 @@ int table_skel_send_tablenum (int socketfd){
 }
 
 struct entry_t *table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
+	
+	if(numero_da_tabela > tablenum){
+		fprintf(stderr,"Tabela não existe\n");
+		return NULL;
+	}
+	
 	//verificar se o numero eh valido
 	//fazer a lista
 	//devolver 
-	return NULL;
+
+
 }
 
 int table_skel_size(int numero_da_tabela){
 	//verificar se eh valido
 	//ir buscar
 	//devolver
-	return 0;
 }
 
 

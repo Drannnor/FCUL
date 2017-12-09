@@ -299,13 +299,26 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 	int i;
 	int n = atoi(n_tables[0]);
 
-	fp = fopen(filename,"w");
+	if((fp = fopen(filename,"w")) == NULL){
+		fprintf(stderr, "Cannot open output file\n");
+		return 0;
+	}
 
-	fputs(adrport,fp);
-	fputs(n_tables[0],fp);
+	if((fprintf(fp,"%s\n",adrport)) < 0){
+		fprintf(stderr,"Couldn't write ip:port\n");
+		return 0;
+	}
+
+	if((fprintf(fp,"%s\n",n_tables[0])) < 0){
+		fprintf(stderr,"Couldn't write number of tables\n");
+		return 0;
+	}
 
 	for(i = 1;i < n;i++){
-		fputs(n_tables[i],fp);
+		if((fprintf(fp,"%s\n",n_tables[i])) < 0){
+			fprintf(stderr,"Couldn't write table size\n");
+			return 0;
+		}
 	}
 	return 1;
 }
