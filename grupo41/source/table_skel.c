@@ -88,8 +88,7 @@ struct entry_t *table_skel_get_entries(int numero_da_tabela){//TODO: get all ent
 		fprintf(stderr,"Tabela não existe\n");
 		return NULL;
 	}
-
-	return table_get_entries(tables[numero_da_table]);
+	return table_get_entries(tables[numero_da_tabela]);
 }
 
 int table_skel_size(int numero_da_tabela){
@@ -98,11 +97,10 @@ int table_skel_size(int numero_da_tabela){
 	//devolver
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");
-		return 0;
+		return -1;
 	}
-	struct table_t table = *tables[numero_da_tabela];
 
-	return table.size_table;
+	return tables[numero_da_tabela]->size_table;
 }
 
 

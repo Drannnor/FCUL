@@ -4,7 +4,9 @@
 //#include "primary_backup.h"
 
 struct server_t{
+    int up;
     int socket_fd;
+    int ntabelas;
 };
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server);
