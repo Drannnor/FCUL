@@ -12,9 +12,10 @@ Ricardo Cruz 47871
 #include <error.h>
 #include <stdio.h>
 #include <pthread.h>
+#include "primary_backup-private.h"
 #include "table_skel-private.h"
 #include "message-private.h"
-#include "primary_backup-private.h"
+
 
 #define NFDESC 7
 #define MAX_SIZE 81

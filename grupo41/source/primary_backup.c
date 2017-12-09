@@ -29,6 +29,7 @@ int update_state(struct server_t *server){//TODO:espera pelos puts
 		//receber o tamanho n
 		//e receber n puts
 	//devolver um resultado accordingly	
+	int i;
 	for(i = 0; i < (server -> ntabelas); i++){
 	}
 	return 0;
