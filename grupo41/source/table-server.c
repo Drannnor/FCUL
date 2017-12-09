@@ -391,6 +391,7 @@ int main(int argc, char **argv){
 			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
 			if((other_server = server_bind(address_port))){
 				secondary_up = 1;
+				other_server -> ntabelas = atoi(n_tables[0]);
 				if((send_table_info(other_server,n_tables)) < 0){
 					secondary_up = 0;
 				}
@@ -408,13 +409,14 @@ int main(int argc, char **argv){
 						printf("getting tables ...\n");
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
+							other_server -> ntabelas = atoi(n_tables[0]);
 						}
 					}
 				}
 			}
 		}
 	}
-	
+
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
 		return -1;
@@ -427,6 +429,7 @@ int main(int argc, char **argv){
 		// }
 	} else {//sync
 		other_server = server_bind(address_port);
+		other_server -> ntabelas = atoi(n_tables[0]);
 		printf("Couldn't sync!"); //FIXME: para tirar
 		//hello(other_server);TODO: fazer o hello e o update
 	}

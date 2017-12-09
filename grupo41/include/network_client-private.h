@@ -14,6 +14,7 @@ Ricardo Cruz 47871
 
 struct server_t{
     int socket_fd;
+    int ntabelas;
     char* address_port_pri;
     char* address_port_sec;
 };
