@@ -421,6 +421,16 @@ struct message_t* message_error(int errcode){
 	return msg;
 }
 
+struct message_t *copy_message(struct message_t *msg){//TODO: funcao que copia uma messagem
+    struct message_t *new_msg;
+
+    if ((new_msg = (struct message_t *)malloc(sizeof(struct message_t))) == NULL){
+        return NULL;
+    }
+
+    
+}
+
 void print_message(struct message_t *msg) {
     int i;
     
