@@ -42,7 +42,7 @@ pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     t_params->server = server;
 
     //criar a thread
-    if (pthread_create(thread, NULL, &backup_update_thread, (void *) &t_params) != 0){
+    if (pthread_create(thread, NULL, &backup_update_thread, (void *) t_params) != 0){
         fprintf(stderr,"\nThread não criada.\n");
         return NULL;
     }
@@ -68,7 +68,7 @@ void *backup_update_thread(void *params){
     *res = msg_out -> content.result;
 
     free_message(msg_out);
-	//free(tp);FIXME: not wortking
+	free(tp);//FIXME: not wortking
     return res;
 }
 

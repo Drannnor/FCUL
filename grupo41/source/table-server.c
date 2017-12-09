@@ -17,11 +17,12 @@ Ricardo Cruz 47871
 #include "primary_backup-private.h"
 
 #define NFDESC 7
-#define MAX_SIZE 1000
-#define adress_port_SIZE 15
+#define MAX_SIZE 81
+#define MAX_ADDRESS_SIZE 20
 #define	N_TABLES_MSIZE 180
-#define PRIMARY_FILE "server-primary.conf"
-#define BACKUP_FILE "server-backup.conf"
+#define PRIMARY_FILE "primary-server.conf"
+#define BACKUP_FILE "backup-server.conf" //TODO: perguntar ao neelo como podemos ter a 
+										//certeza que eh escrito no sitio certo
 
 static int quit = 0;
 static char* nome_ficheiro;
@@ -37,39 +38,53 @@ int is_write(struct message_t *msg){
 }
 
 
-int read_file(char *file_name,char **adrport,char ***n_tables){//FIXME: CRUZZ!! nao compila
-	// int i,n;
-	// char *in;
-	// FILE *fp;
+int read_file(char *file_name,char **adrport,char ***n_tables){
+	int i, j;
+	char in[MAX_SIZE];
+	int table_num;
+	FILE *fp;
 
-	// if((fp = fopen(file_name,"r")) == NULL){
-	// 	return 0;//FIXME:
-	// }
-	// fgets(in,adress_port_SIZE,fp);
+	if((fp = fopen(file_name,"r")) == NULL){
+		return 0;
+	}
 
-	// if((adrport = (char**)malloc(adress_port_SIZE)) == NULL){
-	// 	fprintf(stderr,"Failed malloc\n");
-	// 	return -1;//FIXME:
-	// }
+	if((*adrport = (char*)malloc (MAX_ADDRESS_SIZE)) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;
+	}
 
-	// adrport = in;
-	// fgets(in,N_TABLES_MSIZE,fp);
-	// n = atoi(in)+2;
-	// char *n_tables_read[n]; uso este ou o n_tables?
-	// if((n_tables[0] = (char*)malloc(strlen(in))) == NULL){
-	// 	fprintf(stderr,"Failed malloc\n");
-	// 	return -1;//FIXME:
-	// }
+	fgets(*adrport, MAX_ADDRESS_SIZE,fp);
 
-	// for(i = 1;i < n;i++){
-	// 	fgets(in,N_TABLES_MSIZE,fp);
-	// 	if((n_tables[i] = (char*)malloc(strlen(in))) == NULL){ estava n em vez do i logo estava mal
-	// 		fprintf(stderr,"Failed malloc\n");
-	// 		return -1;//FIXME:
-	// 	}
-	// }
-	// //dar free aos mallocs?
-	//return 1;
+	fgets(in,N_TABLES_MSIZE,fp);
+
+	table_num = atoi(in);
+
+	if((*n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+		fprintf(stderr, "Failed malloc tables\n");
+		return -1;
+	}
+			
+
+	if((*n_tables[0] = (char*)malloc(strlen(in)))== NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;
+	}
+
+	sprintf(*n_tables[0], "%d", table_num);
+	for(i = 1;i < table_num;i++){
+		fgets(in,N_TABLES_MSIZE,fp);
+		if((*n_tables[i] = (char*)malloc(strlen(in))) == NULL){// estava n em vez do i logo estava mal
+			for(j = 0; j < i; j++){
+				free(*n_tables[j]);
+			}
+			free(*n_tables);
+			fprintf(stderr, "Failed malloc tables3\n");
+			return -1;
+		}
+		memcpy(*n_tables[i],in,strlen(in) + 1);
+	}
+
+	n_tables[table_num + 1] = NULL;
 
 	return 0;
 }
@@ -174,6 +189,8 @@ int network_receive_send(int socket_fd){
 		return -2;
 	}
 	print_message(msg_resposta);
+
+	//TODO: copiar msg
 
 	if(primary && is_write(msg_pedido) && secondary_up){
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){
@@ -280,11 +297,10 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 	// FILE *fp;
 	// int i,n;
 
-	// if((fp = fopen(filename,"w")) == NULL){
-	// 	return 0;//FIXME:
-	// }
+	// fp = fopen(filename,"w");
 
-	// fgets(in,adress_port_SIZE,fp);
+	// fgets(in, MAX_ADDRESS_SIZE,fp);
+
 	// fputs(("%s\n",in),fp);
 	// fgets(in,N_TABLES_MSIZE,fp);
 	// fputs(("%s\n",in),fp);
@@ -294,7 +310,8 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 	// 	fgets(in,N_TABLES_MSIZE,fp);
 	// 	fputs(("%s\n",in),fp);
 	// }
-	return 1;
+	// return 1;
+	return -1;
 }
 
 int main(int argc, char **argv){
@@ -366,7 +383,7 @@ int main(int argc, char **argv){
 
 			for(i = 1; i <= table_num; i++){
 				if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
-					for(j = 0; j < i; j++){
+						for(j = 0; j < i; j++){
 						free(n_tables[j]);
 					}
 					free(n_tables);
@@ -410,10 +427,10 @@ int main(int argc, char **argv){
 	}
 
 	if(first_time){
-		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
-			fprintf(stderr, "Failed to write configuration file");
-			return -1;
-		}
+		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+		// 	fprintf(stderr, "Failed to write configuration file");
+		// 	return -1;
+		// }
 	} else {//sync
 		other_server = server_bind(address_port);
 		printf("Couldn't sync!"); //FIXME: para tirar
