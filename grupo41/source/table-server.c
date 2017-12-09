@@ -190,7 +190,7 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
-	struct message_t *thread_msg = copy_message(msg_pedido);
+	//struct message_t *thread_msg = copy_message(msg_pedido);
 
 	if(primary && is_write(msg_pedido) && secondary_up){
 		if((thread = backup_update(thread_msg, other_server)) == NULL){
