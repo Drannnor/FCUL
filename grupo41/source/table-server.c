@@ -318,13 +318,13 @@ int main(int argc, char **argv){
 	//FIXME: arrumar esta merda
 
 	struct pollfd connections[NFDESC];
-	struct sockaddr *p_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*));
+	struct sockaddr *o_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*));
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
 	sigemptyset(&a.sa_mask);
 	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
-	socklen_t primary_size = sizeof(p_server);
+	socklen_t o_size = sizeof(o_server);
 
 	
 	if (argc >= 3){//servidor primario
@@ -406,8 +406,8 @@ int main(int argc, char **argv){
 				secondary_up = 0;
 			} else {
 				printf("awating connection...\n");
-				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) > 0){//FIXME: esta certo? -Bruno
-					if((address_port = get_address_port(other_server, p_server)) != NULL){
+				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){//FIXME: esta certo? -Bruno
+					if((address_port = get_address_port(other_server, o_server)) != NULL){
 						printf("getting tables ...\n");
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
@@ -475,9 +475,9 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ? TODO: guardar a o sockaddr do cliente, 
-																					  // se for a secundario verificar se o client se trata do servidor primario
-																					  // caso negativo passa a ser o servidor primario
+        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ // Ligação feita ? TODO: guardar a o sockaddr do cliente, 
+																					  		 // se for a secundario verificar se o client se trata do servidor primario
+					 															  		 // caso negativo passa a ser o servidor primario
           			connections[i].events = POLLIN;
 					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
 						if (res == 0){
