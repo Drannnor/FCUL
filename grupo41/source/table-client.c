@@ -42,7 +42,7 @@ void ol_switcheroo(char **primary, char **secondary){
 int main(int argc, char **argv){
 	char in[MAX_SIZE];
 	char *tok, *tok_opc, *key_o;
-	int count_param,i,n_tentativas,result;
+	int count_param,i,n_tentativas,result,toquit = 0;
 	struct data_t *value_o;
 	char *tokens[3];
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv){
 	char* secondary = strdup(argv[2]);
 
 	/* Fazer ciclo até que o utilizador resolva fazer "quit" */
-	while (1){
+	while (1 && !toquit){
 		printf(">>> "); // Mostrar a prompt para inserção de comando
 		
 
@@ -238,6 +238,7 @@ int main(int argc, char **argv){
 			}
 		} else if(strcasecmp(tok_opc, "quit") == 0){
 			free(tok_opc);
+			toquit = 1;
 			break;
 		} else {
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
