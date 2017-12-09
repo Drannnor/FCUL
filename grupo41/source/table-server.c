@@ -294,21 +294,19 @@ int tratar_input(){
 }
 
 int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
-	// FILE *fp;
-	// int i;
-	// int n = sizeof(*n_tables)/sizeof(*n_tables[0]);
+	FILE *fp;
+	int i;
+	int n = *n_tables[0];
 
+	fp = fopen(filename,"w");
 
-	// fp = fopen(filename,"w");
+	fputs(adrport,fp);
+	fputs(n_tables[0],fp);
 
-	// fputs(adrport,fp);
-	// fputs(("%d\n",n),fp);
-
-	// for(i = 0;i < n;i++){
-	// 	fputs(*n_tables[i],fp);
-	// }
-	// return 1;
-	return 0;
+	for(i = 1;i < n;i++){
+		fputs(n_tables[i],fp);
+	}
+	return 1;
 }
 
 int main(int argc, char **argv){
