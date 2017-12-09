@@ -179,7 +179,7 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	// se estivermos no servidor secundario assegurar exclusao mutua TODO:
+	// se estivermos no servidor secundario assegurar exclusao mutua FIXME:
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
@@ -234,9 +234,11 @@ int network_receive_send(int socket_fd){
 	
 	//verificar que a thread fez o seu trabalho 
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
-	if(primary && (update_successful(thread)) < 0){
-		fprintf(stderr, "Fail to send message to backup");
-		secondary_up = 0;
+	if(primary && is_write(msg_pedido) && secondary_up){
+		if((update_successful(thread)) < 0){
+			fprintf(stderr, "Fail to send message to backup");
+			secondary_up = 0;
+		}
 	}
 
 	/* Libertar memória */
@@ -292,10 +294,10 @@ int tratar_input(){
 	return 0;
 }
 
-int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
+int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 	FILE *fp;
 	int i;
-	int n = *n_tables[0];
+	int n = atoi(n_tables[0]);
 
 	fp = fopen(filename,"w");
 
@@ -391,6 +393,7 @@ int main(int argc, char **argv){
 			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
 			if((other_server = server_bind(address_port))){
 				secondary_up = 1;
+
 				if((send_table_info(other_server,n_tables)) < 0){
 					secondary_up = 0;
 				}
@@ -408,6 +411,7 @@ int main(int argc, char **argv){
 						printf("getting tables ...\n");
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
+							//
 						}
 					}
 				}
@@ -415,21 +419,24 @@ int main(int argc, char **argv){
 		}
 	}
 	
+	
+	if(first_time){
+		fprintf(stderr, "Writting file...\n");
+		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+			fprintf(stderr, "Failed to write configuration file");
+			return -1;
+		}
+		fprintf(stderr, "done\n");
+	} else {//sync
+		other_server = server_bind(address_port);
+		//hello(other_server);TODO: fazer o hello e o update
+	}
+
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
 		return -1;
 	}
 
-	if(first_time){
-		// if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
-		// 	fprintf(stderr, "Failed to write configuration file");
-		// 	return -1;
-		// }
-	} else {//sync
-		other_server = server_bind(address_port);
-		printf("Couldn't sync!"); //FIXME: para tirar
-		//hello(other_server);TODO: fazer o hello e o update
-	}
 
 	/* inicialização */
 

@@ -196,5 +196,5 @@ void print_table(struct table_t *table){
 }
 
 struct entry_t *table_get_entries(struct table_t *table){//TODO: get all entries from this table
-
+ return NULL;
 }
