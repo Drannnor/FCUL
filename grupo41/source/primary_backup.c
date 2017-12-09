@@ -18,12 +18,28 @@ struct thread_params{
 };
 
 int hello(struct server_t *server){//TODO:
-    return -1;
+    //manda uma sms ao primary, a dizer que esta up
+	//update-state(server)
+	//verificar o resultado e devolver accordingly
 }
 
-int update_state(struct server_t *server){//TODO:
-    return -1;
+int update_state(struct server_t *server){//TODO:espera pelos puts
+	//para cada tabela
+		//receber o tamanho n
+		//e receber n puts
+	//devolver um resultado accordingly	
 }
+
+int sync_backup(struct server_t *server ){//TODO: envia os puts de todas as tabelas
+	//para cada tabela{
+		//size = table_skel_size(n)
+		//mandar para o sec o tabel size
+		//ir buscar as entrys
+		//para cada entry{
+			//executar um bonito put
+		//}
+    //}
+}	
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
@@ -68,7 +84,7 @@ void *backup_update_thread(void *params){
     *res = msg_out -> content.result;
 
     free_message(msg_out);
-	free(tp);//FIXME: not wortking
+	free(tp);
     return res;
 }
 

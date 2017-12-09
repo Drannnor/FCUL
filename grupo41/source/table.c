@@ -116,10 +116,8 @@ char **table_get_keys(struct table_t *table){
     int j = 0;
     for(i = 0; i < table->size_table; i++){
         if(table->hash_table[i].key != NULL){
-            list[j++] = strdup(table->hash_table[i].key);
-            
+            list[j++] = strdup(table->hash_table[i].key);   
         }
-       
     }
     list[j] = NULL;
     return list;
@@ -195,4 +193,8 @@ void print_table(struct table_t *table){
         printf("\n");
     }
     printf("-------------------\n");
+}
+
+struct entry_t *table_get_entries(struct table_t *table){//TODO: get all entries from this table
+
 }

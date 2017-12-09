@@ -74,6 +74,12 @@ int main(int argc, char **argv){
 		in[strlen(in) - 1] = '\0';
 		tok_opc = strdup(strtok(in," "));
 
+		if(strcasecmp(tok_opc, "quit") == 0){
+			free(tok_opc);
+			toquit = 1;
+			break;
+		}
+
 		count_param = 0;
 		while((tok = strtok(NULL, " ")) != NULL){
 			tokens[count_param] = strdup(tok);
@@ -236,10 +242,6 @@ int main(int argc, char **argv){
 					}
 				}
 			}
-		} else if(strcasecmp(tok_opc, "quit") == 0){
-			free(tok_opc);
-			toquit = 1;
-			break;
 		} else {
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
 		}

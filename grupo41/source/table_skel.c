@@ -83,6 +83,18 @@ int table_skel_send_tablenum (int socketfd){
 	return res;
 }
 
+struct entry_t *table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
+	//verificar se o numero eh valido
+	//fazer a lista
+	//devolver 
+}
+
+int table_skel_size(int numero_da_tabela){
+	//verificar se eh valido
+	//ir buscar
+	//devolver
+}
+
 
 
 

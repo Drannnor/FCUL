@@ -21,8 +21,7 @@ Ricardo Cruz 47871
 #define MAX_ADDRESS_SIZE 20
 #define	N_TABLES_MSIZE 180
 #define PRIMARY_FILE "primary-server.conf"
-#define BACKUP_FILE "backup-server.conf" //TODO: perguntar ao neelo como podemos ter a 
-										//certeza que eh escrito no sitio certo
+#define BACKUP_FILE "backup-server.conf" 
 
 static int quit = 0;
 static char* nome_ficheiro;
@@ -232,13 +231,13 @@ int network_receive_send(int socket_fd){
 		free_message(msg_resposta);
 		return -2;
 	}
-
-	if(primary && !update_successful(thread)){
+	
+	//verificar que a thread fez o seu trabalho 
+	//com sucesso, caso contrario, marca o servidor secundario com DOWN
+	if(primary && (update_successful(thread)) < 0){
 		fprintf(stderr, "Fail to send message to backup");
 		secondary_up = 0;
 	}
-	//verificar que a thread fez o seu trabalho TODO:
-	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 
 	/* Libertar memória */
 	free(buff_resposta);
