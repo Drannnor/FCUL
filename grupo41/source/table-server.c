@@ -293,12 +293,27 @@ int tratar_input(){
 }
 
 int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
+<<<<<<< HEAD
+	FILE *fp;
+	int i;
+	int n = sizeof(*n_tables)/sizeof(*n_tables[0]);
+=======
 	// char* in;
 	// FILE *fp;
 	// int i,n;
+>>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
 
 	// fp = fopen(filename,"w");
 
+<<<<<<< HEAD
+	fputs(adrport,fp);
+	fputs(("%d\n",n),fp);
+
+	for(i = 0;i < n;i++){
+		fputs(*n_tables[i],fp);
+	}
+	return 1;
+=======
 	// fgets(in, MAX_ADDRESS_SIZE,fp);
 
 	// fputs(("%s\n",in),fp);
@@ -312,6 +327,7 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 	// }
 	// return 1;
 	return -1;
+>>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
 }
 
 int main(int argc, char **argv){
