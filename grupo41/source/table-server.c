@@ -190,10 +190,10 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
-	//TODO: copiar msg
+	struct message_t *thread_msg = copy_message(msg_pedido);
 
 	if(primary && is_write(msg_pedido) && secondary_up){
-		if((thread = backup_update(msg_pedido, other_server)) == NULL){
+		if((thread = backup_update(thread_msg, other_server)) == NULL){
 			secondary_up = 0;
 		}
 	}
@@ -233,9 +233,9 @@ int network_receive_send(int socket_fd){
 		return -2;
 	}
 
-	// if(!update_successful(thread)){
-	// 	secondary_up = 0;
-	// }
+	if(!update_successful(thread)){
+		secondary_up = 0;
+	}
 	//verificar que a thread fez o seu trabalho TODO:
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 

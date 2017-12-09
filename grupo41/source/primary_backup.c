@@ -329,6 +329,7 @@ int update_successful(pthread_t thread){
 
 	res = *r;
 	free(r);
+	
 	return res;
 }
 
