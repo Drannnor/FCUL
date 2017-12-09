@@ -256,18 +256,30 @@ char **get_table_info(int socket_fd){
 
 	if((n_tables = (char**) malloc(sizeof(char*) * n_tables_size)) == NULL){
 		fprintf(stderr, "get_table_info - failed malloc, n_tables\n");
+		free(buff_pedido);
+		free(msg_pedido);
 		return NULL;
 	}
 
 	for (i = 0; i < n_tables_size - 1; i++){
-		n_tables[i] = strdup(msg_pedido->content.keys[i]);//FIXME: verify
+		if ((n_tables[i] = strdup(msg_pedido->content.keys[i])) == NULL){
+			for(i; i >=0; i--){
+				free(n_tables[i]);
+			}
+			free(n_tables);
+		}
 	}
 
 	n_tables[n_tables_size - 1] = NULL;
 
 	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
 		fprintf(stderr, "get_table_info - failed malloc, msg_resposta\n");
-
+		for (i = 0; i < n_tables_size - 1; i++){
+			free(n_tables[i]);
+		}
+		free(n_tables);
+		free(buff_pedido);
+		free(msg_pedido);
 		return NULL;
 	}
 
@@ -281,6 +293,10 @@ char **get_table_info(int socket_fd){
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
+		for (i = 0; i < n_tables_size - 1; i++){
+			free(n_tables[i]);
+		}
+		free(n_tables);
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -295,6 +311,10 @@ char **get_table_info(int socket_fd){
 	/* Verificar se o envio teve sucesso */
 	if(write_all(socket_fd, (char *) &msg_size, _INT) < 0){
 		fprintf(stderr, "Write failed - size write_all\n");
+		for (i = 0; i < n_tables_size - 1; i++){
+			free(n_tables[i]);
+		}
+		free(n_tables);
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -306,6 +326,10 @@ char **get_table_info(int socket_fd){
 	/* Verificar se o envio teve sucesso */
 	if(write_all(socket_fd, buff_resposta, message_size) < 0){
 		fprintf(stderr, "Write failed - message write_all\n");
+		for (i = 0; i < n_tables_size - 1; i++){
+			free(n_tables[i]);
+		}
+		free(n_tables);
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
