@@ -421,15 +421,28 @@ struct message_t* message_error(int errcode){
 	return msg;
 }
 
-struct message_t *copy_message(struct message_t *msg){//TODO: funcao que copia uma messagem
+/*struct message_t *copy_message(struct message_t *msg){//FIXME: funcao que copia uma messagem - apagar
     struct message_t *new_msg;
 
     if ((new_msg = (struct message_t *)malloc(sizeof(struct message_t))) == NULL){
         return NULL;
     }
 
+    new_msg->opcode = msg->opcode;
+    new_msg->c_type = msg->c_type;
+    new_msg->table_num = msg->table_num;
+
+    switch(msg->c_type){
+        case CT_ENTRY:
+            ola;
+        case CT_KEY:
+            ola;
+
+    }
+
     
-}
+    
+}*/
 
 void print_message(struct message_t *msg) {
     int i;
