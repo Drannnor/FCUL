@@ -50,7 +50,11 @@ void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
     struct message_t *msg_out;
 
+	print_message(tp->msg);
+
 	msg_out = server_backup_send_receive(tp->server, tp->msg);
+
+	print_message(msg_out);
 
     int *res = (int *) malloc(sizeof(int));//FIXME:
     *res = msg_out -> content.result;
@@ -123,24 +127,26 @@ struct server_t *server_bind(const char *address_port){
 	return server;
 }
 
-//devolve uma string da forma <ip>:<port> pronto para escrever TODO: pelo Cruz
+//devolve uma string da forma <ip>:<port> pronto para escrever FIXME: pelo Cruz
 char *get_address_port(struct server_t *server, struct sockaddr *p_server){
 	unsigned int sockaddr_len = sizeof(p_server);
 	struct sockaddr_in *sk_in = (struct sockaddr_in*)p_server;
 	char *ip = inet_ntoa(sk_in->sin_addr);
 	int len = strlen(ip);
-    char *ip_add[strlen(ip) + 2];
+    char *ip_add, *port;
 
 	if(getpeername(server->socket_fd, p_server, &sockaddr_len) == -1) {
     	perror("getpeername() failed");
     	return NULL;
 	}
 
-    strcpy(*ip_add,ip);
+	ip_add = (char *)malloc(strlen(ip) + 2); //FIXME: verificar
+	port = (char *)malloc(6);
+
+    strcpy(ip_add,ip);
     ip_add[len] = ':';
     ip_add[len + 1] = '\0';
 
-	char *port[6];
 	sprintf(port, "%d", ((int) ntohs(sk_in->sin_port)));
 
 	return strcat(ip_add,port);
@@ -164,9 +170,13 @@ int send_table_info(struct server_t *server, char **n_tables){
 	msg_out->opcode = OC_TABLE_INFO;
     msg_out->c_type = CT_KEYS;
 	msg_out->table_num = 0;
-    msg_out->content.keys = n_tables;	
+    msg_out->content.keys = n_tables;
+
+	print_message(msg_out);
 
 	msg_in = server_backup_send_receive(server, msg_out);
+
+	print_message(msg_in);
 
 	int res = msg_in->content.result;
 	msg_out->content.keys = NULL;
@@ -220,6 +230,8 @@ char **get_table_info(int socket_fd){
 		return NULL;
 	}
 
+	print_message(msg_pedido);
+
 	int opc = msg_pedido->opcode;
 
 	if(opc != OC_TABLE_INFO){
@@ -249,6 +261,8 @@ char **get_table_info(int socket_fd){
 		msg_resposta->table_num = msg_pedido->table_num;
 		msg_resposta->content.result = 0;
 	}
+
+	print_message(msg_resposta);
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
