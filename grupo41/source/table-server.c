@@ -300,10 +300,10 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! na
 	fp = fopen(filename,"w");
 
 	fputs(adrport,fp);
-	fputs(("%d\n",n),fp);
+	fputs(n_tables[0],fp);
 
 	for(i = 1;i < n;i++){
-		fputs(*n_tables[i],fp);
+		fputs(n_tables[i],fp);
 	}
 	return 1;
 }
