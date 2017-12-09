@@ -310,12 +310,7 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 		return 0;
 	}
 
-	if((fprintf(fp,"%s\n",n_tables[0])) < 0){
-		fprintf(stderr,"Couldn't write number of tables\n");
-		return 0;
-	}
-
-	for(i = 1;i < n;i++){
+	for(i = 0;i < n;i++){
 		if((fprintf(fp,"%s\n",n_tables[i])) < 0){
 			fprintf(stderr,"Couldn't write table size\n");
 			return 0;
