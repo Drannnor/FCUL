@@ -16,7 +16,7 @@ Ricardo Cruz 47871
 #include "message-private.h"
 #include "primary_backup-private.h"
 
-#define NFDESC 6
+#define NFDESC 7
 #define MAX_SIZE 1000
 #define adress_port_SIZE 15
 #define	N_TABLES_MSIZE 180
@@ -26,8 +26,8 @@ Ricardo Cruz 47871
 static int quit = 0;
 static char* nome_ficheiro;
 int primary, secondary_up, first_time;
-struct server_t *other_server;
 
+static struct server_t *other_server;
 
 //funcao que verifica se a mensagem se trata de uma put ou de um updatez
 //se for esse o caso devolve 1
@@ -134,6 +134,7 @@ int network_receive_send(int socket_fd){
 	/* Verificar se a receção teve sucesso */
 	if((result = read_all(socket_fd, (char *) &msg_size, _INT)) <= 0){
 		if(result < 0) fprintf(stderr, "Read failed - size read_all\n");
+		fprintf(stderr, "ERRO\n");//FIXME:
 		return -1;
 	}
 
@@ -253,7 +254,7 @@ int tratar_input(){
 	}
 	if(strcasecmp( tok, "quit") == 0){
 		quit = 1;
-		while(remove(nome_ficheiro) != 0){} //FIXME: verificar se isto se pode fazer -Burno <3
+		remove(nome_ficheiro); //FIXME: verificar se isto se pode fazer -Burno <3 acho que nao viste o que fizeste
 		
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
@@ -311,6 +312,7 @@ int main(int argc, char **argv){
 	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
 	socklen_t primary_size = sizeof(p_server);
+
 	
 	if (argc >= 3){//servidor primario
 		primary = 1;
@@ -384,19 +386,20 @@ int main(int argc, char **argv){
 			}
 
 		} else {//Servidor Secundario, primeira vez
-
+			printf("sou o secundario\n");
 			if (( other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
 				fprintf(stderr, "Failed malloc other_server\n");
 				secondary_up = 0;
 			} else {
+				printf("awating connection...\n");
 				if((other_server->socket_fd = accept(socket_de_escuta,p_server,&primary_size)) > 0){//FIXME: esta certo? -Bruno
 					if((address_port = get_address_port(other_server, p_server)) != NULL){
+						printf("getting tables ...\n");
 						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
 							secondary_up = 1;
 						}
 					}
 				}
-				secondary_up = 0;
 			}
 		}
 	}
@@ -425,14 +428,17 @@ int main(int argc, char **argv){
 		connections[i].revents = 0;
 		connections[i].events = 0;
 	}
-	//TODO: talvez adicionar o socket do outro servidor	
+
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
     connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standard in
   	connections[1].events = POLLIN;
+	
+	connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
+	connections[2].events = POLLIN;
 
-	nfds = 2;
+	nfds = 3;
 	
 	while(!quit){ /* espera por dados nos sockets abertos */
 
@@ -445,7 +451,7 @@ int main(int argc, char **argv){
             }
 		}
 
-        i = 2;
+        i = 3;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
             	while(connections[i].fd != -1){
