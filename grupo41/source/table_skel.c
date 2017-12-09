@@ -84,23 +84,21 @@ int table_skel_send_tablenum (int socketfd){
 }
 
 struct entry_t *table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
+	int i;
+	int size = tables[numero_da_tabela]->size_table; //noutro sitio
+	struct entry_t *entries; sizeof(struct entry_t) * size;
+
 	//verificar se o numero eh valido
-	//fazer a lista
-	//devolver 
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");
 		return NULL;
 	}
-	struct table_t table = *tables[numero_da_tabela];
-	int i;
-	int size = table.size_table; 
-	struct entry_t *entries[size];
 
 	for(i = 0; i < size; i++){
 		entries[i] = table.next;
 	}
 
-	return *entries;
+	return entries;
 }
 
 int table_skel_size(int numero_da_tabela){
@@ -109,11 +107,10 @@ int table_skel_size(int numero_da_tabela){
 	//devolver
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");
-		return 0;
+		return -1;
 	}
-	struct table_t table = *tables[numero_da_tabela];
 
-	return table.size_table;
+	return tables[numero_da_tabela]->size_table;
 }
 
 

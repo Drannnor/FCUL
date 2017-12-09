@@ -13,7 +13,9 @@
         "primary_backup-private.h": "c",
         "stdio.h": "c",
         "pthread.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "table_skel-private.h": "c",
+        "table_skel.h": "c"
     },
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.errorSquiggles": "Enabled"
