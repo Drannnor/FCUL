@@ -193,7 +193,7 @@ int network_receive_send(int socket_fd){
 	//struct message_t *thread_msg = copy_message(msg_pedido);
 
 	if(primary && is_write(msg_pedido) && secondary_up){
-		if((thread = backup_update(thread_msg, other_server)) == NULL){
+		if((thread = backup_update(msg_pedido, other_server)) == NULL){
 			secondary_up = 0;
 		}
 	}
@@ -233,7 +233,8 @@ int network_receive_send(int socket_fd){
 		return -2;
 	}
 
-	if(!update_successful(thread)){
+	if(!primary && !update_successful(thread)){
+		fprintf(stderr, "Fail to send message to backup");
 		secondary_up = 0;
 	}
 	//verificar que a thread fez o seu trabalho TODO:
@@ -293,41 +294,19 @@ int tratar_input(){
 }
 
 int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!! nao compila
-<<<<<<< HEAD
 	FILE *fp;
 	int i;
-	int n = sizeof(*n_tables)/sizeof(*n_tables[0]);
-=======
-	// char* in;
-	// FILE *fp;
-	// int i,n;
->>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
+	int n = *n_tables[0];
 
-	// fp = fopen(filename,"w");
+	fp = fopen(filename,"w");
 
-<<<<<<< HEAD
 	fputs(adrport,fp);
-	fputs(("%d\n",n),fp);
+	fputs(n_tables[0],fp);
 
-	for(i = 0;i < n;i++){
-		fputs(*n_tables[i],fp);
+	for(i = 1;i < n;i++){
+		fputs(n_tables[i],fp);
 	}
 	return 1;
-=======
-	// fgets(in, MAX_ADDRESS_SIZE,fp);
-
-	// fputs(("%s\n",in),fp);
-	// fgets(in,N_TABLES_MSIZE,fp);
-	// fputs(("%s\n",in),fp);
-	// n = atoi(in)+2;
-
-	// for(i = 1;i < n;i++){
-	// 	fgets(in,N_TABLES_MSIZE,fp);
-	// 	fputs(("%s\n",in),fp);
-	// }
-	// return 1;
-	return -1;
->>>>>>> f5caf108012739e05864cc4c50ca395aba61de29
 }
 
 int main(int argc, char **argv){

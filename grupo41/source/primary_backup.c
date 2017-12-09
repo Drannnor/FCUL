@@ -261,10 +261,11 @@ char **get_table_info(int socket_fd){
 		return NULL;
 	}
 
+	int j;
 	for (i = 0; i < n_tables_size - 1; i++){
 		if ((n_tables[i] = strdup(msg_pedido->content.keys[i])) == NULL){
-			for(i; i >=0; i--){
-				free(n_tables[i]);
+			for(j = 0; j < i; j++){
+				free(n_tables[j]);
 			}
 			free(n_tables);
 		}
@@ -345,9 +346,9 @@ char **get_table_info(int socket_fd){
 	return n_tables;
 }
 
-int update_successful(pthread_t thread){
+int update_successful(pthread_t *thread){
  	int *r, res;
-    if (pthread_join(thread, (void **) &r) != 0){
+    if (pthread_join(*thread, (void **) &r) != 0){
 		fprintf(stderr, "pthread_join error");
 	}
 
