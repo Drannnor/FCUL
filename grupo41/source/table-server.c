@@ -252,7 +252,7 @@ int tratar_input(){
 		quit = 1;
 		return -1;
 	}
-	if(strcasecmp( tok, "quit") == 0){
+	if(strcasecmp(tok, "quit") == 0){
 		quit = 1;
 		remove(nome_ficheiro); //FIXME: verificar se isto se pode fazer -Burno <3 acho que nao viste o que fizeste
 		

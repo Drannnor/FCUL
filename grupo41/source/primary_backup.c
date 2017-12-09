@@ -27,10 +27,14 @@ int update_state(struct server_t *server){//TODO:
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
-    pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));//FIXME:
+    pthread_t *thread;
+	if((thread = (pthread_t *)malloc(sizeof(pthread_t))) == NULL){
+		fprintf(stderr, "backup_update - thread - failed malloc");
+		return NULL;
+	}
     
     if((t_params = (struct thread_params*)malloc(sizeof(struct thread_params*))) == NULL){
-        fprintf(stderr, "backup_update - failed malloc.\n");
+        fprintf(stderr, "backup_update - failed malloc\n");
         return NULL;
     }
     
@@ -56,7 +60,11 @@ void *backup_update_thread(void *params){
 
 	print_message(msg_out);
 
-    int *res = (int *) malloc(sizeof(int));//FIXME:
+    int *res;
+	if((res = (int *) malloc(sizeof(int))) == NULL){
+		fprintf(stderr, "backup_update_thread - failed malloc\n");
+		return NULL;
+	}
     *res = msg_out -> content.result;
 
     free_message(msg_out);
@@ -140,8 +148,14 @@ char *get_address_port(struct server_t *server, struct sockaddr *p_server){
     	return NULL;
 	}
 
-	ip_add = (char *)malloc(strlen(ip) + 2); //FIXME: verificar
-	port = (char *)malloc(6);
+	if((ip_add = (char *)malloc(strlen(ip) + 2)) == NULL){
+		fprintf(stderr, "get_address_port - ip - failed malloc");
+		return NULL;
+	}
+	if((port = (char *)malloc(6)) == NULL){
+		fprintf(stderr, "get_address_port - port - failed malloc2");
+		return NULL;
+	}
 
     strcpy(ip_add,ip);
     ip_add[len] = ':';
@@ -189,7 +203,7 @@ char **get_table_info(int socket_fd){
 	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result, i;
   	struct message_t *msg_pedido, *msg_resposta;
-	char ** n_tables;
+	char **n_tables;
 
 	if(socket_fd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
