@@ -250,31 +250,31 @@ char **get_table_info(int socket_fd){
 
 	if(opc != OC_TABLE_INFO){
 		fprintf(stderr, "send_table_info - wrong opcode");
-		msg_resposta = message_error(SERVER_ERROR);
-	} else {
-		int n_tables_size = atoi(msg_pedido->content.keys[0]) + 2;
-
-		if((n_tables = (char**) malloc(sizeof(char*) * n_tables_size)) == NULL){
-			fprintf(stderr, "get_table_info - failed malloc, n_tables\n");
-			msg_resposta = message_error(SERVER_ERROR);
-		}
-
-		for (i = 0; i < n_tables_size - 1; i++){
-			n_tables[i] = strdup(msg_pedido->content.keys[i]);//FIXME: verify
-		}
-
-		n_tables[n_tables_size - 1] = NULL;
-
-		if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
-			fprintf(stderr, "get_table_info - failed malloc, msg_resposta\n");
-			msg_resposta = message_error(SERVER_ERROR);
-		}
-
-		msg_resposta->opcode = opc + 1;
-		msg_resposta->c_type = CT_RESULT;
-		msg_resposta->table_num = msg_pedido->table_num;
-		msg_resposta->content.result = 0;
+		return NULL;
 	}
+	int n_tables_size = atoi(msg_pedido->content.keys[0]) + 2;
+
+	if((n_tables = (char**) malloc(sizeof(char*) * n_tables_size)) == NULL){
+		fprintf(stderr, "get_table_info - failed malloc, n_tables\n");
+		return NULL;
+	}
+
+	for (i = 0; i < n_tables_size - 1; i++){
+		n_tables[i] = strdup(msg_pedido->content.keys[i]);//FIXME: verify
+	}
+
+	n_tables[n_tables_size - 1] = NULL;
+
+	if((msg_resposta = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
+		fprintf(stderr, "get_table_info - failed malloc, msg_resposta\n");
+
+		return NULL;
+	}
+
+	msg_resposta->opcode = opc + 1;
+	msg_resposta->c_type = CT_RESULT;
+	msg_resposta->table_num = msg_pedido->table_num;
+	msg_resposta->content.result = 0;
 
 	print_message(msg_resposta);
 
