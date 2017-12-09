@@ -22,6 +22,11 @@ struct thread_params{
 int hello(struct server_t *server){//FIXME: server_bind?
 	struct message_t *msg_pedido, *msg_resposta;
 
+	if((msg_pedido = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
+		fprintf(stderr, "Failed malloc\n");
+		return -1;
+	}
+
 	msg_pedido -> opcode = OC_HELLO;
 	msg_pedido -> c_type = CT_RESULT;
 	msg_pedido -> table_num = 0;
@@ -50,15 +55,15 @@ int update_state(struct server_t *server){
 			fprintf(stderr, "update_state - tables_entries empty");
 			return -1;
 		}
-		for(int j = 0; j < size; j++){
+		for(j = 0; j < size; j++){
 			if((server_backup_put(server, tables_entries[j], i)) < 0){
 				fprintf(stderr, "update_state - put failed");
 				free(tables_entries);
 				return -1;
 			}	
 		}
-		return 0;
 	}
+	return 0;
 }
 
 int sync_backup(struct server_t *server){
@@ -70,6 +75,10 @@ int sync_backup(struct server_t *server){
 	for(i = 0; i < (server -> ntabelas); i++){
 		if((size = table_skel_size(i)) <= 0){
 			fprintf(stderr, "sync_backup - incorrect size");
+			return -1;
+		}
+		if((msg_pedido = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
+			fprintf(stderr, "Failed malloc\n");
 			return -1;
 		}
 		msg_pedido -> opcode = OC_SIZE;
@@ -270,8 +279,8 @@ char *get_address_port(struct server_t *server, struct sockaddr *p_server){
     ip_add[len] = ':';
     ip_add[len + 1] = '\0';
 
-	sprintf(port, "%d", ((int) ntohs(sk_in->sin_port)));
-
+	sprintf(port, "%d", ((int)sk_in->sin_port));
+	printf("%s\n",strcat(ip_add,port));
 	return strcat(ip_add,port);
 }
 
@@ -564,7 +573,6 @@ int server_backup_receive_send(struct server_t *server){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result, res = 0;
   	struct message_t *msg_pedido, *msg_resposta;
-	pthread_t *thread;
 
 	/* Verificar parâmetros de entrada */
 	if(server->socket_fd < 0){
@@ -618,7 +626,7 @@ int server_backup_receive_send(struct server_t *server){
 	print_message(msg_pedido);
 
 	if(msg_pedido -> opcode == OC_SIZE){
-		memcpy(res, msg_pedido->content.result, _INT);
+		memcpy(&res, &(msg_pedido->content.result), _INT);
 	} else if(msg_pedido -> opcode != OC_PUT){
 		fprintf(stderr, "Not a 'put' or a 'size'");
 		return -2;

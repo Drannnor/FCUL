@@ -26,6 +26,8 @@ int update_successful(pthread_t *thread);
 
 struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg);
 
+int server_backup_receive_send(struct server_t *server);
+
 int sync_backup(struct server_t *server);
 
 int server_backup_put(struct server_t *server, struct entry_t *entry, int tablenum);

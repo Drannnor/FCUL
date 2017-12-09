@@ -310,12 +310,13 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 		return 0;
 	}
 
-	for(i = 0;i < n;i++){
+	for(i = 0;i <= n ;i++){
 		if((fprintf(fp,"%s\n",n_tables[i])) < 0){
 			fprintf(stderr,"Couldn't write table size\n");
 			return 0;
 		}
 	}
+	fclose(fp);
 	return 1;
 }
 
@@ -428,11 +429,6 @@ int main(int argc, char **argv){
 		}
 	}
 
-	if((table_skel_init(n_tables) < 0)){
-		fprintf(stderr, "Failed to init\n");
-		return -1;
-	}
-
 	if(first_time){
 		fprintf(stderr, "Writting file...\n");
 		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
@@ -443,7 +439,11 @@ int main(int argc, char **argv){
 	} else {//sync
 		other_server = server_bind(address_port);
 		other_server -> ntabelas = atoi(n_tables[0]);
-		printf("Couldn't sync!"); //FIXME: para tirar
+	}
+
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		return -1;
 	}
 
 	/* inicialização */

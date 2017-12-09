@@ -83,7 +83,7 @@ int table_skel_send_tablenum (int socketfd){
 	return res;
 }
 
-struct entry_t *table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
+struct entry_t **table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
 
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");
