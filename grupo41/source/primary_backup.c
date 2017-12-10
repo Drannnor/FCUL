@@ -473,7 +473,7 @@ pthread_t *backup_update(struct message_t *msg, struct server_t *server){
 void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
     struct message_t *msg_out;
-	 int *res;
+	int *res;
 
 	print_message(tp->msg);
 
