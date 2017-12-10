@@ -51,6 +51,8 @@ int main(int argc, char **argv){
 	/* Testar os argumentos de entrada */
 	if(argc < 3){
 		fprintf(stderr, "Insufficient arguments\n");
+		fprintf(stderr, "Uso: ./client <ip servidor>:<porta servidor>\n");
+		fprintf(stderr, "Exemplo de uso: ./client 10.101.148.144:54321\n");
 		return -1;
 	}
 	

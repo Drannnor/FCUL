@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "streambuf": "c"
+        "streambuf": "c",
+        "functional": "c"
     }
 }
