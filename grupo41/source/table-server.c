@@ -501,7 +501,9 @@ int main(int argc, char **argv){
 		if(server_bind(other_server) == 0){//FIXME: verificar
 			other_server -> ntabelas = atoi(n_tables[0]);
 			if(hello(other_server) < 0){
-				//TODO: frees
+				fprintf(stderr, "Failed to hello\n");
+				server_close(other_server);
+				free(o_server);
 				return -1;
 			}
 		}
