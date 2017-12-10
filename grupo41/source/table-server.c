@@ -136,7 +136,7 @@ int make_server_socket(short port){
 int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
   	int message_size, msg_size, result, update_backup ;
-  	struct message_t *msg_pedido, *msg_resposta;
+  	struct message_t *msg_pedido, *msg_resposta = NULL;
 	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
 
@@ -186,9 +186,14 @@ int network_receive_send(int socket_fd){
 	if(primary){
 		switch (msg_pedido->opcode){
 			case OC_HELLO:
+				printf("Hello received! Syncronizing tables...");
 				if(sync_backup(other_server)){
 					other_server->socket_fd = socket_fd;
 					other_server->up = 1;
+					printf("Tables syncronized successfully\n Back is up and running!");
+					return 2;
+				} else {
+					return -1;
 				}
 				break;
 			case OC_TABLE_NUM:
