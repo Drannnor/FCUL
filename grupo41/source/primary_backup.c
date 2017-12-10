@@ -96,6 +96,7 @@ int hello(struct server_t *server){
 			free(msg_pedido);
 			return -1;
 	}
+	
 	free(msg_resposta);
 	free(msg_pedido);
 	return update_state(server);
