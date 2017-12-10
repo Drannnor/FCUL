@@ -4,9 +4,9 @@ TEST_DIR = testes
 INC_DIR = include
 OBJ_DIR = object
 SRC_DIR = source
-CFLAGS = -Wall -lpthread -I $(INC_DIR) -g
+CFLAGS = -Wall -lpthread -I $(INC_DIR)
 
-all: clean server client
+all: server client
 
 server: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table-server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.o
 	$(CC)  $(CFLAGS)  $(OBJ_DIR)/entry.o $(OBJ_DIR)/table-$@.o $< $(OBJ_DIR)/table.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/primary_backup.o -o $(BIN_DIR)/$@
@@ -32,5 +32,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
+	rm -rf *.conf
 	rm -rf $(OBJ_DIR)/*
 	rm -rf $(BIN_DIR)/*
