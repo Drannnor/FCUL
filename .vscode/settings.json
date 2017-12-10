@@ -20,7 +20,8 @@
         "initializer_list": "c",
         "string_view": "c",
         "utility": "c",
-        "valarray": "c"
+        "valarray": "c",
+        "functional": "c"
     },
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.errorSquiggles": "Enabled"

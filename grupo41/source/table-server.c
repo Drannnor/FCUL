@@ -151,7 +151,7 @@ int network_receive_send(int socket_fd){
 	/* Verificar se a receção teve sucesso */
 	if((result = read_all(socket_fd, (char *) &msg_size, _INT)) <= 0){
 		if(result < 0) fprintf(stderr, "Read failed - size read_all\n");
-		fprintf(stderr, "Connection failed\n");
+		//fprintf(stderr, "Connection failed\n");
 		return -1;
 	}
 
@@ -167,7 +167,7 @@ int network_receive_send(int socket_fd){
 	/* Verificar se a receção teve sucesso */
 	if((result = read_all(socket_fd, buff_pedido, ntohl(msg_size))) < 0){
 		if(result < 0) fprintf(stderr, "Read failed - message read_all\n");
-		fprintf(stderr, "Connection failed\n");
+		//fprintf(stderr, "Connection failed\n");
 		free(buff_pedido);
 		return -1;
 	}
@@ -183,32 +183,35 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	if(primary){
-		switch (msg_pedido->opcode){
-			case OC_HELLO:
-				printf("Hello received! Syncronizing tables...");
-				if(sync_backup(other_server)){
-					other_server->socket_fd = socket_fd;
-					other_server->up = 1;
-					printf("Tables syncronized successfully\n Back is up and running!");
-					return 2;
-				} else {
-					return -1;
-				}
-				break;
-			case OC_TABLE_NUM:
-				msg_resposta = table_skel_get_tablenum(msg_pedido);
-				break;
-			default:
-				if((msg_resposta = invoke(msg_pedido)) == NULL){
-					fprintf(stderr, "Failed invoke\n");
-					free(buff_pedido);
-					free(msg_pedido);
-					return -2;
-				}
+	switch (msg_pedido->opcode){
+		case OC_HELLO:
+			printf("Hello received! Syncronizing tables...");
+			if(sync_backup(other_server)){
+				other_server->socket_fd = socket_fd;
+				other_server->up = 1;
+				primary = 1;
+				printf("Tables syncronized successfully\n Back is up and running!");
+				return 2;
+			} else {
+				other_server -> up = 0;
+				return -1;
+			}
+			break;
+		case OC_TABLE_NUM:
+			msg_resposta = table_skel_get_tablenum(msg_pedido);
+			break;
+		default:{
+			if((msg_resposta = invoke(msg_pedido)) == NULL){
+				fprintf(stderr, "Failed invoke\n");
+				free(buff_pedido);
+				free(msg_pedido);
+				return -2;
+			}
 		}
-		return 2;
-	} 
+	}
+
+
+	
 
 	print_message(msg_resposta);
 
@@ -267,10 +270,10 @@ int network_receive_send(int socket_fd){
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
 	if(update_backup){
 		if((update_successful(thread)) < 0){
-			fprintf(stderr, "Fail to send message to backup");
+			fprintf(stderr, "Fail to send message to backup\n");
 			other_server -> up = 0;
 		} else {
-			fprintf(stdin, "Backup updated successefully");
+			fprintf(stdin, "Backup updated successefully\n");
 		}
 		free(thread);
 	}
@@ -579,8 +582,10 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ 
+        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){
+					printf("New Connection!\n");
 					if(!primary){
+						printf("Client. I am now primary\n");
 						other_server -> up = 0;
 						primary = 1;
 					}
@@ -612,6 +617,7 @@ int main(int argc, char **argv){
 				} else {
 					res = network_receive_send(connections[i].fd);
 					if(res == 2){
+						printf("Backup reconnected\n");
 						connections[2].fd = connections[i].fd;
 						connections[2].revents = connections[i].revents;
 						connections[2].events = connections[i].events;
@@ -624,17 +630,20 @@ int main(int argc, char **argv){
 						if(res == -1){		
 							close(connections[i].fd);
 							if(i == 2){
+								printf("Other server disconnected\n");
 								connections[i].fd = -1;
 								connections[i].revents = 0;
 								connections[i].events = 0;
+							} else {
+								printf("Client disconnected\n");
+								connections[i].fd = connections[nfds-1].fd;
+								connections[i].revents = connections[nfds-1].revents;
+								connections[i].events = connections[nfds-1].events;
+								connections[nfds-1].fd = -1;
+								connections[nfds-1].revents = 0;
+								connections[nfds-1].events = 0;
+								nfds--;
 							}
-							connections[i].fd = connections[nfds-1].fd;
-							connections[i].revents = connections[nfds-1].revents;
-							connections[i].events = connections[nfds-1].events;
-							connections[nfds-1].fd = -1;
-							connections[nfds-1].revents = 0;
-							connections[nfds-1].events = 0;
-							nfds--;
 						} else {
 							quit = 1;
 							break;

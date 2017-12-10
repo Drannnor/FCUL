@@ -82,7 +82,7 @@ struct message_t* table_skel_get_tablenum(struct message_t *msg_in){
 	
     if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
 		fprintf(stderr, "table_skel_get_tablenum - Failed malloc\n");
-		return NULL;
+		return message_error(CLIENT_ERROR);
 	}
 
 	msg_out->opcode =  msg_in->opcode + 1;
@@ -211,7 +211,7 @@ struct message_t *process_message(struct message_t *msg_pedido, struct table_t *
 			break;
 		default:
 			free(msg_resposta);
-			return message_error(SERVER_ERROR);
+			return message_error(CLIENT_ERROR);
 	}
 
 	/* Preparar mensagem de resposta */
