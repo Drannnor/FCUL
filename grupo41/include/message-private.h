@@ -15,13 +15,14 @@ Ricardo Cruz 47871
 
 #define OC_RT_ERROR 99
 
-#define SERVER_ERROR -1
-#define CLIENT_ERROR -2
+#define SERVER_ERROR     -1
+#define CLIENT_ERROR     -2
 #define CONNECTION_ERROR -3
 
-#define OC_TABLE_INFO 60
-#define OC_HELLO 	  70
+#define OC_TABLE_INFO   60
+#define OC_HELLO 	    70
 #define OC_ADDRESS_PORT 80
+#define OC_TABLE_NUM    90
 
 struct message_t *message_error(int errcode);
 void print_message(struct message_t *msg);

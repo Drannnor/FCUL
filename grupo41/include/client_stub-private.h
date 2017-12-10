@@ -11,4 +11,6 @@ struct rtables_t{
     int table_index;
 };
 
+int rtables_tablenum(struct rtables_t *rtables);
+
 #endif
