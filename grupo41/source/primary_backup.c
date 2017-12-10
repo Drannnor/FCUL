@@ -472,6 +472,7 @@ pthread_t *backup_update(struct message_t *msg, struct server_t *server){
 void *backup_update_thread(void *params){
 	struct thread_params *tp = (struct thread_params *) params;
     struct message_t *msg_out;
+	 int *res;
 
 	print_message(tp->msg);
 
@@ -479,7 +480,6 @@ void *backup_update_thread(void *params){
 
 	print_message(msg_out);
 
-    int *res;
 	if((res = (int *) malloc(sizeof(int))) == NULL){
 		fprintf(stderr, "backup_update_thread - failed malloc\n");
 		return NULL;
@@ -561,7 +561,7 @@ char *get_address_port(struct server_t *server,struct sockaddr *socket_address){
 
 //envia a informacao das tabelas para o servidor secundario
 int send_table_info(struct server_t *server, char **n_tables){
-	
+
 	//initializar a msg a enviar
 	struct message_t *msg_out, *msg_in;
 
