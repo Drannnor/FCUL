@@ -185,12 +185,12 @@ int network_receive_send(int socket_fd){
 
 	switch (msg_pedido->opcode){
 		case OC_HELLO:
-			printf("Hello received! Syncronizing tables...");
+			printf("Hello received! Syncronizing tables...\n");
 			if(sync_backup(other_server)){
 				other_server->socket_fd = socket_fd;
 				other_server->up = 1;
 				primary = 1;
-				printf("Tables syncronized successfully\n Back is up and running!");
+				printf("Tables syncronized successfully\n Back is up and running!\n");
 				return 2;
 			} else {
 				other_server -> up = 0;

@@ -115,7 +115,7 @@ int update_state(struct server_t *server){
 	for(i = 0; i < (server -> ntabelas); i++){
 		msg = server_backup_receive_send(server);
 		if(msg -> opcode != OC_SIZE){
-			fprintf(stderr, "update_state - not size");
+			fprintf(stderr, "update_state - not size\n");
 			free_message(msg);
 			return -1;
 		}
@@ -123,7 +123,7 @@ int update_state(struct server_t *server){
 		memcpy(&size,&(msg->content.result),_INT);
 
 		if(size < 0){
-			fprintf(stderr, "update_state - invalido size");
+			fprintf(stderr, "update_state - invalido size\n");
 			free_message(msg);
 			return -1;
 		}
@@ -134,7 +134,7 @@ int update_state(struct server_t *server){
 			msg = server_backup_receive_send(server);
 
 			if(msg -> opcode != OC_PUT){
-				fprintf(stderr, "update_state - not a put");
+				fprintf(stderr, "update_state - not a put\n");
 				free_message(msg);
 				return -1;
 			}
@@ -164,7 +164,10 @@ int sync_backup(struct server_t *server){
 		msg_pedido -> table_num = i;
 		msg_pedido -> content.result = size;
 
+		print_message(msg_pedido);
 		msg_resposta = server_backup_send_receive(server, msg_pedido);
+		print_message(msg_resposta);
+		
 		if((msg_resposta -> opcode) == OC_RT_ERROR){ 
 			fprintf(stderr, "sync_backup - msg_resposta error");
 			return -1;
