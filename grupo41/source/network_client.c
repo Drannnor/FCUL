@@ -121,7 +121,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		/* Verificar se o envio teve sucesso */
 		while(first_try >= 0){
 			if((result = write_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-				if(result == 0 && first_try > 0){
+				if(first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				}
@@ -145,7 +145,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		/* Verificar se o envio teve sucesso */
 		while(first_try >= 0){
 			if((result = write_all(server->socket_fd, message_out, message_size)) <= 0){
-				if(result == 0 && first_try > 0){
+				if(first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				}
@@ -170,7 +170,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		first_try = 1;
 		while(first_try >= 0){
 			if((result = read_all(server->socket_fd, (char *) &msg_size, _INT)) <= 0){
-				if(result == 0 && first_try > 0){
+				if(first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				} else {
@@ -203,7 +203,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		first_try = 1;
 		while(first_try >= 0){
 			if((result = read_all(server->socket_fd, message_in, ntohl(msg_size))) <= 0){
-				if(result == 0 && first_try > 0){
+				if(first_try > 0){
 					sleep(RETRY_TIME);
 					first_try--;
 				} else {
@@ -249,22 +249,31 @@ int network_close(struct server_t *server){
 	/* Terminar ligação ao servidor */
 	close(server->socket_fd);
 
+	free(server -> address_port_pri);
+	free(server -> address_port_sec);
+
 	/* Libertar memória */
 	free(server);
 	return 0;
 }
 
 int server_switcharoo(struct server_t *server){
-	struct server_t *new_server;
-	if((new_server = network_connect(server->address_port_sec)) == NULL){
-		return -1;
-	}
-	new_server -> address_port_pri = server -> address_port_sec;
-	new_server -> address_port_sec = server -> address_port_pri;
+    struct server_t *new_server;
+    if((new_server = network_connect(server->address_port_sec)) == NULL){
+        return -1;
+    }
+    server -> address_port_pri = server -> address_port_sec;
+    server -> address_port_sec = server -> address_port_pri;
 
-	network_close(server);
-	server = new_server;
+    // SOCKET SWITCHAROO
+    int t = new_server->socket_fd;
+    new_server->socket_fd = server->socket_fd;
+    server->socket_fd = t;
+    // END SOCKET SWITCHAROO
 
-	return 0;
+    new_server -> address_port_pri = NULL;
+    new_server -> address_port_sec = NULL;
+    network_close(new_server);
+
+    return 0;
 }
-

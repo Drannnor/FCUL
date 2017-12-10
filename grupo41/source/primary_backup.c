@@ -556,8 +556,7 @@ int get_address_port(struct server_t *server,struct sockaddr *socket_address){
 
 	addr = (struct sockaddr_in*) &socket_address;
 	ip = inet_ntoa(addr ->sin_addr);
-	sprintf(server -> address_port, "%s:%s", ip,port);//FIXME: verificar
-
+	sprintf(server -> address_port, "%s:%s", ip,port);
 	free(port);
 	free_message(msg_pedido);
 	return 0;
@@ -656,7 +655,7 @@ int server_close(struct server_t *server){
 		free(server->address_port);
 	}
 
-	close(server->socket_fd);//FIXME: not sure se posso fazer free de fd nao existent
+	close(server->socket_fd);
 	free(server);
 	return 0;
 }

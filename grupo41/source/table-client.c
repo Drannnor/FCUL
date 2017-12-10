@@ -105,7 +105,7 @@ int main(int argc, char **argv){
 		}
 		
 		rtables -> server -> address_port_pri = primary;
-		rtables -> server -> address_port_sec = secondary;
+		rtables -> server -> address_port_sec = secondary;//FIXME: nao eh aqui
 
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
