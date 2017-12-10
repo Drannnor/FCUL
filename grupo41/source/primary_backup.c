@@ -92,9 +92,12 @@ int hello(struct server_t *server){
 	msg_resposta = server_backup_send_receive(server, msg_pedido);
 	if((msg_resposta -> opcode) == OC_RT_ERROR){ 
 			fprintf(stderr, "sync_backup - msg_resposta error");
+			free(msg_resposta);
+			free(msg_pedido);
 			return -1;
 	}
-
+	free(msg_resposta);
+	free(msg_pedido);
 	return update_state(server);
 }
 
