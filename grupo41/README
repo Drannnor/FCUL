@@ -42,3 +42,36 @@ linhas de comentario para indicar o nosso grupo, nomes e numeros,
   2. quit que fecha o servidor de forma segura.
 
   - Nao eh verificado se os parametros do input do cliente sao do tipo esperado
+
+4:
+  - Acrescentámos no table_skel:
+      - o método table_skel_get_entries para obter as entradas de
+      uma determinada tabela;
+
+      - o método table_skel_size para obter o tamanho de uma 
+      determinda tabela.
+
+
+  - Acrescentámos no table-server: 
+      - o método write file que efetua a escrita do ip, port, 
+      número de tabelas e o tamanho de cada tabela para um ficheiro;
+
+      - o método read file que efetua a leitura do ip, port, 
+      número de tabelas e o tamanho de cada tabela que se encontra no ficheiro dado;
+
+      - o método is write para verificar se a mensagem se trata
+      de um put ou de um update.
+
+
+  - Acrescentámos no table:
+      - o método table_get_entries que devolve uma lista com todas as 
+      entries de uma tabela que têm uma key diferente de NULL.
+
+
+  - Acrescentámos no table-client:
+      - o método isNumber que verifica se uma dada string é um
+      número ou não;
+      
+      - o método ol-switcheroo que troca os nomes dados aos
+      servidores
+
