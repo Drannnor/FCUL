@@ -9,9 +9,7 @@
  * retorna NULL em caso de erro .
  */
 struct rtables_t *rtables_bind(const char *address_port){
-    int res;
-    int first_try = 1;
-    int tb;
+    
     if(address_port == NULL){
         return NULL;
     }
@@ -22,7 +20,6 @@ struct rtables_t *rtables_bind(const char *address_port){
         return NULL;
     }
 
-
      if((rtables->server = network_connect(address_port)) == NULL){
         free(rtables);
         return NULL;
@@ -30,23 +27,10 @@ struct rtables_t *rtables_bind(const char *address_port){
     
     rtables->table_index = 0;
 
-    
-	while(first_try >= 0){
-		if((res = read_all(rtables->server->socket_fd, (char *) &tb, _SHORT)) <= 0){
-			if(res == 0 || first_try > 0){
-				sleep(RETRY_TIME);
-				first_try--;
-			}
-			else{
-				fprintf(stderr, "Read failed - size read_all\n");
-                rtables_unbind(rtables);
-				return NULL;
-			}	
-		} else { 
-			break;
-		}
-	}
-    rtables->numberOfTables = ntohs(tb);
+    if((rtables->numberOfTables = rtables_tablenum(rtables)) < 0){
+        free(rtables);
+        return NULL;
+    }
 
     return rtables;
 }
@@ -307,4 +291,33 @@ void rtables_free_keys(char **keys){
         free(*keys++);
     }
     free(ptr);
+}
+
+int rtables_tablenum(struct rtables_t *rtables){
+    struct message_t *msg_res;
+
+    if(rtables == NULL){
+        fprintf(stderr, "NULL params");
+        return CLIENT_ERROR;
+    }
+
+    struct message_t *msg_out;
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+        fprintf(stderr, "Failed to malloc!\n");
+        return CLIENT_ERROR;
+    }
+
+    msg_out->opcode = OC_TABLE_NUM;
+    msg_out->c_type = CT_RESULT;
+	msg_out->table_num = 0;
+    msg_out->content.result = 0;
+
+    print_message(msg_out);
+    msg_res = network_send_receive(rtables->server, msg_out);
+    print_message(msg_res); 
+    
+    int res = msg_res->content.result;
+    free_message(msg_res);
+    free_message(msg_out);
+    return res;
 }

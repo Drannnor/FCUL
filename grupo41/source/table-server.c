@@ -183,20 +183,28 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	if(primary && msg_pedido->opcode == OC_HELLO){
-		if(sync_backup(other_server)){
-			other_server->socket_fd = socket_fd;
-			other_server->up = 1;
+	if(primary){
+		switch (msg_pedido->opcode){
+			case OC_HELLO:
+				if(sync_backup(other_server)){
+					other_server->socket_fd = socket_fd;
+					other_server->up = 1;
+				}
+				break;
+			case OC_TABLE_NUM:
+				msg_resposta = table_skel_get_tablenum(msg_pedido);
+				break;
+			default:
+				if((msg_resposta = invoke(msg_pedido)) == NULL){
+					fprintf(stderr, "Failed invoke\n");
+					free(buff_pedido);
+					free(msg_pedido);
+					return -2;
+				}
 		}
 		return 2;
 	} 
 
-	if((msg_resposta = invoke(msg_pedido)) == NULL){
-		fprintf(stderr, "Failed invoke\n");
-		free(buff_pedido);
-		free(msg_pedido);
-		return -2;
-	}
 	print_message(msg_resposta);
 
 	update_backup = primary && is_write(msg_pedido) && other_server -> up;
@@ -345,7 +353,7 @@ int main(int argc, char **argv){
 	int socket_de_escuta, i, j, nfds, res;
 	char *port;
 	char **n_tables;
-	//FIXME: arrumar esta merda
+	//FIXME: arrumar isto
 
 	struct pollfd connections[NFDESC];
 	struct sockaddr *o_server;
@@ -374,10 +382,9 @@ int main(int argc, char **argv){
 		nome_ficheiro = BACKUP_FILE;
 	}
 
-
 	if ((other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
-			fprintf(stderr, "Failed malloc other_server\n");
-			return -1;
+		fprintf(stderr, "Failed malloc other_server\n");
+		return -1;
 	}
 	
 	if((port = strdup(argv[1])) == NULL){
@@ -574,7 +581,7 @@ int main(int argc, char **argv){
 					}
 
           			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
+					/*if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
 						if (res == 0){
 							close(connections[i].fd);
 							connections[i].fd = connections[nfds-1].fd;
@@ -587,9 +594,9 @@ int main(int argc, char **argv){
 							quit = 1;
 						}
 
-					} // Vamos esperar dados nesta socket
+					} // Vamos esperar dados nesta socket FIXME:*/
 					nfds++;
-					fprintf(stdin,"new connection");
+					fprintf(stdin,"New connection\n");
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */

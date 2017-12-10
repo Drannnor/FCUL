@@ -137,7 +137,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			}
 		}
 
-		if(result == 0){continue;}
+		if(result <= 0){continue;}
 		
 
 		/* Enviar a mensagem que foi previamente serializada */
@@ -161,7 +161,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			}
 		}
 
-		if(result == 0){continue;}		
+		if(result <= 0){continue;}		
 
 		/* De seguida vamos receber a resposta do servidor:
 
@@ -186,7 +186,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		}
 
 
-		if(result == 0){continue;}
+		if(result <= 0){continue;}
 
 		/* Alocar memória para receber o número de bytes da
 		mensagem de resposta. */
@@ -219,7 +219,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 			}
 		}
 
-		if(result == 0){continue;}
+		if(result <= 0){continue;}
 
 		/* Desserializar a mensagem de resposta */
 		msg_resposta = buffer_to_message(message_in, ntohl(msg_size));
@@ -236,7 +236,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 		free(message_in);
 		free(message_out);
 		return msg_resposta;
-	}while (error == CONNECTION_ERROR && n_tentativas < 4);
+	} while (error == CONNECTION_ERROR && n_tentativas < 4);
 	return message_error(CONNECTION_ERROR); //Se correu tudo mal
 }
 

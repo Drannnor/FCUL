@@ -17,7 +17,7 @@ int table_skel_init(char **n_tables){
 		return -1;
 	}
 	
-	tablenum = atoi(n_tables[0]);/*  */
+	tablenum = atoi(n_tables[0]);
 
     if((tables = (struct table_t**)malloc(sizeof(struct table_t*)*(tablenum))) == NULL){
 		fprintf(stderr, "Failed malloc tables\n");
@@ -73,17 +73,27 @@ void table_skel_print(int n){
 	}
 }
 
-int table_skel_send_tablenum (int socketfd){
-	short tb = htons(tablenum);
-	int res; 
-    if((res = (write_all(socketfd, (char *) &tb, _SHORT))) < 0){
-		fprintf(stderr, "Write failed - size write_all\n");
-		return -1;
+struct message_t* table_skel_get_tablenum(struct message_t *msg_in){
+	struct message_t *msg_out;
+
+	if(msg_in -> opcode != OC_TABLE_NUM){
+		return message_error(CLIENT_ERROR);
 	}
-	return res;
+	
+    if((msg_out = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+		fprintf(stderr, "table_skel_get_tablenum - Failed malloc\n");
+		return NULL;
+	}
+
+	msg_out->opcode =  msg_in->opcode + 1;
+    msg_out->c_type = CT_RESULT;
+    msg_out->table_num = 0;
+	msg_out->content.result = tablenum;
+
+	return msg_out;
 }
 
-struct entry_t **table_skel_get_entries(int numero_da_tabela){//TODO: get all entries from this table
+struct entry_t **table_skel_get_entries(int numero_da_tabela){
 
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");

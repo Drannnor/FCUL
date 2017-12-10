@@ -651,8 +651,7 @@ int server_close(struct server_t *server){
 		free(server->address_port);
 	}
 
-
-	close(server ->socket_fd);//FIXME: not sure se posso fazer free de fd nao existent
+	close(server->socket_fd);//FIXME: not sure se posso fazer free de fd nao existent
 	free(server);
 	return 0;
 }
