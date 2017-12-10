@@ -27,7 +27,7 @@ Ricardo Cruz 47871
 
 static int quit = 0;
 static char* nome_ficheiro;
-int primary, secondary_up, first_time;
+int primary, first_time;
 
 static struct server_t *other_server;
 
@@ -107,7 +107,7 @@ int make_server_socket(short port){
 
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);  
-	server.sin_addr.s_addr = htonl(INADDR_ANY);
+	server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 	if(bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
 		fprintf(stderr, "Erro ao fazer bind.\n");
@@ -150,7 +150,7 @@ int network_receive_send(int socket_fd){
 	/* Verificar se a receção teve sucesso */
 	if((result = read_all(socket_fd, (char *) &msg_size, _INT)) <= 0){
 		if(result < 0) fprintf(stderr, "Read failed - size read_all\n");
-		fprintf(stderr, "ERRO\n");//FIXME:
+		fprintf(stderr, "Connection failed\n");
 		return -1;
 	}
 
@@ -166,6 +166,7 @@ int network_receive_send(int socket_fd){
 	/* Verificar se a receção teve sucesso */
 	if((result = read_all(socket_fd, buff_pedido, ntohl(msg_size))) < 0){
 		if(result < 0) fprintf(stderr, "Read failed - message read_all\n");
+		fprintf(stderr, "Connection failed\n");
 		free(buff_pedido);
 		return -1;
 	}
@@ -182,8 +183,10 @@ int network_receive_send(int socket_fd){
 	print_message(msg_pedido);
 
 	if(primary && msg_pedido->opcode == OC_HELLO){
-		sync_backup(other_server);//FIXME: verificar
-		other_server->socket_fd = socket_fd;
+		if(sync_backup(other_server)){
+			other_server->socket_fd = socket_fd;
+			other_server->up = 1;
+		}
 	}
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
@@ -194,11 +197,11 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
-	update_backup = primary && is_write(msg_pedido) && secondary_up;
+	update_backup = primary && is_write(msg_pedido) && other_server -> up;
 
 	if(update_backup){
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){
-			secondary_up = 0;
+			other_server -> up = 0;
 		}
 	}
 
@@ -250,7 +253,7 @@ int network_receive_send(int socket_fd){
 	if(update_backup){
 		if((update_successful(thread)) < 0){
 			fprintf(stderr, "Fail to send message to backup");
-			secondary_up = 0;
+			other_server -> up = 0;
 		} else {
 			fprintf(stdin, "Backup updated successefully");
 		}
@@ -338,27 +341,21 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *address_port, *port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
+	char *port;
 	char **n_tables;
 	//FIXME: arrumar esta merda
 
 	struct pollfd connections[NFDESC];
 	struct sockaddr *o_server;
-	if((o_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*))) == NULL){
-		fprintf(stderr, "Failed malloc - o_server\n");
-		return -1;
-	}
+
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
 	sigemptyset(&a.sa_mask);
 	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
-	socklen_t o_size = sizeof(o_server);
-
 	
 	if (argc >= 3){//servidor primario
 		primary = 1;
-		secondary_up = 0;
 	} else if (argc == 2){//servidor secundario
 		primary = 0;
 	} else {//input invalido
@@ -367,7 +364,6 @@ int main(int argc, char **argv){
 		printf("-----------------------------------------------------\n");
 		printf("Uso para servidor secundario: ./server <porta TCP>\n");
 		printf("Exemplo de uso: ./server 54322\n");
-		free(o_server);
 		return -1;
 	}
 	if(primary){
@@ -376,24 +372,40 @@ int main(int argc, char **argv){
 		nome_ficheiro = BACKUP_FILE;
 	}
 
+
+	if ((other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
+			fprintf(stderr, "Failed malloc other_server\n");
+			return -1;
+	}
+	
 	if((port = strdup(argv[1])) == NULL){
 		fprintf(stderr, "strdup failed - port\n");
-		free(o_server);
+		server_close(other_server);
 		return -1;
 	}
+
+	if((o_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*))) == NULL){
+		fprintf(stderr, "Failed malloc - o_server\n");
+		server_close(other_server);
+		free(port);
+		return -1;
+	}
+	socklen_t o_size = sizeof(o_server);
 
 	if((socket_de_escuta = make_server_socket((unsigned short)atoi(port))) < 0){
 		fprintf(stderr, "Error creating server socket");
-		free(port); //FIXME: ver se eh mesmo isto, em todos os que estao pra baixo inclusice
 		free(o_server);
+		free(port);
+		server_close(other_server);
 		return -1;
 	}
 
-	if((res = read_file(nome_ficheiro,&address_port,&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
+	if((res = read_file(nome_ficheiro,&(other_server -> address_port),&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
 			fprintf(stderr, "Unable to read file");
-			free(port);
+			server_close(other_server);
 			free(o_server);
+			free(port);
 			return -1;
 		}
 		first_time = 0;
@@ -402,8 +414,10 @@ int main(int argc, char **argv){
 		first_time = 1;
 		if(primary){//Servidor Primario, primeira vez
 			int table_num = argc - 3;
+			other_server -> up = 0;
 			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
 				fprintf(stderr, "Failed malloc tables1\n");
+				server_close(other_server);
 				free(port);
 				free(o_server);
 				return -1;
@@ -412,8 +426,9 @@ int main(int argc, char **argv){
 			if((n_tables[0] = (char *)malloc(_INT)) == NULL){
 				fprintf(stderr, "Failed malloc tables2\n");
 				free(n_tables);
-				free(port);
+				server_close(other_server);
 				free(o_server);
+				free(port);
 				return -1;
 			}
 
@@ -426,8 +441,9 @@ int main(int argc, char **argv){
 					}
 					free(n_tables);
 					fprintf(stderr, "Failed malloc tables3\n");
-					free(port);
+					server_close(other_server);
 					free(o_server);
+					free(port);
 					return -1;
 				}
 				memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
@@ -435,12 +451,14 @@ int main(int argc, char **argv){
 			n_tables[table_num + 1] = NULL;
 
 
-			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
-			if((other_server = server_bind(address_port))){
+			other_server -> address_port = strdup(argv[2]);
+
+
+			if((server_bind(other_server) == 0)){
 				other_server -> ntabelas = atoi(n_tables[0]);
-				if(send_port(other_server,port) == 0){
+				if(send_port(other_server, port) == 0){
 					if((send_table_info(other_server,n_tables)) == 0){
-						secondary_up = 1;
+						other_server -> up = 1;
 					}
 				}
 			}
@@ -449,20 +467,19 @@ int main(int argc, char **argv){
 			printf("Sou o secundario!\n");
 			if ((other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
 				fprintf(stderr, "Failed malloc other_server\n");
-				secondary_up = 0;
+				other_server -> up = 0;
 			} else {
 				printf("Awaiting connection...\n");
-				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){//FIXME: esta certo? -Bruno
-					if((address_port = get_address_port(other_server, o_server)) == NULL){
+				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){
+					if((get_address_port(other_server, o_server)) < 0){
 						printf("Closing backup...\n");
-						free(other_server);
-						free(port);
+						server_close(other_server);
 						free(o_server);
 						return -1;
 					} else {
 						printf("Getting tables ...\n");
 						if((n_tables = get_table_info(other_server)) != NULL){
-							secondary_up = 1;
+							other_server -> up = 1;
 							other_server -> ntabelas = atoi(n_tables[0]);
 						}
 					} 
@@ -473,26 +490,26 @@ int main(int argc, char **argv){
 
 	if(first_time){
 		fprintf(stderr, "Writing file...\n");
-		if((write_file(nome_ficheiro, address_port, n_tables)) < 0){
+		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
 			fprintf(stderr, "Failed to write configuration file");
-			free(other_server);
-			free(address_port);
-			free(port);
+			server_close(other_server);
 			free(o_server);
 			return -1;
 		}
 		fprintf(stderr, "Done!\n");
 	} else {//sync
-		other_server = server_bind(address_port);
-		other_server -> ntabelas = atoi(n_tables[0]);
-		hello(other_server);
+		if(server_bind(other_server) == 0){//FIXME: verificar
+			other_server -> ntabelas = atoi(n_tables[0]);
+			if(hello(other_server) < 0){
+				//TODO: frees
+				return -1;
+			}
+		}
 	}
 
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
-		free(other_server);
-		free(address_port);
-		free(port);
+		server_close(other_server);
 		free(o_server);
 		return -1;
 	}
@@ -539,7 +556,7 @@ int main(int argc, char **argv){
             	}
         		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ 
 					if(!primary){
-						secondary_up == 0;
+						other_server -> up = 0;
 						primary = 1;
 					}
 
@@ -592,8 +609,7 @@ int main(int argc, char **argv){
 	for (i = 0; i < nfds; i++) {
 		close(connections[i].fd);
 	}
-	free(other_server);
-	free(address_port);
+	server_close(other_server);
 	free(port);
 	free(o_server);
 	return table_skel_destroy();

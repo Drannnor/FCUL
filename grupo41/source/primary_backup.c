@@ -21,25 +21,18 @@ struct thread_params{
 	struct message_t *msg;
 };
 
-struct server_t *server_bind(const char *address_port){
+int server_bind(struct server_t *server){
     int socket_fd;
 	struct sockaddr_in *p_server;
 	char *delim = ":";
-	struct server_t *server;
     
-    if(address_port == NULL){
-        return NULL;
+    if(server -> address_port == NULL){
+        return -1;
     }
-
-    if (( server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
-		fprintf(stderr, "Failed malloc\n");
-		return NULL;
-	}
 
 	if (( p_server = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in))) == NULL){
 		fprintf(stderr, "Failed malloc\n");
-		free(server);
-		return NULL;
+		return -1;
 	}
 
 	/* Estabelecer ligação ao server:
@@ -47,13 +40,12 @@ struct server_t *server_bind(const char *address_port){
 	Preencher estrutura struct sockaddr_in com dados do
 	endereço do server. */
 	p_server->sin_family = AF_INET; 
-	char *adr_p = strdup(address_port);
+	char *adr_p = strdup(server -> address_port);
 	if (inet_pton(AF_INET, strtok(adr_p,delim), &p_server->sin_addr) < 1) { // Endereço IP
 		printf("Erro ao converter IP\n");
 		free(p_server);
-		free(server);
 		free(adr_p);
-		return NULL;
+		return -1;
 	}
 
 	p_server->sin_port = htons(atoi(strtok(NULL,delim)));
@@ -64,9 +56,8 @@ struct server_t *server_bind(const char *address_port){
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Unable to create socket\n");
 		free(p_server);
-		free(server);
 		free(adr_p);
-		return NULL;
+		return -1;
 	}
 
 	//Estabelecer ligação.
@@ -74,19 +65,18 @@ struct server_t *server_bind(const char *address_port){
 		fprintf(stderr, "Unable to connect to server\n");
 		close(socket_fd);
 		free(p_server);
-		free(server);
 		free(adr_p);
-		return NULL;
+		return -1;
 	}
 
 	/* Se a ligação não foi estabelecida, retornar NULL */
 	free(p_server); 
 	free(adr_p);	
-	server->socket_fd = socket_fd;
-	return server;
+	server -> socket_fd = socket_fd;
+	return 0;
 }
 
-int hello(struct server_t *server){//FIXME: server_bind?
+int hello(struct server_t *server){
 	struct message_t *msg_pedido, *msg_resposta;
 
 	if((msg_pedido = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
@@ -495,7 +485,7 @@ int send_port(struct server_t *server, char *port){
 	//initializar a msg a enviar
 	struct message_t *msg_out, *msg_in;
 
-	if(server == NULL || port == NULL){
+	if(server == NULL){
 		fprintf(stderr,"send_table_info - bad params");
 		return -1;
 	}
@@ -523,15 +513,15 @@ int send_port(struct server_t *server, char *port){
     return res;
 }
 
-char *get_address_port(struct server_t *server,struct sockaddr *socket_address){
-	char *port, *ip , *address_port;
+int get_address_port(struct server_t *server,struct sockaddr *socket_address){
+	char *port, *ip;
 	struct sockaddr_in *addr;
 
 	struct message_t *msg_pedido;
 	
-	if((address_port = (char *) malloc(MAX_SIZE)) == NULL){
+	if((server -> address_port = (char *) malloc(MAX_SIZE)) == NULL){
 		fprintf(stderr, "Failed malloc address_port \n");
-		return NULL;
+		return -1;
 	}
 
 	msg_pedido = server_backup_receive_send(server);
@@ -541,22 +531,22 @@ char *get_address_port(struct server_t *server,struct sockaddr *socket_address){
 	if(opc != OC_ADDRESS_PORT){
 		fprintf(stderr, "get_addres_port - wrong opcode");
 		free_message(msg_pedido);
-		return NULL;
+		return -1;
 	}
 
 	if((port = strdup(msg_pedido->content.key)) == NULL){
 		fprintf(stderr, "get_address_port - strdup failed");
 		free_message(msg_pedido);
-		return NULL;
+		return -1;
 	}
 
 	addr = (struct sockaddr_in*) &socket_address;
 	ip = inet_ntoa(addr ->sin_addr);
-	sprintf(address_port, "%s:%s", ip,port);//FIXME: verificar
+	sprintf(server -> address_port, "%s:%s", ip,port);//FIXME: verificar
 
 	free(port);
 	free_message(msg_pedido);
-	return address_port;
+	return 0;
 }
 
 //envia a informacao das tabelas para o servidor secundario
@@ -641,4 +631,19 @@ int update_successful(pthread_t *thread){
 	free(r);
 	
 	return res;
+}
+
+int server_close(struct server_t *server){
+	if(server == NULL){
+		return 0;
+	}
+
+	if(server ->address_port != NULL){
+		free(server->address_port);
+	}
+
+
+	close(server ->socket_fd);//FIXME: not sure se posso fazer free de fd nao existent
+	free(server);
+	return 0;
 }

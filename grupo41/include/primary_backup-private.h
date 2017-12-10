@@ -8,17 +8,18 @@ struct server_t{
     int up;
     int socket_fd;
     int ntabelas;
+    char *address_port;
 };
 
 pthread_t *backup_update(struct message_t *msg, struct server_t *server);
 
 void *backup_update_thread(void *params);
 
-struct server_t *server_bind(const char *address_port);
+int server_bind(struct server_t *server);
 
-int send_port(struct server_t *server, char *addr_port);
+int send_port(struct server_t *server, char *port);
 
-char *get_address_port(struct server_t *server, struct sockaddr *socket_address);
+int get_address_port(struct server_t *server, struct sockaddr *socket_address);
 
 int send_table_info(struct server_t *server, char **n_tables);
 
@@ -33,5 +34,7 @@ struct message_t *server_backup_receive_send(struct server_t *server);
 int sync_backup(struct server_t *server);
 
 int server_backup_put(struct server_t *server, struct entry_t *entry, int tablenum);
+
+int server_close(struct server_t* server);
 #endif
 
