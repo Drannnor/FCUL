@@ -72,6 +72,7 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 	}
 
 	sprintf(*n_tables[0], "%d", table_num);
+
 	for(i = 1;i < table_num;i++){
 		fgets(in,N_TABLES_MSIZE,fp);
 		if((*n_tables[i] = (char*)malloc(strlen(in))) == NULL){// estava n em vez do i logo estava mal
@@ -87,7 +88,7 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 
 	n_tables[table_num + 1] = NULL;
 
-	return 0;
+	return 1;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
@@ -107,7 +108,7 @@ int make_server_socket(short port){
 
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);  
-	server.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if(bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
 		fprintf(stderr, "Erro ao fazer bind.\n");
@@ -313,7 +314,7 @@ int tratar_input(){
 	return 0;
 }
 
-int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
+int write_file(char *filename,char *adrport,char **n_tables){
 	FILE *fp;
 	int i;
 	int n = atoi(n_tables[0]);
@@ -390,7 +391,7 @@ int main(int argc, char **argv){
 		free(port);
 		return -1;
 	}
-	socklen_t o_size = sizeof(o_server);
+	socklen_t o_size = sizeof(*o_server);
 
 	if((socket_de_escuta = make_server_socket((unsigned short)atoi(port))) < 0){
 		fprintf(stderr, "Error creating server socket");
@@ -409,6 +410,7 @@ int main(int argc, char **argv){
 			return -1;
 		}
 		first_time = 0;
+		printf("Im back!\n");
 
 	} else {//primeira execucao
 		first_time = 1;
@@ -471,6 +473,7 @@ int main(int argc, char **argv){
 			} else {
 				printf("Awaiting connection...\n");
 				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){
+
 					if((get_address_port(other_server, o_server)) < 0){
 						printf("Closing backup...\n");
 						server_close(other_server);
@@ -498,8 +501,10 @@ int main(int argc, char **argv){
 		}
 		fprintf(stderr, "Done!\n");
 	} else {//sync
-		if(server_bind(other_server) == 0){//FIXME: verificar
+		printf("Reconnecting...\n");
+		if(server_bind(other_server) == 0){
 			other_server -> ntabelas = atoi(n_tables[0]);
+			printf("Connected, Saying Hello...\n");
 			if(hello(other_server) < 0){
 				fprintf(stderr, "Failed to hello\n");
 				server_close(other_server);
@@ -532,7 +537,7 @@ int main(int argc, char **argv){
   	connections[1].events = POLLIN;
 	
 	if(other_server != NULL){
-		connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
+		connections[2].fd = other_server -> socket_fd;
 		connections[2].events = POLLIN;
 	}
 	
@@ -578,6 +583,7 @@ int main(int argc, char **argv){
 
 					} // Vamos esperar dados nesta socket
 					nfds++;
+					fprintf(stdin,"new connection");
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */
