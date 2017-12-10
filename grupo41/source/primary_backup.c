@@ -492,11 +492,11 @@ void *backup_update_thread(void *params){
     return res;
 }
 
-int send_port(struct server_t *server, char *addr_port){
+int send_port(struct server_t *server, char *port){
 	//initializar a msg a enviar
 	struct message_t *msg_out, *msg_in;
 
-	if(server == NULL || addr_port == NULL){
+	if(server == NULL || port == NULL){
 		fprintf(stderr,"send_table_info - bad params");
 		return -1;
 	}
@@ -509,7 +509,7 @@ int send_port(struct server_t *server, char *addr_port){
 	msg_out->opcode = OC_ADDRESS_PORT;
     msg_out->c_type = CT_KEY;
 	msg_out->table_num = 0;
-    msg_out->content.key = strdup(addr_port);
+    msg_out->content.key = strdup(port);
 
 	print_message(msg_out);
 
@@ -524,7 +524,6 @@ int send_port(struct server_t *server, char *addr_port){
     return res;
 }
 
-//devolve uma string da forma <ip>:<port> pronto para escrever FIXME: pelo Cruz
 char *get_address_port(struct server_t *server,struct sockaddr *socket_address){
 	char *port, *ip , *address_port;
 	struct sockaddr_in *addr;
@@ -563,6 +562,7 @@ char *get_address_port(struct server_t *server,struct sockaddr *socket_address){
 
 //envia a informacao das tabelas para o servidor secundario
 int send_table_info(struct server_t *server, char **n_tables){
+	
 	//initializar a msg a enviar
 	struct message_t *msg_out, *msg_in;
 
