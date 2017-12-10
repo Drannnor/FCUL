@@ -73,6 +73,7 @@ int server_bind(struct server_t *server){
 	free(p_server); 
 	free(adr_p);	
 	server -> socket_fd = socket_fd;
+
 	return 0;
 }
 
@@ -89,14 +90,18 @@ int hello(struct server_t *server){
 	msg_pedido -> table_num = 0;
 	msg_pedido -> content.result = 0;
 
+	print_message(msg_pedido);
+
 	msg_resposta = server_backup_send_receive(server, msg_pedido);
+
+	print_message(msg_resposta);
 	if((msg_resposta -> opcode) == OC_RT_ERROR){ 
 			fprintf(stderr, "sync_backup - msg_resposta error");
 			free(msg_resposta);
 			free(msg_pedido);
 			return -1;
 	}
-	
+
 	free(msg_resposta);
 	free(msg_pedido);
 	return update_state(server);

@@ -1,7 +1,6 @@
 #ifndef _PRIMARY_BACKUP_PRIVATE_H
 #define _PRIMARY_BACKUP_PRIVATE_H
 
-//#include "primary_backup.h"
 #include "message-private.h" //FIXME:
 
 struct server_t{

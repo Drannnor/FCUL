@@ -188,7 +188,8 @@ int network_receive_send(int socket_fd){
 			other_server->socket_fd = socket_fd;
 			other_server->up = 1;
 		}
-	}
+		return 2;
+	} 
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
@@ -415,6 +416,7 @@ int main(int argc, char **argv){
 	} else {//primeira execucao
 		first_time = 1;
 		if(primary){//Servidor Primario, primeira vez
+			printf("Sou o primario\n");
 			int table_num = argc - 3;
 			other_server -> up = 0;
 			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
@@ -455,12 +457,16 @@ int main(int argc, char **argv){
 
 			other_server -> address_port = strdup(argv[2]);
 
-
+			printf("Connecting to backup\n");
 			if((server_bind(other_server) == 0)){
+				printf("Backup online!\n");
 				other_server -> ntabelas = atoi(n_tables[0]);
+				printf("Sending port info\n");
 				if(send_port(other_server, port) == 0){
+					printf("Sending table info\n");
 					if((send_table_info(other_server,n_tables)) == 0){
 						other_server -> up = 1;
+						printf("Backup is up and running!\n");
 					}
 				}
 			}
@@ -593,9 +599,23 @@ int main(int argc, char **argv){
 					tratar_input();
 				} else {
 					res = network_receive_send(connections[i].fd);
+					if(res == 2){
+						connections[2].fd = connections[i].fd;
+						connections[2].revents = connections[i].revents;
+						connections[2].events = connections[i].events;
+						connections[i].fd = -1;
+						connections[i].revents = 0;
+						connections[i].events = 0;
+
+					}
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		
 							close(connections[i].fd);
+							if(i == 2){
+								connections[i].fd = -1;
+								connections[i].revents = 0;
+								connections[i].events = 0;
+							}
 							connections[i].fd = connections[nfds-1].fd;
 							connections[i].revents = connections[nfds-1].revents;
 							connections[i].events = connections[nfds-1].events;
