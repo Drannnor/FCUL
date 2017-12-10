@@ -16,17 +16,19 @@ void *backup_update_thread(void *params);
 
 struct server_t *server_bind(const char *address_port);
 
-char *get_address_port(struct server_t *server, struct sockaddr *p_server);
+int send_port(struct server_t *server, char *addr_port);
+
+char *get_address_port(struct server_t *server, struct sockaddr *socket_address);
 
 int send_table_info(struct server_t *server, char **n_tables);
 
-char **get_table_info(int socket_fd);
+char **get_table_info(struct server_t *server);
 
 int update_successful(pthread_t *thread);
 
 struct message_t *server_backup_send_receive(struct server_t *server, struct message_t *msg);
 
-int server_backup_receive_send(struct server_t *server);
+struct message_t *server_backup_receive_send(struct server_t *server);
 
 int sync_backup(struct server_t *server);
 

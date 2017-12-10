@@ -195,7 +195,7 @@ void print_table(struct table_t *table){
     printf("-------------------\n");
 }
 
-struct entry_t **table_get_entries(struct table_t *table){//TODO: get all entries from this table
+struct entry_t **table_get_entries(struct table_t *table){//FIXME: get all entries from this table
     struct entry_t **entries;
     struct entry_t *hashtable;
     int size = table->size_table;

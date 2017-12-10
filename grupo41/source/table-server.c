@@ -13,6 +13,7 @@ Ricardo Cruz 47871
 #include <stdio.h>
 #include <pthread.h>
 #include "primary_backup-private.h"
+#include "primary_backup.h"
 #include "table_skel-private.h"
 #include "message-private.h"
 
@@ -180,7 +181,10 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	// se estivermos no servidor secundario assegurar exclusao mutua FIXME:
+	if(msg_pedido->opcode == OC_HELLO){
+		other_server->socket_fd = socket_fd;
+		sync_backup(other_server);
+	}
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
 		fprintf(stderr, "Failed invoke\n");
@@ -240,6 +244,7 @@ int network_receive_send(int socket_fd){
 			fprintf(stderr, "Fail to send message to backup");
 			secondary_up = 0;
 		}
+		fprintf(stdin, "Backup updated successefully");
 	}
 
 	/* Libertar memória */
@@ -323,7 +328,7 @@ int write_file(char *filename,char *adrport,char **n_tables){//FIXME: CRUZZ!!
 int main(int argc, char **argv){
 	struct sigaction a;
 	int socket_de_escuta, i, j, nfds, res;
-	char *address_port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
+	char *address_port, *port;//FIXME: talvez seja necessario diferenciar os ficheiros dos 2 servidores,caso sejam criados na mesma maquina
 	char **n_tables;
 	//FIXME: arrumar esta merda
 
@@ -357,8 +362,8 @@ int main(int argc, char **argv){
 	}
 
 	
-
-	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
+	port = strdup(argv[1]);//FIXME:
+	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(port))) < 0){
 		fprintf(stderr, "Error creating server socket");
 		return -1;
 	}
@@ -400,12 +405,14 @@ int main(int argc, char **argv){
 			}
 			n_tables[table_num + 1] = NULL;
 
+
 			address_port = strdup(argv[2]);//FIXME: nao esquecer de fazer free
 			if((other_server = server_bind(address_port))){
-				secondary_up = 1;
 				other_server -> ntabelas = atoi(n_tables[0]);
-				if((send_table_info(other_server,n_tables)) < 0){
-					secondary_up = 0;
+				if(send_port(other_server,port) == 0){
+					if((send_table_info(other_server,n_tables)) == 0){
+						secondary_up = 1;
+					}
 				}
 			}
 
@@ -417,13 +424,16 @@ int main(int argc, char **argv){
 			} else {
 				printf("awating connection...\n");
 				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){//FIXME: esta certo? -Bruno
-					if((address_port = get_address_port(other_server, o_server)) != NULL){
+					if((address_port = get_address_port(other_server, o_server)) == NULL){
+						printf("closing backup\n");
+						return -1;
+					} else {
 						printf("getting tables ...\n");
-						if((n_tables = get_table_info(other_server->socket_fd)) != NULL){
+						if((n_tables = get_table_info(other_server)) != NULL){
 							secondary_up = 1;
 							other_server -> ntabelas = atoi(n_tables[0]);
 						}
-					}
+					} 
 				}
 			}
 		}
@@ -439,6 +449,7 @@ int main(int argc, char **argv){
 	} else {//sync
 		other_server = server_bind(address_port);
 		other_server -> ntabelas = atoi(n_tables[0]);
+		hello(other_server);
 	}
 
 	if((table_skel_init(n_tables) < 0)){
@@ -461,10 +472,10 @@ int main(int argc, char **argv){
     connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standard in
   	connections[1].events = POLLIN;
 	
-	connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
-	connections[2].events = POLLIN;
+	// connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
+	// connections[2].events = POLLIN;
 
-	nfds = 3;
+	nfds = 2;
 	
 	while(!quit){ /* espera por dados nos sockets abertos */
 
@@ -477,7 +488,7 @@ int main(int argc, char **argv){
             }
 		}
 
-        i = 3;
+        i = 2;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
             	while(connections[i].fd != -1){
@@ -485,7 +496,7 @@ int main(int argc, char **argv){
             	}
         		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ // Ligação feita ? TODO: guardar a o sockaddr do cliente, 
 																					  		 // se for a secundario verificar se o client se trata do servidor primario
-					 															  		 // caso negativo passa a ser o servidor primario
+					 															  		 	 // caso negativo passa a ser o servidor primario
           			connections[i].events = POLLIN;
 					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
 						if (res == 0){
