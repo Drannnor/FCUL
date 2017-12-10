@@ -408,19 +408,6 @@ int read_all(int sock, char *buf, int len){
 	return bufsize;
 }
 
-struct message_t* message_error(int errcode){
-    struct message_t *msg;
-    if((msg = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
-		fprintf(stderr, "Failed malloc message_pedido\n");
-		return NULL;
-	}
-	msg->opcode = OC_RT_ERROR;
-    msg->c_type = CT_RESULT;
-    msg->table_num = 0;
-	msg->content.result = errcode;
-	return msg;
-}
-
 void print_message(struct message_t *msg) {
     int i;
     
@@ -452,4 +439,35 @@ void print_message(struct message_t *msg) {
         }break;
     }
     printf("-------------------\n");
+}
+
+struct message_t* message_error(int errcode){
+    struct message_t *msg;
+    if((msg = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+		fprintf(stderr, "Failed malloc message_pedido\n");
+		return NULL;
+	}
+
+	msg->opcode = OC_RT_ERROR;
+    msg->c_type = CT_RESULT;
+    msg->table_num = 0;
+	msg->content.result = errcode;
+
+	return msg;
+}
+
+struct message_t *message_success(struct message_t *msg_pedido){
+
+    struct message_t *msg;
+    if((msg = (struct message_t*) malloc(sizeof(struct message_t))) == NULL){
+		fprintf(stderr, "Failed malloc message_pedido\n");
+		return NULL;
+	}
+
+	msg->opcode =  msg_pedido->opcode + 1;
+    msg->c_type = CT_RESULT;
+    msg->table_num = 0;
+	msg->content.result = 0;
+
+	return msg;
 }
