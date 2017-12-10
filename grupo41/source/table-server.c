@@ -472,10 +472,13 @@ int main(int argc, char **argv){
     connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standard in
   	connections[1].events = POLLIN;
 	
-	// connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
-	// connections[2].events = POLLIN;
+	if(other_server != NULL){
+		connections[2].fd = other_server -> socket_fd;//FIXME: vai abaixo se o secundario nao ligar
+		connections[2].events = POLLIN;
+	}
+	
 
-	nfds = 2;
+	nfds = 3;
 	
 	while(!quit){ /* espera por dados nos sockets abertos */
 
@@ -488,7 +491,7 @@ int main(int argc, char **argv){
             }
 		}
 
-        i = 2;
+        i = 3;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
             	while(connections[i].fd != -1){
