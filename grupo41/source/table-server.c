@@ -103,7 +103,7 @@ int make_server_socket(short port){
 	
 	int sim = 1;
 	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
-		fprintf(stderr,"SO_REUSEADDR setsockopt error");
+		fprintf(stderr,"SO_REUSEADDR setsockopt error\n");
 	}
 
 	server.sin_family = AF_INET;
@@ -310,7 +310,7 @@ int tratar_input(){
 		return -1;
 	}
 	if((tok = strdup(tok)) == NULL){
-		fprintf(stderr,"Erro ao alocar memória para o primeiro token");
+		fprintf(stderr,"Erro ao alocar memória para o primeiro token\n");
 		quit = 1;
 		return -1;
 	}
@@ -325,7 +325,7 @@ int tratar_input(){
 			return -1;
 		}
 		if((tok = strdup(tok)) == NULL){
-			fprintf(stderr,"Erro ao alocar memória para o token");
+			fprintf(stderr,"Erro ao alocar memória para o token\n");
 			quit = 1;
 			return -1;
 		}
@@ -416,7 +416,7 @@ int main(int argc, char **argv){
 	socklen_t o_size = sizeof(*o_server);
 
 	if((socket_de_escuta = make_server_socket((unsigned short)atoi(port))) < 0){
-		fprintf(stderr, "Error creating server socket");
+		fprintf(stderr, "Error creating server socket\n");
 		free(o_server);
 		free(port);
 		server_close(other_server);
@@ -425,7 +425,7 @@ int main(int argc, char **argv){
 
 	if((res = read_file(nome_ficheiro,&(other_server -> address_port),&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
-			fprintf(stderr, "Unable to read file");
+			fprintf(stderr, "Unable to read file\n");
 			server_close(other_server);
 			free(o_server);
 			free(port);
@@ -528,7 +528,7 @@ int main(int argc, char **argv){
 	if(first_time){
 		fprintf(stderr, "Writing file...\n");
 		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
-			fprintf(stderr, "Failed to write configuration file");
+			fprintf(stderr, "Failed to write configuration file\n");
 			server_close(other_server);
 			free(o_server);
 			return -1;
@@ -660,7 +660,7 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-	fprintf(stderr,"Closing server...");
+	fprintf(stderr,"Closing server...\n");
 
 	for (i = 0; i < nfds; i++) {
 		close(connections[i].fd);

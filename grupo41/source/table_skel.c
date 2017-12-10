@@ -13,7 +13,7 @@ static int tablenum;
 int table_skel_init(char **n_tables){
 
 	if(n_tables == NULL){
-		fprintf(stderr, "NULL n_tables");
+		fprintf(stderr, "NULL n_tables\n");
 		return -1;
 	}
 	

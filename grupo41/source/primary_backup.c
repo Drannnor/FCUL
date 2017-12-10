@@ -96,7 +96,7 @@ int hello(struct server_t *server){
 
 	print_message(msg_resposta);
 	if((msg_resposta -> opcode) == OC_RT_ERROR){ 
-			fprintf(stderr, "sync_backup - msg_resposta error");
+			fprintf(stderr, "sync_backup - msg_resposta error\n");
 			free(msg_resposta);
 			free(msg_pedido);
 			return -1;
@@ -152,7 +152,7 @@ int sync_backup(struct server_t *server){
 
 	for(i = 0; i < (server -> ntabelas); i++){
 		if((size = table_skel_size(i)) <= 0){
-			fprintf(stderr, "sync_backup - incorrect size");
+			fprintf(stderr, "sync_backup - incorrect size\n");
 			return -1;
 		}
 		if((msg_pedido = (struct message_t*) malloc(sizeof(struct message_t)))==NULL){
@@ -169,17 +169,17 @@ int sync_backup(struct server_t *server){
 		print_message(msg_resposta);
 
 		if((msg_resposta -> opcode) == OC_RT_ERROR){ 
-			fprintf(stderr, "sync_backup - msg_resposta error");
+			fprintf(stderr, "sync_backup - msg_resposta error\n");
 			return -1;
 		}
 		if((tables_entries = table_skel_get_entries(i)) == NULL){
-			fprintf(stderr, "sync_backup - tables_entries empty");
+			fprintf(stderr, "sync_backup - tables_entries empty\n");
 			return -1;
 		}
 		for(j = 0; j < size; j++){
 				//faz put de tables_entries[j]
 			if((server_backup_put(server, tables_entries[j], i)) < 0){
-				fprintf(stderr, "sync_backup - put failed");
+				fprintf(stderr, "sync_backup - put failed\n");
 				free(tables_entries);
 				return -1;
 			}	
@@ -363,7 +363,7 @@ struct message_t *server_backup_receive_send(struct server_t *server){
 			break;
 		}
 		default:{
-			fprintf(stderr, "Opcode invalido... server shutting down");
+			fprintf(stderr, "Opcode invalido... server shutting down\n");
 			msg_resposta = message_error(SERVER_ERROR);
 		}
 	}
@@ -416,7 +416,7 @@ int server_backup_put(struct server_t *server, struct entry_t *entry, int tablen
 	struct message_t *msg_res;
 
     if(server == NULL || entry == NULL){
-        fprintf(stderr, "NULL params");
+        fprintf(stderr, "NULL params\n");
         return CLIENT_ERROR;
     }
 
@@ -453,7 +453,7 @@ pthread_t *backup_update(struct message_t *msg, struct server_t *server){
     struct thread_params *t_params;
     pthread_t *thread;
 	if((thread = (pthread_t *)malloc(sizeof(pthread_t))) == NULL){
-		fprintf(stderr, "backup_update - thread - failed malloc");
+		fprintf(stderr, "backup_update - thread - failed malloc\n");
 		return NULL;
 	}
     
@@ -500,7 +500,7 @@ int send_port(struct server_t *server, char *port){
 	struct message_t *msg_out, *msg_in;
 
 	if(server == NULL){
-		fprintf(stderr,"send_table_info - bad params");
+		fprintf(stderr,"send_table_info - bad params\n");
 		return -1;
 	}
 
@@ -543,13 +543,13 @@ int get_address_port(struct server_t *server,struct sockaddr *socket_address){
 	int opc = msg_pedido->opcode;
 
 	if(opc != OC_ADDRESS_PORT){
-		fprintf(stderr, "get_addres_port - wrong opcode");
+		fprintf(stderr, "get_addres_port - wrong opcode\n");
 		free_message(msg_pedido);
 		return -1;
 	}
 
 	if((port = strdup(msg_pedido->content.key)) == NULL){
-		fprintf(stderr, "get_address_port - strdup failed");
+		fprintf(stderr, "get_address_port - strdup failed\n");
 		free_message(msg_pedido);
 		return -1;
 	}
@@ -570,7 +570,7 @@ int send_table_info(struct server_t *server, char **n_tables){
 	struct message_t *msg_out, *msg_in;
 
 	if(server == NULL || n_tables == NULL){
-		fprintf(stderr,"send_table_info - bad params");
+		fprintf(stderr,"send_table_info - bad params\n");
 		return -1;
 	}
 
@@ -608,7 +608,7 @@ char **get_table_info(struct server_t *server){
 	int opc = msg_pedido->opcode;
 
 	if(opc != OC_TABLE_INFO){
-		fprintf(stderr, "get_table_info - wrong opcode");
+		fprintf(stderr, "get_table_info - wrong opcode\n");
 		free_message(msg_pedido);
 		return NULL;
 	}
@@ -638,7 +638,7 @@ char **get_table_info(struct server_t *server){
 int update_successful(pthread_t *thread){
  	int *r, res;
     if (pthread_join(*thread, (void **) &r) != 0){
-		fprintf(stderr, "pthread_join error");
+		fprintf(stderr, "pthread_join error\n");
 	}
 
 	res = *r;
