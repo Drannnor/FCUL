@@ -135,7 +135,7 @@ int make_server_socket(short port){
 */
 int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
-  	int message_size, msg_size, result, update_backup ;
+  	int message_size, msg_size, result, update_backup, sync_time = 0;
   	struct message_t *msg_pedido, *msg_resposta = NULL;
 	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
@@ -186,16 +186,8 @@ int network_receive_send(int socket_fd){
 	switch (msg_pedido->opcode){
 		case OC_HELLO:
 			printf("Hello received! Syncronizing tables...\n");
-			if(sync_backup(other_server)){
-				other_server->socket_fd = socket_fd;
-				other_server->up = 1;
-				primary = 1;
-				printf("Tables syncronized successfully\n Back is up and running!\n");
-				return 2;
-			} else {
-				other_server -> up = 0;
-				return -1;
-			}
+			msg_resposta = message_success(msg_pedido);
+			sync_time = 1;
 			break;
 		case OC_TABLE_NUM:
 			msg_resposta = table_skel_get_tablenum(msg_pedido);
@@ -284,6 +276,20 @@ int network_receive_send(int socket_fd){
 	free_message(msg_resposta);
 	free_message(msg_pedido);
 
+
+	if(sync_time){
+		if(sync_backup(other_server) == 0){
+			other_server->socket_fd = socket_fd;
+			other_server->up = 1;
+			primary = 1;
+			printf("Tables syncronized successfully\n Back is up and running!\n");
+			return 2;
+		} else {
+			primary = 1;
+			other_server -> up = 0;
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -512,6 +518,13 @@ int main(int argc, char **argv){
 		}
 	}
 
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		server_close(other_server);
+		free(o_server);
+		return -1;
+	}
+	
 	if(first_time){
 		fprintf(stderr, "Writing file...\n");
 		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
@@ -534,13 +547,7 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-
-	if((table_skel_init(n_tables) < 0)){
-		fprintf(stderr, "Failed to init\n");
-		server_close(other_server);
-		free(o_server);
-		return -1;
-	}
+	free(n_tables);
 
 	/* inicialização */
 
