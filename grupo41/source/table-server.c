@@ -73,9 +73,9 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 
 	sprintf(*n_tables[0], "%d", table_num);
 
-	for(i = 1;i < table_num;i++){
+	for(i = 1;i <= table_num;i++){
 		fgets(in,N_TABLES_MSIZE,fp);
-		if((*n_tables[i] = (char*)malloc(strlen(in))) == NULL){// estava n em vez do i logo estava mal
+		if(((*n_tables)[i] = (char*)malloc(strlen(in))) == NULL){// estava n em vez do i logo estava mal
 			for(j = 0; j < i; j++){
 				free(*n_tables[j]);
 			}
@@ -83,10 +83,10 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 			fprintf(stderr, "Failed malloc tables3\n");
 			return -1;
 		}
-		memcpy(*n_tables[i],in,strlen(in) + 1);
+		memcpy((*n_tables)[i],in,strlen(in) + 1);
 	}
 
-	n_tables[table_num + 1] = NULL;
+	*n_tables[table_num + 1] = NULL;
 
 	return 1;
 }
@@ -135,7 +135,7 @@ int make_server_socket(short port){
 */
 int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
-  	int message_size, msg_size, result, update_backup ;
+  	int message_size, msg_size, result, update_backup, sync_time = 0;
   	struct message_t *msg_pedido, *msg_resposta = NULL;
 	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
@@ -185,17 +185,8 @@ int network_receive_send(int socket_fd){
 
 	switch (msg_pedido->opcode){
 		case OC_HELLO:
-			printf("Hello received! Syncronizing tables...\n");
-			if(sync_backup(other_server)){
-				other_server->socket_fd = socket_fd;
-				other_server->up = 1;
-				primary = 1;
-				printf("Tables syncronized successfully\n Back is up and running!\n");
-				return 2;
-			} else {
-				other_server -> up = 0;
-				return -1;
-			}
+			msg_resposta = message_success(msg_pedido);
+			sync_time = 1;
 			break;
 		case OC_TABLE_NUM:
 			msg_resposta = table_skel_get_tablenum(msg_pedido);
@@ -284,6 +275,21 @@ int network_receive_send(int socket_fd){
 	free_message(msg_resposta);
 	free_message(msg_pedido);
 
+
+	if(sync_time){
+		printf("Hello received! Syncronizing tables...\n");
+		if(sync_backup(other_server) == 0){
+			other_server->socket_fd = socket_fd;
+			other_server->up = 1;
+			primary = 1;
+			printf("Tables syncronized successfully\n Back is up and running!\n");
+			return 2;
+		} else {
+			primary = 1;
+			other_server -> up = 0;
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -361,7 +367,6 @@ int main(int argc, char **argv){
 	int socket_de_escuta, i, j, nfds, res;
 	char *port;
 	char **n_tables;
-	//FIXME: arrumar isto
 
 	struct pollfd connections[NFDESC];
 	struct sockaddr *o_server;
@@ -512,6 +517,13 @@ int main(int argc, char **argv){
 		}
 	}
 
+	if((table_skel_init(n_tables) < 0)){
+		fprintf(stderr, "Failed to init\n");
+		server_close(other_server);
+		free(o_server);
+		return -1;
+	}
+	
 	if(first_time){
 		fprintf(stderr, "Writing file...\n");
 		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
@@ -535,12 +547,10 @@ int main(int argc, char **argv){
 		}
 	}
 
-	if((table_skel_init(n_tables) < 0)){
-		fprintf(stderr, "Failed to init\n");
-		server_close(other_server);
-		free(o_server);
-		return -1;
+	for(i = 0; i < other_server -> ntabelas + 1; i++){
+		free(n_tables[i]);
 	}
+	free(n_tables);
 
 	/* inicialização */
 
@@ -591,20 +601,6 @@ int main(int argc, char **argv){
 					}
 
           			connections[i].events = POLLIN;
-					/*if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
-						if (res == 0){
-							close(connections[i].fd);
-							connections[i].fd = connections[nfds-1].fd;
-							connections[i].revents = connections[nfds-1].revents;
-							connections[i].events = connections[nfds-1].events;
-							connections[nfds-1].fd = -1;
-							connections[nfds-1].revents = 0;
-							connections[nfds-1].events = 0;
-						} else {
-							quit = 1;
-						}
-
-					} // Vamos esperar dados nesta socket FIXME:*/
 					nfds++;
 					fprintf(stdin,"New connection\n");
 				}

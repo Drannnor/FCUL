@@ -151,7 +151,7 @@ int sync_backup(struct server_t *server){
 	struct message_t *msg_pedido, *msg_resposta;
 
 	for(i = 0; i < (server -> ntabelas); i++){
-		if((size = table_skel_size(i)) <= 0){
+		if((size = table_skel_size(i)) < 0){
 			fprintf(stderr, "sync_backup - incorrect size\n");
 			return -1;
 		}
@@ -167,7 +167,7 @@ int sync_backup(struct server_t *server){
 		print_message(msg_pedido);
 		msg_resposta = server_backup_send_receive(server, msg_pedido);
 		print_message(msg_resposta);
-		
+
 		if((msg_resposta -> opcode) == OC_RT_ERROR){ 
 			fprintf(stderr, "sync_backup - msg_resposta error\n");
 			return -1;
@@ -413,6 +413,8 @@ struct message_t *server_backup_receive_send(struct server_t *server){
 }
 
 int server_backup_put(struct server_t *server, struct entry_t *entry, int tablenum){
+	struct message_t *msg_res;
+
     if(server == NULL || entry == NULL){
         fprintf(stderr, "NULL params\n");
         return CLIENT_ERROR;
@@ -435,8 +437,8 @@ int server_backup_put(struct server_t *server, struct entry_t *entry, int tablen
     
     print_message(msg_out);
 
-    struct message_t *msg_res;
     msg_res = server_backup_send_receive(server,msg_out);
+	
     print_message(msg_res);
 
     int res = msg_res->content.result;

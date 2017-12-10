@@ -11,4 +11,7 @@
 
 # End of https://www.gitignore.io/api/visualstudiocode
 
-vgcore.*
+vgcore.*binary/
+object/
+binary/
+object/

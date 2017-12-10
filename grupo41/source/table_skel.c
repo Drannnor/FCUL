@@ -32,11 +32,6 @@ int table_skel_init(char **n_tables){
 			return -1;
 		}
 	}
-	
-	for(i = 0; i < tablenum + 1; i++){
-		free(n_tables[i]);
-	}
-	free(n_tables);
     return 0;
 }
 
@@ -103,15 +98,12 @@ struct entry_t **table_skel_get_entries(int numero_da_tabela){
 }
 
 int table_skel_size(int numero_da_tabela){
-	//verificar se eh valido
-	//ir buscar
-	//devolver
 	if(numero_da_tabela > tablenum){
 		fprintf(stderr,"Tabela não existe\n");
 		return -1;
 	}
 
-	return tables[numero_da_tabela]->size_table;
+	return tables[numero_da_tabela]->num_entries;
 }
 
 /* Função que recebe uma tabela e uma mensagem de pedido e:
