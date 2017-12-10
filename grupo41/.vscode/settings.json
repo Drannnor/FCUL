@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "streambuf": "c",
-        "functional": "c"
+        "functional": "c",
+        "thread": "c",
+        "system_error": "c"
     }
 }

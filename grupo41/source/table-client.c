@@ -51,13 +51,13 @@ int main(int argc, char **argv){
 	/* Testar os argumentos de entrada */
 	if(argc < 3){
 		fprintf(stderr, "Insufficient arguments\n");
-		fprintf(stderr, "Uso: ./client <ip servidor>:<porta servidor>\n");
-		fprintf(stderr, "Exemplo de uso: ./client 10.101.148.144:54321\n");
+		fprintf(stderr, "Uso: ./client <ip_servidor>:<porta_servidor> <ip_backup>:<porta_backup>\n");
+		fprintf(stderr, "Exemplo de uso: ./client 10.101.148.144:54321 10.120.150.150:12345\n");
 		return -1;
 	}
 	
 	/* Usar network_connect para estabelcer ligação ao servidor */
-	struct rtables_t *rtables;
+	struct rtables_t *rtables = NULL;
 	char* primary = strdup(argv[1]);
 	char* secondary = strdup(argv[2]);
 
