@@ -151,7 +151,7 @@ int sync_backup(struct server_t *server){
 	struct message_t *msg_pedido, *msg_resposta;
 
 	for(i = 0; i < (server -> ntabelas); i++){
-		if((size = table_skel_size(i)) <= 0){
+		if((size = table_skel_size(i)) < 0){
 			fprintf(stderr, "sync_backup - incorrect size\n");
 			return -1;
 		}
