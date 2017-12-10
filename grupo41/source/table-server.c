@@ -181,9 +181,9 @@ int network_receive_send(int socket_fd){
 	
 	print_message(msg_pedido);
 
-	if(msg_pedido->opcode == OC_HELLO){
+	if(primary && msg_pedido->opcode == OC_HELLO){
+		sync_backup(other_server);//FIXME: verificar
 		other_server->socket_fd = socket_fd;
-		sync_backup(other_server);
 	}
 
 	if((msg_resposta = invoke(msg_pedido)) == NULL){
@@ -279,7 +279,7 @@ int tratar_input(){
 	}
 	if(strcasecmp(tok, "quit") == 0){
 		quit = 1;
-		remove(nome_ficheiro); //FIXME: verificar se isto se pode fazer -Burno <3 acho que nao viste o que fizeste
+		remove(nome_ficheiro);
 		
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
@@ -527,9 +527,12 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ // Ligação feita ? TODO: guardar a o sockaddr do cliente, 
-																					  		 // se for a secundario verificar se o client se trata do servidor primario
-					 															  		 	 // caso negativo passa a ser o servidor primario
+        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){ 
+					if(!primary){
+						secondary_up == 0;
+						primary = 1;
+					}
+
           			connections[i].events = POLLIN;
 					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
 						if (res == 0){
