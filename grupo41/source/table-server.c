@@ -134,7 +134,7 @@ int make_server_socket(short port){
 */
 int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
-  	int message_size, msg_size, result;
+  	int message_size, msg_size, result, update_backup ;
   	struct message_t *msg_pedido, *msg_resposta;
 	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
@@ -194,18 +194,20 @@ int network_receive_send(int socket_fd){
 	}
 	print_message(msg_resposta);
 
-	//struct message_t *thread_msg = copy_message(msg_pedido);
+	update_backup = primary && is_write(msg_pedido) && secondary_up;
 
-	if(primary && is_write(msg_pedido) && secondary_up){
+	if(update_backup){
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){
 			secondary_up = 0;
 		}
 	}
 
-
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -220,6 +222,9 @@ int network_receive_send(int socket_fd){
 	/* Verificar se o envio teve sucesso */
 	if(write_all(socket_fd, (char *) &msg_size, _INT) < 0){
 		fprintf(stderr, "Write failed - size write_all\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -231,6 +236,9 @@ int network_receive_send(int socket_fd){
 	/* Verificar se o envio teve sucesso */
 	if(write_all(socket_fd, buff_resposta, message_size) < 0){
 		fprintf(stderr, "Write failed - message write_all\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -239,12 +247,14 @@ int network_receive_send(int socket_fd){
 	
 	//verificar que a thread fez o seu trabalho 
 	//com sucesso, caso contrario, marca o servidor secundario com DOWN
-	if(primary && is_write(msg_pedido) && secondary_up){
+	if(update_backup){
 		if((update_successful(thread)) < 0){
 			fprintf(stderr, "Fail to send message to backup");
 			secondary_up = 0;
+		} else {
+			fprintf(stdin, "Backup updated successefully");
 		}
-		fprintf(stdin, "Backup updated successefully");
+		free(thread);
 	}
 
 	/* Libertar memória */

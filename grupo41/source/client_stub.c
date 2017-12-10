@@ -131,8 +131,6 @@ int rtables_update(struct rtables_t *rtables, char *key, struct data_t *value){
     print_message(msg_res);
 
     int res = msg_res->content.result;
-    free(key);
-    data_destroy(value);
     free_message(msg_res);
     free_message(msg_out);
     return res;
