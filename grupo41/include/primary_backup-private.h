@@ -24,7 +24,7 @@ int server_bind(struct server_t *server);
 
 int send_port(struct server_t *server, char *port);
 
-int get_address_port(struct server_t *server, struct sockaddr *socket_address);
+int get_address_port(struct server_t *server, struct sockaddr_in *socket_address);
 
 int send_table_info(struct server_t *server, char **n_tables);
 

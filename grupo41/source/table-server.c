@@ -368,7 +368,7 @@ int main(int argc, char **argv){
 	char **n_tables;
 
 	struct pollfd connections[NFDESC];
-	struct sockaddr *o_server;
+	struct sockaddr_in *o_server;
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
@@ -405,7 +405,7 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	if((o_server = (struct sockaddr*)malloc(sizeof(struct sockaddr*))) == NULL){
+	if((o_server = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in*))) == NULL){
 		fprintf(stderr, "Failed malloc - o_server\n");
 		server_close(other_server);
 		free(port);
@@ -497,7 +497,7 @@ int main(int argc, char **argv){
 				other_server -> up = 0;
 			} else {
 				printf("Awaiting connection...\n");
-				if((other_server->socket_fd = accept(socket_de_escuta,o_server,&o_size)) > 0){
+				if((other_server->socket_fd = accept(socket_de_escuta,(struct sockaddr*)o_server,&o_size)) > 0){
 
 					if((get_address_port(other_server, o_server)) < 0){
 						printf("Closing backup...\n");
@@ -591,7 +591,7 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, o_server, &o_size)) > 0){
+        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){
 					printf("New Connection!\n");
 					if(!primary){
 						printf("Client. I am now primary\n");

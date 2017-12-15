@@ -525,16 +525,10 @@ int send_port(struct server_t *server, char *port){
     return res;
 }
 
-int get_address_port(struct server_t *server,struct sockaddr *socket_address){
+int get_address_port(struct server_t *server,struct sockaddr_in *socket_address){
 	char *port, *ip;
-	struct sockaddr_in *addr;
 
 	struct message_t *msg_pedido;
-	
-	if((server -> address_port = (char *) malloc(MAX_SIZE)) == NULL){
-		fprintf(stderr, "Failed malloc address_port \n");
-		return -1;
-	}
 
 	msg_pedido = server_backup_receive_send(server);
 
@@ -552,8 +546,13 @@ int get_address_port(struct server_t *server,struct sockaddr *socket_address){
 		return -1;
 	}
 
-	addr = (struct sockaddr_in*) &socket_address;
-	ip = inet_ntoa(addr ->sin_addr);
+	ip = inet_ntoa(socket_address ->sin_addr);
+
+	if((server -> address_port = (char *) malloc(strlen(port) + strlen(ip) + 2)) == NULL){
+		fprintf(stderr, "Failed malloc address_port \n");
+		return -1;
+	}
+
 	sprintf(server -> address_port, "%s:%s", ip,port);
 	free(port);
 	free_message(msg_pedido);

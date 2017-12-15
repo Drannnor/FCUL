@@ -6,7 +6,7 @@
                 "type": "cppdbg",
                 "request": "launch",
                 "program": "${workspaceRoot}/grupo41/binary/server",
-                "args": ["54322"], 
+                "args": ["54321", "192.168.43.104:54322", "9", "5", "20"],
                 "stopAtEntry": false,
                 "cwd": "${workspaceRoot}/grupo41/",
                 "environment": [],
