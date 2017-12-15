@@ -116,8 +116,8 @@ int main(int argc, char **argv){
 					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
+				if(rtables->table_index >= rtables->numberOfTables){
+					fprintf(stderr, "Tabela nao existe!\n");
 					continue;
 				}
 				if((key_o = strdup(tokens[1])) == NULL){
@@ -149,8 +149,8 @@ int main(int argc, char **argv){
 					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
+				if(rtables->table_index >= rtables->numberOfTables){
+					fprintf(stderr, "Tabela nao existe!\n");
 					continue;
 				}
 				if((strcmp(tokens[1], "*") == 0)){
@@ -173,8 +173,8 @@ int main(int argc, char **argv){
 					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
+				if(rtables->table_index >= rtables->numberOfTables){
+					fprintf(stderr, "Tabela nao existe!\n");
 					continue;
 				}
 				if((key_o = strdup(tokens[1])) == NULL){
@@ -205,8 +205,8 @@ int main(int argc, char **argv){
 					continue;
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
+				if(rtables->table_index >= rtables->numberOfTables){
+					fprintf(stderr, "Tabela nao existe!\n");
 					continue;
 				}
 				if((result = rtables_size(rtables)) < 0){
@@ -229,8 +229,8 @@ int main(int argc, char **argv){
 					printf("Input inválido: número de tabela tem de ser um inteiro\n");
 				}
 				rtables->table_index = atoi(tokens[0]);
-				if(rtables->table_index > rtables->numberOfTables){
-					fprintf(stderr, "Tabela nao existe.\n");
+				if(rtables->table_index >= rtables->numberOfTables){
+					fprintf(stderr, "Tabela nao existe!\n");
 					continue;
 				}
 				if((result = rtables_collisions(rtables)) < 0){

@@ -50,7 +50,7 @@ struct message_t *invoke(struct message_t *msg_in){
 	int tb_num = msg_in->table_num;
 	if(msg_in != NULL){	
 		if(tb_num >= tablenum){
-			fprintf(stderr, "Tabela nao existe.\n");
+			fprintf(stderr, "Tabela nao existe!\n");
 			msg_resposta = message_error(SERVER_ERROR);
 		}
 		else{
@@ -64,7 +64,7 @@ void table_skel_print(int n){
 	if(n < tablenum){
 		print_table(tables[n]);
 	} else {
-		fprintf(stderr, "Tabela nao existe.\n");
+		fprintf(stderr, "Tabela nao existe!\n");
 	}
 }
 

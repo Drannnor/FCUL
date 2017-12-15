@@ -435,7 +435,7 @@ int main(int argc, char **argv){
 	} else {//primeira execucao
 		first_time = 1;
 		if(primary){//Servidor Primario, primeira vez
-			printf("Sou o primario\n");
+			printf("Sou o primario!\n");
 			int table_num = argc - 3;
 			other_server -> up = 0;
 			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
@@ -619,6 +619,7 @@ int main(int argc, char **argv){
 						connections[i].fd = -1;
 						connections[i].revents = 0;
 						connections[i].events = 0;
+						nfds--;
 
 					}
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {

@@ -49,9 +49,7 @@ int server_bind(struct server_t *server){
 	}
 
 	p_server->sin_port = htons(atoi(strtok(NULL,delim)));
-
-	p_server->sin_addr.s_addr = htonl(INADDR_ANY);
-
+	
 	//Criar a socket.
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Unable to create socket\n");
