@@ -201,12 +201,11 @@ int network_receive_send(int socket_fd){
 		}
 	}
 
-
-	
-
 	print_message(msg_resposta);
 
-	update_backup = primary && is_write(msg_pedido) && other_server -> up;
+	int opcode_res = msg_resposta -> opcode;
+
+	update_backup = primary && is_write(msg_pedido) && other_server -> up && opcode_res != OC_RT_ERROR;
 
 	if(update_backup){
 		if((thread = backup_update(msg_pedido, other_server)) == NULL){

@@ -130,7 +130,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					break;//FIXME:S
+					break;
 				}	
 			} else { 
 				break;
@@ -154,7 +154,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					break;//FIXME:S
+					break;
 				}	
 			}else { 
 				break;
@@ -178,7 +178,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_out);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					break;//FIXME:S
+					break;
 				}	
 			} else { 
 				break;
@@ -212,7 +212,7 @@ struct message_t *network_send_receive(struct server_t *server, struct message_t
 					free(message_in);
 					//return message_error(CONNECTION_ERROR);
 					error = CONNECTION_ERROR;
-					break;//FIXME:S
+					break;
 				}	
 			} else { 
 				break;
