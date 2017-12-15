@@ -279,7 +279,7 @@ int network_receive_send(int socket_fd){
 		if(sync_backup(other_server) == 0){
 			other_server->up = 1;
 			primary = 1;
-			printf("Tables syncronized successfully\n Back is up and running!\n");
+			printf("Tables syncronized successfully\nBackup is up and running!\n");
 			return 2;
 		} else {
 			primary = 1;
@@ -536,11 +536,12 @@ int main(int argc, char **argv){
 			other_server -> ntabelas = atoi(n_tables[0]);
 			printf("Connected, Saying Hello...\n");
 			if(hello(other_server) < 0){
-				fprintf(stderr, "Failed to hello\n");
+				fprintf(stderr, "Failed to hello...\n");
 				server_close(other_server);
 				free(o_server);
 				return -1;
 			}
+			printf("Syncronization complete!");
 		}
 	}
 
@@ -590,16 +591,16 @@ int main(int argc, char **argv){
 					i++;
             	}
         		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){
-					printf("New Connection!\n");
+					printf("New connection!\n");
 					if(!primary){
-						printf("Client. I am now primary\n");
+						printf("I am now primary!\n");
 						other_server -> up = 0;
 						primary = 1;
 					}
 
           			connections[i].events = POLLIN;
 					nfds++;
-					fprintf(stdin,"New connection\n");
+					fprintf(stdin,"New connection!\n");
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */
@@ -610,7 +611,6 @@ int main(int argc, char **argv){
 				} else {
 					res = network_receive_send(connections[i].fd);
 					if(res == 2){
-						printf("Backup reconnected\n");
 						connections[2].fd = connections[i].fd;
 						connections[2].revents = connections[i].revents;
 						connections[2].events = connections[i].events;
@@ -624,12 +624,12 @@ int main(int argc, char **argv){
 						if(res == -1){		
 							close(connections[i].fd);
 							if(i == 2){
-								printf("Other server disconnected\n");
+								printf("Other server disconnected...\n");
 								connections[i].fd = -1;
 								connections[i].revents = 0;
 								connections[i].events = 0;
 							} else {
-								printf("Client disconnected\n");
+								printf("Client disconnected...\n");
 								connections[i].fd = connections[nfds-1].fd;
 								connections[i].revents = connections[nfds-1].revents;
 								connections[i].events = connections[nfds-1].events;
