@@ -275,8 +275,8 @@ int network_receive_send(int socket_fd){
 
 	if(sync_time){
 		printf("Hello received! Syncronizing tables...\n");
+		other_server->socket_fd = socket_fd;
 		if(sync_backup(other_server) == 0){
-			other_server->socket_fd = socket_fd;
 			other_server->up = 1;
 			primary = 1;
 			printf("Tables syncronized successfully\n Back is up and running!\n");
