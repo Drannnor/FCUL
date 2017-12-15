@@ -20,7 +20,6 @@ Ricardo Cruz 47871
 
 #define NFDESC 7
 #define MAX_SIZE 81
-#define MAX_ADDRESS_SIZE 20
 #define	N_TABLES_MSIZE 180
 #define PRIMARY_FILE "primary-server.conf"
 #define BACKUP_FILE "backup-server.conf" 
@@ -49,12 +48,12 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 		return 0;
 	}
 
-	if((*adrport = (char*)malloc (MAX_ADDRESS_SIZE)) == NULL){
+	if((*adrport = (char*)malloc (MAX_SIZE)) == NULL){
 		fprintf(stderr,"Failed malloc\n");
 		return -1;
 	}
 
-	fgets(*adrport, MAX_ADDRESS_SIZE,fp);
+	fgets(*adrport, MAX_SIZE,fp);
 
 	fgets(in,N_TABLES_MSIZE,fp);
 
@@ -65,13 +64,12 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 		return -1;
 	}
 			
-
-	if((*n_tables[0] = (char*)malloc(strlen(in)))== NULL){
+	if(((*n_tables)[0] = (char*)malloc(strlen(in)))== NULL){
 		fprintf(stderr,"Failed malloc\n");
 		return -1;
 	}
 
-	sprintf(*n_tables[0], "%d", table_num);
+	sprintf((*n_tables)[0], "%d", table_num);
 
 	for(i = 1;i <= table_num;i++){
 		fgets(in,N_TABLES_MSIZE,fp);
@@ -86,7 +84,7 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 		memcpy((*n_tables)[i],in,strlen(in) + 1);
 	}
 
-	*n_tables[table_num + 1] = NULL;
+	(*n_tables)[table_num + 1] = NULL;
 
 	return 1;
 }
