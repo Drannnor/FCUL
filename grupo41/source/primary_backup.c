@@ -651,8 +651,6 @@ int server_close(struct server_t *server){
 	if(server ->address_port != NULL){
 		free(server->address_port);
 	}
-
-	close(server->socket_fd);
 	free(server);
 	return 0;
 }
