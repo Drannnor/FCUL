@@ -350,10 +350,12 @@ void value_unmarshalling(struct message_t *m, char **ptr)
     int datasize_conv;
 
     //memcpy(&data_size,*ptr,_INT);
-    datasize_conv = ntohl(*(int*) *ptr);
+    if((datasize_conv = ntohl(*(int*) *ptr)) == 0){
+        m->content.data = data_create_empty();
+        return;
+    } 
     *ptr += _INT;
-    if ((m->content.data = data_create(datasize_conv)) == NULL)
-    {
+    if ((m->content.data = data_create(datasize_conv)) == NULL){
         free(m);
         return;
     }

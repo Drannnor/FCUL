@@ -85,7 +85,7 @@ int read_file(char *file_name,char **adrport,char ***n_tables){
 	}
 
 	(*n_tables)[table_num + 1] = NULL;
-
+	fclose(fp);
 	return 1;
 }
 /* Função para preparar uma socket de receção de pedidos de ligação.
@@ -396,7 +396,9 @@ int main(int argc, char **argv){
 		fprintf(stderr, "Failed malloc other_server\n");
 		return -1;
 	}
-	
+
+	other_server -> up = 0;
+
 	if((port = strdup(argv[1])) == NULL){
 		fprintf(stderr, "strdup failed - port\n");
 		server_close(other_server);
@@ -422,9 +424,9 @@ int main(int argc, char **argv){
 	if((res = read_file(nome_ficheiro,&(other_server -> address_port),&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
 		if ( res == -1 ){
 			fprintf(stderr, "Unable to read file\n");
-			server_close(other_server);
 			free(o_server);
 			free(port);
+			server_close(other_server);
 			return -1;
 		}
 		first_time = 0;
@@ -438,18 +440,18 @@ int main(int argc, char **argv){
 			other_server -> up = 0;
 			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
 				fprintf(stderr, "Failed malloc tables1\n");
-				server_close(other_server);
-				free(port);
 				free(o_server);
+				free(port);
+				server_close(other_server);
 				return -1;
 			}
 			
 			if((n_tables[0] = (char *)malloc(_INT)) == NULL){
 				fprintf(stderr, "Failed malloc tables2\n");
 				free(n_tables);
-				server_close(other_server);
 				free(o_server);
 				free(port);
+				server_close(other_server);
 				return -1;
 			}
 
@@ -462,9 +464,9 @@ int main(int argc, char **argv){
 					}
 					free(n_tables);
 					fprintf(stderr, "Failed malloc tables3\n");
-					server_close(other_server);
 					free(o_server);
 					free(port);
+					server_close(other_server);
 					return -1;
 				}
 				memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
@@ -490,34 +492,31 @@ int main(int argc, char **argv){
 
 		} else {//Servidor Secundario, primeira vez
 			printf("Sou o secundario!\n");
-			if ((other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
-				fprintf(stderr, "Failed malloc other_server\n");
-				other_server -> up = 0;
-			} else {
-				printf("Awaiting connection...\n");
-				if((other_server->socket_fd = accept(socket_de_escuta,(struct sockaddr*)o_server,&o_size)) > 0){
+			printf("Awaiting connection...\n");
+			if((other_server->socket_fd = accept(socket_de_escuta,(struct sockaddr*)o_server,&o_size)) > 0){
 
-					if((get_address_port(other_server, o_server)) < 0){
-						printf("Closing backup...\n");
-						server_close(other_server);
-						free(o_server);
-						return -1;
-					} else {
-						printf("Getting tables ...\n");
-						if((n_tables = get_table_info(other_server)) != NULL){
-							other_server -> up = 1;
-							other_server -> ntabelas = atoi(n_tables[0]);
-						}
-					} 
-				}
+				if((get_address_port(other_server, o_server)) < 0){
+					printf("Closing backup...\n");
+					free(o_server);
+					free(port);
+					server_close(other_server);
+					return -1;
+				} else {
+					printf("Getting tables ...\n");
+					if((n_tables = get_table_info(other_server)) != NULL){
+						other_server -> up = 1;
+						other_server -> ntabelas = atoi(n_tables[0]);
+					}
+				} 
 			}
 		}
 	}
 
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
-		server_close(other_server);
 		free(o_server);
+		free(port);
+		server_close(other_server);
 		return -1;
 	}
 	
@@ -525,8 +524,9 @@ int main(int argc, char **argv){
 		fprintf(stderr, "Writing file...\n");
 		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
 			fprintf(stderr, "Failed to write configuration file\n");
-			server_close(other_server);
 			free(o_server);
+			free(port);
+			server_close(other_server);
 			return -1;
 		}
 		fprintf(stderr, "Done!\n");
@@ -537,11 +537,12 @@ int main(int argc, char **argv){
 			printf("Connected, Saying Hello...\n");
 			if(hello(other_server) < 0){
 				fprintf(stderr, "Failed to hello...\n");
-				server_close(other_server);
 				free(o_server);
+				free(port);
+				server_close(other_server);
 				return -1;
 			}
-			printf("Syncronization complete!");
+			printf("Syncronization complete!\n");
 		}
 	}
 
@@ -590,7 +591,7 @@ int main(int argc, char **argv){
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){
+        		if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr*)o_server,&o_size)) > 0){
 					printf("New connection!\n");
 					if(!primary){
 						printf("I am now primary!\n");
@@ -652,8 +653,9 @@ int main(int argc, char **argv){
 	for (i = 0; i < nfds; i++) {
 		close(connections[i].fd);
 	}
-	server_close(other_server);
-	free(port);
+	
 	free(o_server);
+	free(port);
+	server_close(other_server);
 	return table_skel_destroy();
 }

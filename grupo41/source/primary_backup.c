@@ -168,10 +168,16 @@ int sync_backup(struct server_t *server){
 
 		if((msg_resposta -> opcode) == OC_RT_ERROR){ 
 			fprintf(stderr, "sync_backup - msg_resposta error\n");
+			free_message(msg_pedido);
+			free_message(msg_resposta);
+			//free(msg_resposta);
 			return -1;
 		}
 		if((tables_entries = table_skel_get_entries(i)) == NULL){
 			fprintf(stderr, "sync_backup - tables_entries empty\n");
+			free_message(msg_pedido);
+			free_message(msg_resposta);
+			//free(msg_resposta);
 			return -1;
 		}
 		for(j = 0; j < size; j++){
@@ -179,11 +185,17 @@ int sync_backup(struct server_t *server){
 			if((server_backup_put(server, tables_entries[j], i)) < 0){
 				fprintf(stderr, "sync_backup - put failed\n");
 				free(tables_entries);
+				free_message(msg_pedido);
+				free_message(msg_resposta);
+				//free(msg_resposta);
 				return -1;
 			}	
 		}
+		free_message(msg_pedido);
+		free_message(msg_resposta);
+		free(tables_entries);
 	}
-	free(tables_entries);
+	
 	return 0;
 }
 
@@ -648,7 +660,7 @@ int server_close(struct server_t *server){
 		return 0;
 	}
 
-	if(server ->address_port != NULL){
+	if(server->address_port != NULL){
 		free(server->address_port);
 	}
 	free(server);

@@ -248,15 +248,16 @@ int main(int argc, char **argv){
 			printf("Input inválido: put, get, update, size, collisions, quit\n");
 		}
 
-		free(tok_opc);
 		i = 0;
 		while(i < count_param){
 			free(tokens[i]);
 			i++;
 		}
+		//free(tokens); //???
+		free(tok_opc);
 	}
-	free(primary);
-	free(secondary);
+	//free(primary);
+	//free(secondary);
 	return rtables_unbind(rtables); 
 }
 

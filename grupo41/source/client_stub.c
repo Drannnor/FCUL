@@ -156,7 +156,6 @@ struct data_t *rtables_get(struct rtables_t *rtables, char *key){
 
     struct data_t *data_res;
     if((data_res = data_dup(msg_res->content.data)) == NULL){
-        free(data_res);
         free_message(msg_out);
         free_message(msg_res);
         return NULL;
