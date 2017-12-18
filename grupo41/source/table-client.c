@@ -104,8 +104,8 @@ int main(int argc, char **argv){
 			continue;
 		}
 		
-		rtables -> server -> address_port_pri = primary;
-		rtables -> server -> address_port_sec = secondary;//FIXME: nao eh aqui
+		rtables -> server -> address_port_pri = strdup(primary);
+		rtables -> server -> address_port_sec = strdup(secondary);//FIXME: nao eh aqui
 
 		if(strcasecmp(tok_opc, "put") == 0){
 			if(count_param < 3){
@@ -256,8 +256,8 @@ int main(int argc, char **argv){
 		//free(tokens); //???
 		free(tok_opc);
 	}
-	//free(primary);
-	//free(secondary);
+	free(primary);
+	free(secondary);
 	return rtables_unbind(rtables); 
 }
 
