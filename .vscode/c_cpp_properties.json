@@ -34,7 +34,9 @@
                 "/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include-fixed",
                 "/usr/include",
                 "${workspaceRoot}",
-                "${workspaceRoot}/grupo41/include"
+                "${workspaceRoot}/grupo41/include",
+                "/usr/include/x86_64-linux-gnu",
+                "/usr/include/linux"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -58,7 +60,8 @@
             "name": "Win32",
             "includePath": [
                 "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
-                "${workspaceRoot}"
+                "${workspaceRoot}",
+                "${workspaceRoot}/grupo41/include"
             ],
             "defines": [
                 "_DEBUG",

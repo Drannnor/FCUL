@@ -10,15 +10,84 @@ Ricardo Cruz 47871
    Exemplo de uso: ./table_server 54321 10 15 20 25
 */
 #include <error.h>
-#include "table-private.h"
-#include "message-private.h"
+#include <stdio.h>
+#include <pthread.h>
+#include "primary_backup-private.h"
+#include "primary_backup.h"
 #include "table_skel-private.h"
+#include "message-private.h"
 
-#define NFDESC 6
-#define MAX_SIZE 1000
+
+#define NFDESC 7
+#define MAX_SIZE 81
+#define	N_TABLES_MSIZE 180
+#define PRIMARY_FILE "primary-server.conf"
+#define BACKUP_FILE "backup-server.conf" 
 
 static int quit = 0;
+static char* nome_ficheiro;
+int primary, first_time;
 
+static struct server_t *other_server;
+
+//funcao que verifica se a mensagem se trata de uma put ou de um updatez
+//se for esse o caso devolve 1
+//caso contrario devolve 0
+int is_write(struct message_t *msg){ 
+	return msg->opcode == OC_PUT || msg->opcode == OC_UPDATE;
+}
+
+
+int read_file(char *file_name,char **adrport,char ***n_tables){
+	int i, j;
+	char in[MAX_SIZE];
+	int table_num;
+	FILE *fp;
+
+	if((fp = fopen(file_name,"r")) == NULL){
+		return 0;
+	}
+
+	if((*adrport = (char*)malloc (MAX_SIZE)) == NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;
+	}
+
+	fgets(*adrport, MAX_SIZE,fp);
+
+	fgets(in,N_TABLES_MSIZE,fp);
+
+	table_num = atoi(in);
+
+	if((*n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+		fprintf(stderr, "Failed malloc tables\n");
+		return -1;
+	}
+			
+	if(((*n_tables)[0] = (char*)malloc(strlen(in)))== NULL){
+		fprintf(stderr,"Failed malloc\n");
+		return -1;
+	}
+
+	sprintf((*n_tables)[0], "%d", table_num);
+
+	for(i = 1;i <= table_num;i++){
+		fgets(in,N_TABLES_MSIZE,fp);
+		if(((*n_tables)[i] = (char*)malloc(strlen(in))) == NULL){// estava n em vez do i logo estava mal
+			for(j = 0; j < i; j++){
+				free(*n_tables[j]);
+			}
+			free(*n_tables);
+			fprintf(stderr, "Failed malloc tables3\n");
+			return -1;
+		}
+		memcpy((*n_tables)[i],in,strlen(in) + 1);
+	}
+
+	(*n_tables)[table_num + 1] = NULL;
+	fclose(fp);
+	return 1;
+}
 /* Função para preparar uma socket de receção de pedidos de ligação.
 */
 int make_server_socket(short port){
@@ -32,20 +101,20 @@ int make_server_socket(short port){
 	
 	int sim = 1;
 	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (int *)&sim, sizeof(sim)) < 0 ) {
-		fprintf(stderr,"SO_REUSEADDR setsockopt error");
+		fprintf(stderr,"SO_REUSEADDR setsockopt error\n");
 	}
 
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);  
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
+	if(bind(socket_fd, (struct sockaddr *) &server, sizeof(server)) < 0){
 		fprintf(stderr, "Erro ao fazer bind.\n");
 		close(socket_fd);
 		return -1;
 	}
 
-	if (listen(socket_fd, 0) < 0){
+	if(listen(socket_fd, 0) < 0){
 		fprintf(stderr, "Erro ao executar listen.\n");
 		close(socket_fd);
 		return -1;
@@ -62,14 +131,14 @@ int make_server_socket(short port){
 	Aplica o pedido na tabela;
 	Envia a resposta.
 */
-int network_receive_send(int sockfd){
+int network_receive_send(int socket_fd){
   	char *buff_resposta, *buff_pedido;
-  	int message_size, msg_size, result;
-  	struct message_t *msg_pedido, *msg_resposta;
-
+  	int message_size, msg_size, result, update_backup, sync_time = 0;
+  	struct message_t *msg_pedido, *msg_resposta = NULL;
+	pthread_t *thread;
 	/* Verificar parâmetros de entrada */
 
-	if(sockfd < 0){
+	if(socket_fd < 0){
 		fprintf(stderr, "Socket dada eh menor que zero\n");
 		return -2;
 	}
@@ -78,8 +147,9 @@ int network_receive_send(int sockfd){
 	   mensagem de pedido que será recebida de seguida.*/
 
 	/* Verificar se a receção teve sucesso */
-	if((result = read_all(sockfd, (char *) &msg_size, _INT)) <= 0){
+	if((result = read_all(socket_fd, (char *) &msg_size, _INT)) <= 0){
 		if(result < 0) fprintf(stderr, "Read failed - size read_all\n");
+		//fprintf(stderr, "Connection failed\n");
 		return -1;
 	}
 
@@ -93,8 +163,9 @@ int network_receive_send(int sockfd){
 	/* Com a função read_all, receber a mensagem de resposta. */
 
 	/* Verificar se a receção teve sucesso */
-	if((result = read_all(sockfd, buff_pedido, ntohl(msg_size))) < 0){
+	if((result = read_all(socket_fd, buff_pedido, ntohl(msg_size))) < 0){
 		if(result < 0) fprintf(stderr, "Read failed - message read_all\n");
+		//fprintf(stderr, "Connection failed\n");
 		free(buff_pedido);
 		return -1;
 	}
@@ -109,18 +180,43 @@ int network_receive_send(int sockfd){
 	}
 	
 	print_message(msg_pedido);
-	if((msg_resposta = invoke(msg_pedido)) == NULL){
-		fprintf(stderr, "Failed invoke\n");
-		free(buff_pedido);
-		free(msg_pedido);
-		return -2;
+
+	switch (msg_pedido->opcode){
+		case OC_HELLO:
+			msg_resposta = message_success(msg_pedido);
+			sync_time = 1;
+			break;
+		case OC_TABLE_NUM:
+			msg_resposta = table_skel_get_tablenum(msg_pedido);
+			break;
+		default:{
+			if((msg_resposta = invoke(msg_pedido)) == NULL){
+				fprintf(stderr, "Failed invoke\n");
+				free(buff_pedido);
+				free(msg_pedido);
+				return -2;
+			}
+		}
 	}
+
 	print_message(msg_resposta);
-	
+
+	int opcode_res = msg_resposta -> opcode;
+
+	update_backup = primary && is_write(msg_pedido) && other_server -> up && opcode_res != OC_RT_ERROR;
+
+	if(update_backup){
+		if((thread = backup_update(msg_pedido, other_server)) == NULL){
+			other_server -> up = 0;
+		}
+	}
 
 	/* Verificar se a serialização teve sucesso */
 	if((message_size = message_to_buffer(msg_resposta, &buff_resposta)) < 0){
 		fprintf(stderr, "Failed marshalling\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -133,8 +229,11 @@ int network_receive_send(int sockfd){
 	msg_size = htonl(message_size);
 
 	/* Verificar se o envio teve sucesso */
-	if(write_all(sockfd, (char *) &msg_size, _INT) < 0){
+	if(write_all(socket_fd, (char *) &msg_size, _INT) < 0){
 		fprintf(stderr, "Write failed - size write_all\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
@@ -144,12 +243,27 @@ int network_receive_send(int sockfd){
 	/* Enviar a mensagem que foi previamente serializada */
 
 	/* Verificar se o envio teve sucesso */
-	if(write_all(sockfd, buff_resposta, message_size) < 0){
+	if(write_all(socket_fd, buff_resposta, message_size) < 0){
 		fprintf(stderr, "Write failed - message write_all\n");
+		if(update_backup){
+			free(thread);
+		}
 		free(buff_pedido);
 		free_message(msg_pedido);
 		free_message(msg_resposta);
 		return -2;
+	}
+	
+	//verificar que a thread fez o seu trabalho 
+	//com sucesso, caso contrario, marca o servidor secundario com DOWN
+	if(update_backup){
+		if((update_successful(thread)) < 0){
+			fprintf(stderr, "Fail to send message to backup\n");
+			other_server -> up = 0;
+		} else {
+			fprintf(stdin, "Backup updated successefully\n");
+		}
+		free(thread);
 	}
 
 	/* Libertar memória */
@@ -158,6 +272,21 @@ int network_receive_send(int sockfd){
 	free_message(msg_resposta);
 	free_message(msg_pedido);
 
+
+	if(sync_time){
+		printf("Hello received! Syncronizing tables...\n");
+		other_server->socket_fd = socket_fd;
+		if(sync_backup(other_server) == 0){
+			other_server->up = 1;
+			primary = 1;
+			printf("Tables syncronized successfully\nBackup is up and running!\n");
+			return 2;
+		} else {
+			primary = 1;
+			other_server -> up = 0;
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -174,95 +303,255 @@ int tratar_input(){
 	fgets(in,MAX_SIZE,stdin);
 	in[strlen(in) - 1] = '\0';
 	if((tok = strtok(in," ")) == NULL){
-		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		fprintf(stderr,"Input inválido: quit, print <número da tabela>\n");
 		return -1;
 	}
 	if((tok = strdup(tok)) == NULL){
-		fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+		fprintf(stderr,"Erro ao alocar memória para o primeiro token\n");
 		quit = 1;
 		return -1;
 	}
-	if(strcasecmp( tok, "quit") == 0){
+	if(strcasecmp(tok, "quit") == 0){
 		quit = 1;
+		remove(nome_ficheiro);
 		
 	} else if (strcasecmp( tok, "print") == 0){
 		free(tok);
 		if((tok = strtok(NULL," ")) == NULL){
-			fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+			fprintf(stderr,"Input inválido: print <número da tabela>\n");
 			return -1;
 		}
 		if((tok = strdup(tok)) == NULL){
-			fprintf(stderr,"Erro ao alucar memoria para o primeiro token");
+			fprintf(stderr,"Erro ao alocar memória para o token\n");
 			quit = 1;
 			return -1;
 		}
 		table_skel_print(atoi(tok));
 	} else {
-		fprintf(stderr,"Input Invalido - ex:\nquit\nprint <numero da tabela>\n");
+		fprintf(stderr,"Input inválido: quit, print <número da tabela>\n");
 	}
 	free(tok);
 	return 0;
 }
 
+int write_file(char *filename,char *adrport,char **n_tables){
+	FILE *fp;
+	int i;
+	int n = atoi(n_tables[0]);
+
+	if((fp = fopen(filename,"w")) == NULL){
+		fprintf(stderr, "Cannot open output file\n");
+		return 0;
+	}
+
+	if((fprintf(fp,"%s\n",adrport)) < 0){
+		fprintf(stderr,"Couldn't write ip:port\n");
+		return 0;
+	}
+
+	for(i = 0;i <= n ;i++){
+		if((fprintf(fp,"%s\n",n_tables[i])) < 0){
+			fprintf(stderr,"Couldn't write table size\n");
+			return 0;
+		}
+	}
+	fclose(fp);
+	return 1;
+}
+
 int main(int argc, char **argv){
 	struct sigaction a;
-	int socket_de_escuta, i, nfds, res;
-
+	int socket_de_escuta, i, j, nfds, res;
+	char *port;
 	char **n_tables;
 
 	struct pollfd connections[NFDESC];
+	struct sockaddr_in *o_server;
 
 	a.sa_handler = sign_handler;
 	a.sa_flags = 0;
-	sigemptyset( &a.sa_mask );
-	sigaction( SIGINT, &a, NULL );
+	sigemptyset(&a.sa_mask);
+	sigaction(SIGINT, &a, NULL);
 	signal(SIGPIPE,SIG_IGN);
+	
+	if (argc >= 3){//servidor primario
+		primary = 1;
+	} else if (argc == 2){//servidor secundario
+		primary = 0;
+	} else {//input invalido
+		printf("Uso para servidor primario: ./server <porta TCP> <IP do secundario:porta TCP do secundario> <table1_size> [<table2_size> ...]\n");
+		printf("Exemplo de uso: ./server 54321 127.0.0.1:54322 10 15 20 25\n");
+		printf("-----------------------------------------------------\n");
+		printf("Uso para servidor secundario: ./server <porta TCP>\n");
+		printf("Exemplo de uso: ./server 54322\n");
+		return -1;
+	}
+	if(primary){
+		nome_ficheiro = PRIMARY_FILE;
+	} else {
+		nome_ficheiro = BACKUP_FILE;
+	}
 
-	if (argc < 3){
-		printf("Uso: ./server <porta TCP> <table1_size> [<table2_size> ...]\n");
-		printf("Exemplo de uso: ./table-server 54321 10 15 20 25\n");
+	if ((other_server = (struct server_t*)malloc(sizeof(struct server_t))) == NULL){
+		fprintf(stderr, "Failed malloc other_server\n");
 		return -1;
 	}
 
-	/* inicialização */
-	if(( socket_de_escuta = make_server_socket((unsigned short)atoi(argv[1]))) < 0){
-		fprintf(stderr, "Error creating server socket");
+	other_server -> up = 0;
+
+	if((port = strdup(argv[1])) == NULL){
+		fprintf(stderr, "strdup failed - port\n");
+		server_close(other_server);
 		return -1;
 	}
 
-	/* inicializar o n_tables*/
-	if((n_tables = (char**)malloc(sizeof(char*)*argc - 1)) == NULL){
-		fprintf(stderr, "Failed malloc tables1\n");
+	if((o_server = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in*))) == NULL){
+		fprintf(stderr, "Failed malloc - o_server\n");
+		server_close(other_server);
+		free(port);
+		return -1;
+	}
+	socklen_t o_size = sizeof(*o_server);
+
+	if((socket_de_escuta = make_server_socket((unsigned short)atoi(port))) < 0){
+		fprintf(stderr, "Error creating server socket\n");
+		free(o_server);
+		free(port);
+		server_close(other_server);
 		return -1;
 	}
 
-	if((n_tables[0] = (char *)malloc(_INT)) == NULL){
-		fprintf(stderr, "Failed malloc tables2\n");
-		free(n_tables);
-		return -1;
-	}
-
-	sprintf(n_tables[0], "%d", argc-2);
-	int count;
-	for(i = 1; i <= argc - 2; i++){
-		count = i-1;
-		if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
-			while(count >= 1){
-				free(n_tables[count]);
-				count--;
-			}
-			free(n_tables);
-			fprintf(stderr, "Failed malloc tables3\n");
+	if((res = read_file(nome_ficheiro,&(other_server -> address_port),&n_tables))){//se existe o ficheiro este servidor esta a recuperar de um crash
+		if ( res == -1 ){
+			fprintf(stderr, "Unable to read file\n");
+			free(o_server);
+			free(port);
+			server_close(other_server);
 			return -1;
 		}
-		//verificar os mallocs TODO???
-    	memcpy(n_tables[i],argv[i + 1],strlen(argv[i + 1]) + 1);
-	 } 
+		first_time = 0;
+		printf("Im back!\n");
+
+	} else {//primeira execucao
+		first_time = 1;
+		if(primary){//Servidor Primario, primeira vez
+			printf("Sou o primario!\n");
+			int table_num = argc - 3;
+			other_server -> up = 0;
+			if((n_tables = (char**)malloc(sizeof(char*)*(table_num + 2))) == NULL){
+				fprintf(stderr, "Failed malloc tables1\n");
+				free(o_server);
+				free(port);
+				server_close(other_server);
+				return -1;
+			}
+			
+			if((n_tables[0] = (char *)malloc(_INT)) == NULL){
+				fprintf(stderr, "Failed malloc tables2\n");
+				free(n_tables);
+				free(o_server);
+				free(port);
+				server_close(other_server);
+				return -1;
+			}
+
+			sprintf(n_tables[0], "%d", table_num);
+
+			for(i = 1; i <= table_num; i++){
+				if((n_tables[i] = (char *) malloc(strlen(argv[i + 1]) + 1)) == NULL){
+						for(j = 0; j < i; j++){
+						free(n_tables[j]);
+					}
+					free(n_tables);
+					fprintf(stderr, "Failed malloc tables3\n");
+					free(o_server);
+					free(port);
+					server_close(other_server);
+					return -1;
+				}
+				memcpy(n_tables[i],argv[i + 2],strlen(argv[i + 2]) + 1);
+			}
+			n_tables[table_num + 1] = NULL;
+
+
+			other_server -> address_port = strdup(argv[2]);
+
+			printf("Connecting to backup\n");
+			if((server_bind(other_server) == 0)){
+				printf("Backup online!\n");
+				other_server -> ntabelas = atoi(n_tables[0]);
+				printf("Sending port info\n");
+				if(send_port(other_server, port) == 0){
+					printf("Sending table info\n");
+					if((send_table_info(other_server,n_tables)) == 0){
+						other_server -> up = 1;
+						printf("Backup is up and running!\n");
+					}
+				}
+			}
+
+		} else {//Servidor Secundario, primeira vez
+			printf("Sou o secundario!\n");
+			printf("Awaiting connection...\n");
+			if((other_server->socket_fd = accept(socket_de_escuta,(struct sockaddr*)o_server,&o_size)) > 0){
+
+				if((get_address_port(other_server, o_server)) < 0){
+					printf("Closing backup...\n");
+					free(o_server);
+					free(port);
+					server_close(other_server);
+					return -1;
+				} else {
+					printf("Getting tables ...\n");
+					if((n_tables = get_table_info(other_server)) != NULL){
+						other_server -> up = 1;
+						other_server -> ntabelas = atoi(n_tables[0]);
+					}
+				} 
+			}
+		}
+	}
 
 	if((table_skel_init(n_tables) < 0)){
 		fprintf(stderr, "Failed to init\n");
+		free(o_server);
+		free(port);
+		server_close(other_server);
 		return -1;
 	}
+	
+	if(first_time){
+		fprintf(stderr, "Writing file...\n");
+		if((write_file(nome_ficheiro, other_server -> address_port, n_tables)) < 0){
+			fprintf(stderr, "Failed to write configuration file\n");
+			free(o_server);
+			free(port);
+			server_close(other_server);
+			return -1;
+		}
+		fprintf(stderr, "Done!\n");
+	} else {//sync
+		printf("Reconnecting...\n");
+		if(server_bind(other_server) == 0){
+			other_server -> ntabelas = atoi(n_tables[0]);
+			printf("Connected, Saying Hello...\n");
+			if(hello(other_server) < 0){
+				fprintf(stderr, "Failed to hello...\n");
+				free(o_server);
+				free(port);
+				server_close(other_server);
+				return -1;
+			}
+			printf("Syncronization complete!\n");
+		}
+	}
+
+	for(i = 0; i < other_server -> ntabelas + 1; i++){
+		free(n_tables[i]);
+	}
+	free(n_tables);
+
+	/* inicialização */
 
 	//initializacao da lista de conections
 	for (i = 0; i < NFDESC; i++){
@@ -274,10 +563,16 @@ int main(int argc, char **argv){
   	connections[0].fd = socket_de_escuta;  // Vamos detetar eventos na welcoming socket
   	connections[0].events = POLLIN;
     
-    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standart in
+    connections[1].fd = fileno(stdin);  // Vamos detetar eventos no standard in
   	connections[1].events = POLLIN;
+	
+	if(other_server != NULL){
+		connections[2].fd = other_server -> socket_fd;
+		connections[2].events = POLLIN;
+	}
+	
 
-	nfds = 2;
+	nfds = 3;
 	
 	while(!quit){ /* espera por dados nos sockets abertos */
 
@@ -290,29 +585,23 @@ int main(int argc, char **argv){
             }
 		}
 
-        i = 2;
+        i = 3;
 
 		if ((connections[0].revents & POLLIN) && (nfds < NFDESC)) {// Pedido na listening socket ?
             	while(connections[i].fd != -1){
 					i++;
             	}
-        		if ((connections[i].fd = accept(connections[0].fd, NULL, NULL)) > 0){ // Ligação feita ?
-          			connections[i].events = POLLIN;
-					if ((res = table_skel_send_tablenum(connections[i].fd)) <= 0){
-						if (res == 0){
-							close(connections[i].fd);
-							connections[i].fd = connections[nfds-1].fd;
-							connections[i].revents = connections[nfds-1].revents;
-							connections[i].events = connections[nfds-1].events;
-							connections[nfds-1].fd = -1;
-							connections[nfds-1].revents = 0;
-							connections[nfds-1].events = 0;
-						} else {
-							quit = 1;
-						}
+        		if ((connections[i].fd = accept(connections[0].fd, (struct sockaddr*)o_server,&o_size)) > 0){
+					printf("New connection!\n");
+					if(!primary){
+						printf("I am now primary!\n");
+						other_server -> up = 0;
+						primary = 1;
+					}
 
-					} // Vamos esperar dados nesta socket
+          			connections[i].events = POLLIN;
 					nfds++;
+					fprintf(stdin,"New connection!\n");
 				}
       	}
 		/* um dos sockets de ligação tem dados para ler */
@@ -322,16 +611,34 @@ int main(int argc, char **argv){
 					tratar_input();
 				} else {
 					res = network_receive_send(connections[i].fd);
+					if(res == 2){
+						connections[2].fd = connections[i].fd;
+						connections[2].revents = connections[i].revents;
+						connections[2].events = connections[i].events;
+						connections[i].fd = -1;
+						connections[i].revents = 0;
+						connections[i].events = 0;
+						nfds--;
+
+					}
 					if (connections[i].revents & POLLERR || connections[i].revents & POLLHUP || res < 0) {
 						if(res == -1){		
 							close(connections[i].fd);
-							connections[i].fd = connections[nfds-1].fd;
-							connections[i].revents = connections[nfds-1].revents;
-							connections[i].events = connections[nfds-1].events;
-							connections[nfds-1].fd = -1;
-							connections[nfds-1].revents = 0;
-							connections[nfds-1].events = 0;
-							nfds--;
+							if(i == 2){
+								printf("Other server disconnected...\n");
+								connections[i].fd = -1;
+								connections[i].revents = 0;
+								connections[i].events = 0;
+							} else {
+								printf("Client disconnected...\n");
+								connections[i].fd = connections[nfds-1].fd;
+								connections[i].revents = connections[nfds-1].revents;
+								connections[i].events = connections[nfds-1].events;
+								connections[nfds-1].fd = -1;
+								connections[nfds-1].revents = 0;
+								connections[nfds-1].events = 0;
+								nfds--;
+							}
 						} else {
 							quit = 1;
 							break;
@@ -341,11 +648,14 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-	fprintf(stderr,"Closing server...");
+	fprintf(stderr,"Closing server...\n");
 
 	for (i = 0; i < nfds; i++) {
 		close(connections[i].fd);
 	}
 	
+	free(o_server);
+	free(port);
+	server_close(other_server);
 	return table_skel_destroy();
 }

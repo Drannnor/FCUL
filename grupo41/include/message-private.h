@@ -11,18 +11,30 @@ Ricardo Cruz 47871
 #include <signal.h>
 #include "inet.h"
 #include "message.h"
-#include "network_client-private.h"
 #include "table-private.h"
 
 #define OC_RT_ERROR 99
 
-struct message_t* message_error();
-void print_message(struct message_t *msg);
+#define SERVER_ERROR     -1
+#define CLIENT_ERROR     -2
+#define CONNECTION_ERROR -3
 
-/* Função que recebe uma tabela e uma mensagem de pedido e:
-	- aplica a operação na mensagem de pedido na tabela;
-	- devolve uma mensagem de resposta com oresultado.
+#define OC_TABLE_INFO   60
+#define OC_HELLO 	    70
+#define OC_ADDRESS_PORT 80
+#define OC_TABLE_NUM    90
+
+struct message_t *message_error(int errcode);
+void print_message(struct message_t *msg);
+struct message_t *message_success(struct message_t *msg_pedido);
+
+/* Função que garante o envio de len bytes armazenados em buf,
+   através da socket sock.
 */
-struct message_t *process_message(struct message_t *msg_pedido, struct table_t *tabela);
+int write_all(int sock, char *buf, int len);
+
+// Função que garante a receção de len bytes através da socket sock,
+// armazenando-os em buf.
+int read_all(int sock, char *buf, int len);
 
 #endif
