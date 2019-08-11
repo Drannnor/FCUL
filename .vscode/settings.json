@@ -9,7 +9,19 @@
         "entry-private.h": "c",
         "client_stub-private.h": "c",
         "client_stub.h": "c",
-        "data.h": "c"
+        "data.h": "c",
+        "primary_backup-private.h": "c",
+        "stdio.h": "c",
+        "pthread.h": "c",
+        "system_error": "c",
+        "table_skel-private.h": "c",
+        "table_skel.h": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "string_view": "c",
+        "utility": "c",
+        "valarray": "c",
+        "functional": "c"
     },
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.errorSquiggles": "Enabled"

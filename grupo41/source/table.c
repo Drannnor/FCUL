@@ -116,10 +116,8 @@ char **table_get_keys(struct table_t *table){
     int j = 0;
     for(i = 0; i < table->size_table; i++){
         if(table->hash_table[i].key != NULL){
-            list[j++] = strdup(table->hash_table[i].key);
-            
+            list[j++] = strdup(table->hash_table[i].key);   
         }
-       
     }
     list[j] = NULL;
     return list;
@@ -127,10 +125,12 @@ char **table_get_keys(struct table_t *table){
 
 void table_free_keys(char **keys){
     char **ptr= keys;
-    while(*keys){
-        free(*keys++);
+    if(keys != NULL){
+        while(*keys){
+            free(*keys++);
+        }
+        free(ptr);
     }
-    free(ptr);
 }
 
 /*
@@ -193,4 +193,27 @@ void print_table(struct table_t *table){
         printf("\n");
     }
     printf("-------------------\n");
+}
+
+struct entry_t **table_get_entries(struct table_t *table){
+    struct entry_t **entries;
+    struct entry_t *hashtable;
+    int size = table->size_table;
+    int i,j = 0;
+
+    if((entries = (struct entry_t**)malloc(sizeof(struct entry_t)*(table->num_entries))) == NULL){
+        fprintf(stderr, "Failed malloc\n");
+        return NULL;
+    }
+
+    hashtable = table->hash_table;
+
+    for(i = 0; i < size; i++){
+        if(hashtable[i].key != NULL){
+            entries[j] = entry_dup(&hashtable[i]);
+            j++;
+        }
+    }
+
+    return entries;
 }

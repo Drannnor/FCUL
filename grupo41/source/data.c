@@ -14,10 +14,14 @@ struct data_t *data_create(int size){
     struct data_t *a = NULL;
 
     if(size > 0){
-        a = (struct data_t*) malloc(sizeof(struct data_t));
+        if((a = (struct data_t*) malloc(sizeof(struct data_t))) == NULL){
+            fprintf(stderr, "Failed malloc - data_create\n");
+            return NULL;
+        }
         if (a != NULL){
             a->datasize = size;
             if((a->data = malloc(size)) == NULL){
+                fprintf(stderr, "Failed malloc2 - data_create\n");
                 return NULL;
             }
         }

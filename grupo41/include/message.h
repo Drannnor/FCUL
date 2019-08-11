@@ -7,18 +7,18 @@
 #define _INT 4
 
 /* Define os possíveis opcodes da mensagem */
-#define OC_SIZE		10
-#define OC_UPDATE  	20
-#define OC_GET		30
-#define OC_PUT		40
-#define OC_COLLS	50
+#define OC_SIZE		  10
+#define OC_UPDATE  	  20
+#define OC_GET		  30
+#define OC_PUT		  40
+#define OC_COLLS	  50
 
 /* Define códigos para os possíveis conteúdos da mensagem */
-#define CT_RESULT	10
-#define CT_VALUE	20
-#define CT_KEY		30
-#define CT_KEYS		40
-#define CT_ENTRY	50
+#define CT_RESULT	  10
+#define CT_VALUE	  20
+#define CT_KEY		  30
+#define CT_KEYS		  40
+#define CT_ENTRY	  50
 
 /* Estrutura que representa uma mensagem genérica a ser transmitida.
  * Esta mensagem pode ter vários tipos de conteúdos.
